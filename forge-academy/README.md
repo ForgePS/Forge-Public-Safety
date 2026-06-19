@@ -5,6 +5,15 @@ Statewide training platform for the Arkansas Fire Training Academy (AFTA). This 
 **Hosted app:** https://forge-academy-95f84.web.app  
 **Firebase project:** `forge-academy-95f84`
 
+## Architecture
+
+Forge Academy is one product in the Forge Public Safety ecosystem (alongside Forge RMS and [ForgePS/Dashboard](https://github.com/ForgePS/Dashboard)). Each product has its own repo and Firebase project; they integrate via APIs, not shared databases.
+
+- **[docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md)** — product map, Campus Signage vs org Dashboard, design principles  
+- **[docs/INTEGRATION.md](./docs/INTEGRATION.md)** — shared IDs, planned RMS/Dashboard APIs, integration rules  
+
+**Campus Signage** (class schedules, dining, TV displays) is built into this app (`/admin/digital-dashboard`, `/display/...`). **ForgePS/Dashboard** is a separate repo for RMS-fed org-wide signage.
+
 ## Quick start
 
 ```powershell
@@ -65,6 +74,8 @@ Download a service account key from Firebase console → Project settings → Se
 | Instructor | `/instructor` |
 | Certification officer | `/certification` |
 | Public certificate verify | `/verify/:validationCode` |
+| Campus signage admin | `/admin/digital-dashboard` |
+| Campus signage player | `/display/:displayId/:publicKey` |
 
 ## Build
 
