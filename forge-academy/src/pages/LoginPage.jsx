@@ -1,18 +1,28 @@
 import { useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import { Navigate, useLocation } from "react-router-dom";
+import { ForgeOrgBadge, ForgeWordmark } from "../components/auth/ForgeLoginBrand.jsx";
+import { ForgeLoginThemeToggle } from "../components/auth/ForgeLoginThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useForgeLoginTheme } from "../hooks/useForgeLoginTheme.js";
 import { homePathForRole, pathAllowedForRole } from "../lib/roles.js";
+
+const ACADEMY_HOSTING_URL = "forge-academy-95f84.web.app";
 
 export default function LoginPage() {
   const { user, signIn, signingIn, error } = useAuth();
   const location = useLocation();
+  const { theme, isDark, toggleTheme } = useForgeLoginTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  if (signingIn) {
+  if (signingIn && !user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[var(--color-afta-bg)] text-[var(--color-afta-muted)]">
-        Signing in…
+      <div
+        className="forge-login-screen grid min-h-screen place-items-center"
+        data-forge-login-theme={theme}
+      >
+        <p className="forge-login-muted">Signing in…</p>
       </div>
     );
   }
@@ -31,62 +41,93 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="grid min-h-screen place-items-center bg-[var(--color-afta-bg)] px-4 py-10">
-      <div className="w-full max-w-md rounded-[18px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] p-8 shadow-sm">
-        <div className="mb-6 flex items-center gap-3">
-          <img src="/afta-logo.png" alt="" className="h-16 w-16 object-contain" />
-          <div>
-            <p className="text-base font-semibold text-[var(--color-afta-text)]">Forge Academy Management System</p>
-            <p className="text-xs text-[var(--color-afta-muted)]">Arkansas Fire Training Academy · Camden</p>
+    <div
+      className="forge-login-screen flex min-h-screen flex-col items-center justify-center px-4 py-10"
+      data-forge-login-theme={theme}
+    >
+      <div className="w-full max-w-[420px]">
+        <ForgeLoginThemeToggle isDark={isDark} onToggle={toggleTheme} />
+        <ForgeWordmark />
+
+        <div className="forge-login-card mt-8 rounded-2xl border p-6 backdrop-blur-sm sm:p-8">
+          <div className="mb-6">
+            <ForgeOrgBadge
+              logoAlt="Arkansas Fire Training Academy"
+              title="Arkansas Fire Training Academy"
+              subtitle="Forge Academy · Camden"
+            />
           </div>
+
+          <div className="mb-6 flex items-start gap-3">
+            <span className="forge-login-shield grid h-10 w-10 shrink-0 place-items-center rounded-xl">
+              <ShieldCheck className="h-5 w-5" aria-hidden />
+            </span>
+            <div>
+              <h1 className="forge-login-heading text-xl font-bold">Sign in</h1>
+              <p className="forge-login-muted mt-1 text-xs">
+                FORGE Academy · {ACADEMY_HOSTING_URL}
+              </p>
+            </div>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <label className="block">
+              <span className="forge-login-label mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em]">
+                Email
+              </span>
+              <input
+                type="email"
+                autoComplete="email"
+                required
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                disabled={signingIn}
+                placeholder="you@department.org"
+                className="forge-login-input"
+              />
+            </label>
+
+            <label className="block">
+              <span className="forge-login-label mb-1.5 block text-[10px] font-bold uppercase tracking-[0.14em]">
+                Password
+              </span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={signingIn}
+                placeholder="Minimum 6 characters"
+                className="forge-login-input"
+              />
+            </label>
+
+            {error ? (
+              <p className="forge-login-error rounded-xl border px-3 py-2.5 text-sm">{error}</p>
+            ) : null}
+
+            <button type="submit" disabled={signingIn} className="forge-login-submit">
+              {signingIn ? "Signing in…" : "Sign In"}
+            </button>
+          </form>
+
+          <p className="forge-login-muted mt-5 text-center text-xs">
+            Accounts are created by your academy or department administrator.
+          </p>
         </div>
 
-        <h2 className="text-xl font-semibold text-[var(--color-afta-text)]">Sign in</h2>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-afta-muted)]">
-          Statewide training, certification, and department compliance — one centralized platform.
-        </p>
-
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold text-[var(--color-afta-muted)]">Email</span>
-            <input
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              disabled={signingIn}
-              className="w-full rounded-[10px] border border-[var(--color-afta-border)] bg-white px-3 py-2.5 text-sm text-[var(--color-afta-text)] outline-none focus:border-[var(--color-afta-red)]/50 disabled:opacity-60"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-[11px] font-semibold text-[var(--color-afta-muted)]">Password</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              disabled={signingIn}
-              className="w-full rounded-[10px] border border-[var(--color-afta-border)] bg-white px-3 py-2.5 text-sm text-[var(--color-afta-text)] outline-none focus:border-[var(--color-afta-red)]/50 disabled:opacity-60"
-            />
-          </label>
-
-          {error ? (
-            <p className="rounded-[10px] border border-[var(--color-afta-red)]/30 bg-[var(--color-afta-red)]/10 px-3 py-2 text-sm text-[var(--color-afta-red)]">
-              {error}
-            </p>
-          ) : null}
-
-          <button
-            type="submit"
-            disabled={signingIn}
-            className="w-full rounded-[10px] bg-[var(--color-afta-red)] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-60"
+        <p className="forge-login-muted mt-6 text-center text-xs">
+          Company website:{" "}
+          <a
+            href="https://forgepublicsafety.com"
+            target="_blank"
+            rel="noreferrer"
+            className="forge-login-link font-semibold"
           >
-            {signingIn ? "Signing in…" : "Sign In"}
-          </button>
-        </form>
+            forgepublicsafety.com
+          </a>
+        </p>
       </div>
     </div>
   );

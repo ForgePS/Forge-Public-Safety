@@ -13,6 +13,7 @@ Forge Academy is one product in the Forge Public Safety ecosystem (alongside For
 - **[docs/INTEGRATION.md](./docs/INTEGRATION.md)** — shared IDs, planned RMS/Dashboard APIs, integration rules  
 - **[docs/API_CONTRACTS.md](./docs/API_CONTRACTS.md)** — draft HTTP contracts (v0.1)  
 - **[docs/for-dashboard/](./docs/for-dashboard/)** — copy into [ForgePS/Dashboard](https://github.com/ForgePS/Dashboard) repo  
+- **[templates/forge-dashboard-scaffold/](./templates/forge-dashboard-scaffold/)** — minimal Vite player + admin starter for Dashboard repo  
 
 **Campus Signage** (class schedules, dining, TV displays) is built into this app (`/admin/digital-dashboard`, `/display/...`). **ForgePS/Dashboard** is a separate repo for RMS-fed org-wide signage.
 

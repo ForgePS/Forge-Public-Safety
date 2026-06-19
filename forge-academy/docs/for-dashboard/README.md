@@ -11,8 +11,15 @@ forge-academy/docs/for-dashboard/ARCHITECTURE.md  →  docs/ARCHITECTURE.md
 forge-academy/docs/for-dashboard/INTEGRATION.md  →  docs/INTEGRATION.md
 ```
 
+Or bootstrap the full app scaffold:
+
+```text
+forge-academy/templates/forge-dashboard-scaffold/*  →  Dashboard repo root
+```
+
 ```powershell
 # Run from a machine with both repos cloned
+Copy-Item -Recurse forge-academy\templates\forge-dashboard-scaffold\* ..\Dashboard\
 Copy-Item forge-academy\docs\for-dashboard\ARCHITECTURE.md ..\Dashboard\docs\ARCHITECTURE.md
 Copy-Item forge-academy\docs\for-dashboard\INTEGRATION.md ..\Dashboard\docs\INTEGRATION.md
 ```

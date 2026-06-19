@@ -43,12 +43,16 @@ export function getAuthErrorMessage(error) {
  * } | null>} */
 const AuthContext = createContext(null);
 
-function AuthLoadingScreen({ message }) {
-  return (
-    <div className="grid min-h-screen place-items-center bg-[var(--color-afta-bg)] text-[var(--color-afta-subtle)]">
-      {message}
-    </div>
-  );
+const AUTH_BOOTSTRAP_TIMEOUT_MS = 12_000;
+const PROFILE_FETCH_TIMEOUT_MS = 10_000;
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      window.setTimeout(() => reject(new Error(`${label} timed out`)), ms);
+    }),
+  ]);
 }
 
 export function AuthProvider({ children }) {
@@ -59,7 +63,19 @@ export function AuthProvider({ children }) {
   const profileRequestId = useRef(0);
 
   useEffect(() => {
+    let authSettled = false;
+
+    const bootstrapTimeoutId = window.setTimeout(() => {
+      if (!authSettled) {
+        setSigningIn(false);
+        setReady(true);
+      }
+    }, AUTH_BOOTSTRAP_TIMEOUT_MS);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      authSettled = true;
+      window.clearTimeout(bootstrapTimeoutId);
+
       const requestId = ++profileRequestId.current;
 
       if (!firebaseUser) {
@@ -70,10 +86,18 @@ export function AuthProvider({ children }) {
       }
 
       try {
-        let profile = await fetchUserProfile(firebaseUser.uid);
+        let profile = await withTimeout(
+          fetchUserProfile(firebaseUser.uid),
+          PROFILE_FETCH_TIMEOUT_MS,
+          "Profile lookup",
+        );
 
         if (!profile) {
-          profile = await tryBootstrapAdminProfile(firebaseUser);
+          profile = await withTimeout(
+            tryBootstrapAdminProfile(firebaseUser),
+            PROFILE_FETCH_TIMEOUT_MS,
+            "Admin bootstrap",
+          );
         }
 
         if (requestId !== profileRequestId.current) return;
@@ -101,7 +125,10 @@ export function AuthProvider({ children }) {
       }
     });
 
-    return unsubscribe;
+    return () => {
+      window.clearTimeout(bootstrapTimeoutId);
+      unsubscribe();
+    };
   }, []);
 
   const value = useMemo(
@@ -132,10 +159,6 @@ export function AuthProvider({ children }) {
     }),
     [user, ready, signingIn, error],
   );
-
-  if (!ready) {
-    return <AuthLoadingScreen message="Loading Forge Academy…" />;
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

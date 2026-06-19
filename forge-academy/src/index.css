@@ -94,6 +94,196 @@ body {
   color: #b91c1c;
 }
 
+/* Forge Public Safety login — dark/light themes aligned with Forge RMS */
+body.forge-login-active {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(37 99 235 / 0.12), transparent 55%),
+    linear-gradient(180deg, #070d19 0%, #0b1220 45%, #0a1018 100%);
+  transition: background 0.25s ease;
+}
+
+body.forge-login-active[data-forge-login-theme="light"] {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgb(37 99 235 / 0.08), transparent 55%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2f7 45%, #e2e8f0 100%);
+}
+
+body.forge-login-active #root {
+  min-height: 100vh;
+}
+
+.forge-login-screen {
+  --forge-login-fg: #e2e8f0;
+  --forge-login-muted: #64748b;
+  --forge-login-label: #64748b;
+  --forge-login-card-bg: rgb(17 24 39 / 0.9);
+  --forge-login-card-border: rgb(255 255 255 / 0.1);
+  --forge-login-card-shadow: rgb(0 0 0 / 0.4);
+  --forge-login-org-bg: rgb(15 23 42 / 0.8);
+  --forge-login-org-border: rgb(255 255 255 / 0.1);
+  --forge-login-org-title: #fff;
+  --forge-login-org-subtitle: #94a3b8;
+  --forge-login-shield-bg: rgb(59 130 246 / 0.15);
+  --forge-login-shield-fg: #60a5fa;
+  --forge-login-input-bg: #0b1220;
+  --forge-login-input-border: rgb(148 163 184 / 0.18);
+  --forge-login-input-fg: #f8fafc;
+  --forge-login-error-border: rgb(239 68 68 / 0.3);
+  --forge-login-error-bg: rgb(239 68 68 / 0.1);
+  --forge-login-error-fg: #fca5a5;
+  --forge-login-link: #fb923c;
+  --forge-login-link-hover: #fdba74;
+  --forge-login-toggle-bg: rgb(15 23 42 / 0.65);
+  --forge-login-toggle-border: rgb(148 163 184 / 0.2);
+  --forge-login-toggle-fg: #cbd5e1;
+
+  background: transparent;
+  color: var(--forge-login-fg);
+}
+
+.forge-login-screen[data-forge-login-theme="light"] {
+  --forge-login-fg: #0f172a;
+  --forge-login-muted: #64748b;
+  --forge-login-label: #94a3b8;
+  --forge-login-card-bg: rgb(255 255 255 / 0.96);
+  --forge-login-card-border: #e2e8f0;
+  --forge-login-card-shadow: rgb(15 23 42 / 0.08);
+  --forge-login-org-bg: #f8fafc;
+  --forge-login-org-border: #e2e8f0;
+  --forge-login-org-title: #0f172a;
+  --forge-login-org-subtitle: #64748b;
+  --forge-login-shield-bg: rgb(37 99 235 / 0.1);
+  --forge-login-shield-fg: #2563eb;
+  --forge-login-input-bg: #fff;
+  --forge-login-input-border: #cbd5e1;
+  --forge-login-input-fg: #0f172a;
+  --forge-login-error-border: rgb(220 38 38 / 0.25);
+  --forge-login-error-bg: rgb(254 226 226 / 0.9);
+  --forge-login-error-fg: #b91c1c;
+  --forge-login-link: #ea580c;
+  --forge-login-link-hover: #c2410c;
+  --forge-login-toggle-bg: #fff;
+  --forge-login-toggle-border: #e2e8f0;
+  --forge-login-toggle-fg: #475569;
+}
+
+.forge-login-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 9999px;
+  border: 1px solid var(--forge-login-toggle-border);
+  background: var(--forge-login-toggle-bg);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--forge-login-toggle-fg);
+  cursor: pointer;
+  transition: filter 0.15s ease, border-color 0.15s ease;
+}
+
+.forge-login-theme-toggle:hover {
+  filter: brightness(1.05);
+}
+
+.forge-login-card {
+  border-color: var(--forge-login-card-border);
+  background: var(--forge-login-card-bg);
+  box-shadow: 0 25px 50px -12px var(--forge-login-card-shadow);
+}
+
+.forge-login-org-badge {
+  border-color: var(--forge-login-org-border);
+  background: var(--forge-login-org-bg);
+}
+
+.forge-login-org-title {
+  color: var(--forge-login-org-title);
+}
+
+.forge-login-org-subtitle {
+  color: var(--forge-login-org-subtitle);
+}
+
+.forge-login-shield {
+  background: var(--forge-login-shield-bg);
+  color: var(--forge-login-shield-fg);
+}
+
+.forge-login-heading {
+  color: var(--forge-login-org-title);
+}
+
+.forge-login-muted {
+  color: var(--forge-login-muted);
+}
+
+.forge-login-label {
+  color: var(--forge-login-label);
+}
+
+.forge-login-link {
+  color: var(--forge-login-link);
+}
+
+.forge-login-link:hover {
+  color: var(--forge-login-link-hover);
+}
+
+.forge-login-error {
+  border-color: var(--forge-login-error-border);
+  background: var(--forge-login-error-bg);
+  color: var(--forge-login-error-fg);
+}
+
+.forge-login-input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--forge-login-input-border);
+  background: var(--forge-login-input-bg);
+  padding: 0.7rem 0.85rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--forge-login-input-fg);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.forge-login-input::placeholder {
+  color: var(--forge-login-muted);
+}
+
+.forge-login-input:focus {
+  border-color: rgb(59 130 246 / 0.55);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.15);
+}
+
+.forge-login-input:disabled {
+  opacity: 0.6;
+}
+
+.forge-login-submit {
+  width: 100%;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 10px 24px rgb(37 99 235 / 0.28);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.forge-login-submit:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+
+.forge-login-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 @media print {
   body {
     background: #fff;
