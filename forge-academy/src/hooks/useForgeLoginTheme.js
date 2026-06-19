@@ -1,17 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { usePortalTheme } from "../context/PortalThemeContext.jsx";
 
-const STORAGE_KEY = "forge-login-theme";
-
-function readStoredTheme() {
-  if (typeof window === "undefined") return "dark";
-  return window.localStorage.getItem(STORAGE_KEY) === "light" ? "light" : "dark";
-}
-
+/** Login shell theme — shared with portal dashboards. */
 export function useForgeLoginTheme() {
-  const [theme, setThemeState] = useState(readStoredTheme);
+  const { theme, isDark, toggleTheme } = usePortalTheme();
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, theme);
     document.body.classList.add("forge-login-active");
     document.body.dataset.forgeLoginTheme = theme;
     return () => {
@@ -20,13 +14,9 @@ export function useForgeLoginTheme() {
     };
   }, [theme]);
 
-  function toggleTheme() {
-    setThemeState((current) => (current === "dark" ? "light" : "dark"));
-  }
-
   return {
     theme,
-    isDark: theme === "dark",
+    isDark,
     toggleTheme,
   };
 }

@@ -3,6 +3,7 @@ import { LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ROLE_LABELS } from "../lib/roles.js";
 import NotificationBell from "./NotificationBell.jsx";
+import PortalThemeToggle from "./PortalThemeToggle.jsx";
 
 function formatToday() {
   return new Date().toLocaleDateString("en-US", {
@@ -40,14 +41,17 @@ export default function DashboardTopBar({ portalTitle = "Arkansas Fire Training 
           <p className="text-[10px] text-[var(--color-afta-muted)]">
             {user ? ROLE_LABELS[user.role] : ""}
           </p>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="mt-2 inline-flex items-center gap-1.5 text-[10px] font-semibold text-[var(--color-afta-muted)] transition hover:text-[#c8102e]"
-          >
-            <LogOut className="h-3 w-3" />
-            Sign out
-          </button>
+          <div className="mt-2 flex items-center gap-2">
+            <PortalThemeToggle compact />
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-[var(--color-afta-muted)] transition hover:text-[var(--color-afta-red)]"
+            >
+              <LogOut className="h-3 w-3" />
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
     </div>
