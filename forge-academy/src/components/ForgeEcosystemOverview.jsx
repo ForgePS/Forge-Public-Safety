@@ -77,8 +77,10 @@ export default function ForgeEcosystemOverview({ variant = "full", showCampusNot
             ))}
           </ul>
           <p className="mt-4 text-xs text-[var(--color-afta-muted)]">
-            Full architecture and API plans: <code className="rounded bg-slate-100 px-1">docs/ARCHITECTURE.md</code> and{" "}
-            <code className="rounded bg-slate-100 px-1">docs/INTEGRATION.md</code> in the repository.
+            Full architecture: <code className="rounded bg-slate-100 px-1">docs/ARCHITECTURE.md</code>,{" "}
+            <code className="rounded bg-slate-100 px-1">docs/INTEGRATION.md</code>,{" "}
+            <code className="rounded bg-slate-100 px-1">docs/API_CONTRACTS.md</code>. Dashboard repo templates:{" "}
+            <code className="rounded bg-slate-100 px-1">docs/for-dashboard/</code>
           </p>
         </section>
       ) : null}

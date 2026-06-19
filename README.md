@@ -2,7 +2,20 @@
 
 Standalone marketing website for **forgepublicsafety.com**, rebuilt outside GoDaddy Airo.
 
-## What's included
+See [INTEGRATION.md](./INTEGRATION.md) for planned cross-product APIs and identifiers.
+
+## Repository layout (this Git remote)
+
+| Path | Product | Status |
+|------|---------|--------|
+| `forge-academy/` | **Forge Academy** — primary application in this remote | Active |
+| Root `src/`, `content/` | Legacy marketing site (`forgepublicsafety.com`) | Moving off-site |
+| `ForgePS/Dashboard` | Org-wide RMS-fed digital signage | [Separate repo](https://github.com/ForgePS/Dashboard) |
+| Forge RMS | Operations / records | Separate repo — `rms.forgepublicsafety.com` |
+
+Academy architecture: [forge-academy/docs/ARCHITECTURE.md](./forge-academy/docs/ARCHITECTURE.md)
+
+## What's included (marketing — root)
 
 - Home, Products, Solutions, Resources, Company, Contact
 - Privacy, Terms, Security

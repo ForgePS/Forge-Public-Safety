@@ -2,6 +2,10 @@
 
 This document describes how Forge Academy connects to other Forge Public Safety products **today** and **planned**.
 
+See [API_CONTRACTS.md](./API_CONTRACTS.md) for draft request/response shapes.
+
+Dashboard repo templates (copy to `ForgePS/Dashboard`): [for-dashboard/README.md](./for-dashboard/README.md)
+
 ## Connected products
 
 | Product | Repository | Role |
