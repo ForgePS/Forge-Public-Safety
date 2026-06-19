@@ -1,0 +1,259 @@
+backend:
+  name: github
+  repo: YOUR_GITHUB_USERNAME/forgepublicsafety-website
+  branch: main
+  base_url: https://us-central1-rms-dashboard-7562e.cloudfunctions.net/cmsOAuth
+  auth_endpoint: auth
+
+local_backend: false
+
+media_folder: public/assets/uploads
+public_folder: /assets/uploads
+
+site_url: https://forgepublicsafety.com
+display_url: https://forgepublicsafety.com
+logo_url: /assets/forge-logo.png
+
+collections:
+  - name: content
+    label: Website Content
+    files:
+      - label: Site settings & navigation
+        name: global
+        file: content/global.json
+        format: json
+        fields:
+          - label: Site
+            name: site
+            widget: object
+            fields:
+              - { label: Site name, name: name, widget: string }
+              - { label: Tagline, name: tagline, widget: string }
+              - { label: Footer blurb, name: footerBlurb, widget: text }
+              - { label: Demo email, name: demoEmail, widget: string }
+              - { label: Privacy email, name: privacyEmail, widget: string }
+              - { label: Security email, name: securityEmail, widget: string }
+              - { label: RMS URL, name: rmsUrl, widget: string }
+              - { label: Pricing note, name: pricingNote, widget: text }
+          - label: Navigation
+            name: navigation
+            widget: object
+            fields:
+              - label: Main menu links
+                name: main
+                widget: list
+                fields:
+                  - { label: Label, name: label, widget: string }
+                  - { label: Link path, name: href, widget: string, hint: "Example: /products" }
+              - { label: Header button text, name: ctaLabel, widget: string }
+
+      - label: Homepage
+        name: home
+        file: content/home.json
+        format: json
+        fields:
+          - label: Homepage
+            name: home
+            widget: object
+            fields:
+              - { label: Hero eyebrow, name: heroEyebrow, widget: string }
+              - { label: Hero title, name: heroTitle, widget: string }
+              - { label: Hero lead, name: heroLead, widget: text }
+              - { label: Hero body, name: heroBody, widget: text }
+              - label: Hero bullets
+                name: heroBullets
+                widget: list
+                field: { label: Bullet, name: bullet, widget: string }
+              - { label: Modules eyebrow, name: modulesEyebrow, widget: string }
+              - { label: Modules title, name: modulesTitle, widget: string }
+              - { label: Modules description, name: modulesDescription, widget: text }
+              - { label: Products eyebrow, name: productsEyebrow, widget: string }
+              - { label: Products title, name: productsTitle, widget: string }
+              - { label: Products description, name: productsDescription, widget: text }
+              - { label: Why eyebrow, name: whyEyebrow, widget: string }
+              - { label: Why title, name: whyTitle, widget: string }
+              - { label: Why description, name: whyDescription, widget: text }
+              - label: Why cards
+                name: whyCards
+                widget: list
+                fields:
+                  - { label: Title, name: title, widget: string }
+                  - { label: Copy, name: copy, widget: text }
+              - { label: Closing title, name: closingTitle, widget: string }
+              - { label: Closing description, name: closingDescription, widget: text }
+
+      - label: Products page
+        name: products-page
+        file: content/products-page.json
+        format: json
+        fields:
+          - label: Products page
+            name: products
+            widget: object
+            fields:
+              - { label: Hero eyebrow, name: heroEyebrow, widget: string }
+              - { label: Hero title, name: heroTitle, widget: string }
+              - { label: Hero description, name: heroDescription, widget: text }
+              - { label: Secondary link text, name: heroSecondaryLink, widget: string }
+              - { label: Base eyebrow, name: baseEyebrow, widget: string }
+              - { label: Base title, name: baseTitle, widget: string }
+              - { label: Base description, name: baseDescription, widget: text }
+              - { label: Add-ons eyebrow, name: addonsEyebrow, widget: string }
+              - { label: Add-ons title, name: addonsTitle, widget: string }
+              - { label: Add-ons description, name: addonsDescription, widget: text }
+              - { label: Core title, name: coreTitle, widget: string }
+              - { label: Core description, name: coreDescription, widget: text }
+          - label: Base package features
+            name: basePackageFeatures
+            widget: list
+            field: { label: Feature, name: feature, widget: string }
+
+      - label: Product modules
+        name: product-modules
+        file: content/product-modules.json
+        format: json
+        fields:
+          - label: Core products
+            name: productModules
+            widget: list
+            fields:
+              - { label: ID (URL anchor), name: id, widget: string, hint: "Example: forge-rms" }
+              - { label: Name, name: name, widget: string }
+              - { label: Subtitle, name: subtitle, widget: string }
+              - { label: Description, name: description, widget: text }
+              - { label: Has live link, name: liveLink, widget: boolean, required: false }
+
+      - label: Add-on modules
+        name: addon-modules
+        file: content/addon-modules.json
+        format: json
+        fields:
+          - label: Add-on modules
+            name: addOnModules
+            widget: list
+            fields:
+              - { label: Name, name: name, widget: string }
+              - { label: Subtitle, name: subtitle, widget: string }
+              - { label: Description, name: description, widget: text }
+
+      - label: Solutions page
+        name: solutions
+        file: content/solutions.json
+        format: json
+        fields:
+          - label: Solutions page
+            name: solutions
+            widget: object
+            fields:
+              - { label: Eyebrow, name: eyebrow, widget: string }
+              - { label: Title, name: title, widget: string }
+              - { label: Description, name: description, widget: text }
+              - label: Solution cards
+                name: items
+                widget: list
+                fields:
+                  - { label: Title, name: title, widget: string }
+                  - { label: Copy, name: copy, widget: text }
+              - { label: Closing title, name: closingTitle, widget: string }
+              - { label: Closing description, name: closingDescription, widget: text }
+
+      - label: Company page
+        name: company
+        file: content/company.json
+        format: json
+        fields:
+          - label: Company page
+            name: company
+            widget: object
+            fields:
+              - { label: Eyebrow, name: eyebrow, widget: string }
+              - { label: Title, name: title, widget: string }
+              - { label: Description, name: description, widget: text }
+              - label: Body paragraphs
+                name: paragraphs
+                widget: list
+                field: { label: Paragraph, name: paragraph, widget: text }
+              - { label: Closing title, name: closingTitle, widget: string }
+              - { label: Closing description, name: closingDescription, widget: text }
+
+      - label: Contact page
+        name: contact
+        file: content/contact.json
+        format: json
+        fields:
+          - label: Contact page
+            name: contact
+            widget: object
+            fields:
+              - { label: Eyebrow, name: eyebrow, widget: string }
+              - { label: Title, name: title, widget: string }
+              - { label: Description, name: description, widget: text }
+              - { label: Sidebar title, name: sidebarTitle, widget: string }
+              - { label: Sidebar body, name: sidebarBody, widget: text }
+              - { label: Testimonial quote, name: quote, widget: text }
+
+      - label: Resources page
+        name: resources
+        file: content/resources.json
+        format: json
+        fields:
+          - label: Resources page
+            name: resources
+            widget: object
+            fields:
+              - { label: Eyebrow, name: eyebrow, widget: string }
+              - { label: Title, name: title, widget: string }
+              - { label: Description, name: description, widget: text }
+              - label: Resource cards
+                name: cards
+                widget: list
+                fields:
+                  - { label: Title, name: title, widget: string }
+                  - { label: Copy, name: copy, widget: text }
+                  - { label: Link label, name: linkLabel, widget: string }
+                  - { label: Link URL, name: linkHref, widget: string }
+                  - { label: Opens in new tab, name: external, widget: boolean }
+
+      - label: Footer links
+        name: footer
+        file: content/footer.json
+        format: json
+        fields:
+          - label: Footer columns
+            name: footerColumns
+            widget: object
+            fields:
+              - label: Solutions column
+                name: Solutions
+                widget: list
+                fields:
+                  - { label: Label, name: label, widget: string }
+                  - { label: Link, name: href, widget: string }
+              - label: Products column
+                name: Products
+                widget: list
+                fields:
+                  - { label: Label, name: label, widget: string }
+                  - { label: Link, name: href, widget: string }
+              - label: Resources column
+                name: Resources
+                widget: list
+                fields:
+                  - { label: Label, name: label, widget: string }
+                  - { label: Link, name: href, widget: string }
+              - label: Company column
+                name: Company
+                widget: list
+                fields:
+                  - { label: Label, name: label, widget: string }
+                  - { label: Link, name: href, widget: string }
+
+  - name: media
+    label: Images
+    files:
+      - label: Logo & hero images
+        name: images
+        file: content/media.json
+        format: json
+        fields:
+          - { label: Note, name: note, widget: string, default: "Replace files in public/assets/ — forge-logo.png and hero-firefighter.png. Uploaded images go to public/assets/uploads/." }

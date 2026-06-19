@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --color-afta-red: #c8102e;
+  --color-afta-navy: #0f2744;
+  --color-afta-sidebar: #0a1f38;
+  --color-afta-bg: #eef2f7;
+  --color-afta-surface: #ffffff;
+  --color-afta-border: #e2e8f0;
+  --color-afta-text: #0f172a;
+  --color-afta-muted: #64748b;
+  --color-afta-subtle: #94a3b8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-afta-bg);
+  color: var(--color-afta-text);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Shared light-theme primitives */
+.app-panel {
+  border-radius: 14px;
+  border: 1px solid var(--color-afta-border);
+  background: var(--color-afta-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+}
+
+.app-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--color-afta-border);
+  background: #fff;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--color-afta-text);
+  outline: none;
+}
+
+.app-input:focus {
+  border-color: rgb(200 16 46 / 0.5);
+}
+
+.app-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-afta-muted);
+}
+
+.app-btn-secondary {
+  border-radius: 10px;
+  border: 1px solid var(--color-afta-border);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-afta-subtle);
+  background: #fff;
+}
+
+.app-btn-secondary:hover {
+  color: var(--color-afta-text);
+  background: #f8fafc;
+}
+
+.app-btn-primary {
+  border-radius: 10px;
+  background: var(--color-afta-red);
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.app-error {
+  border-radius: 10px;
+  border: 1px solid rgb(200 16 46 / 0.3);
+  background: rgb(200 16 46 / 0.08);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #b91c1c;
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #0f172a;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .transcript-print {
+    box-shadow: none;
+    border: none;
+  }
+
+  @page {
+    size: landscape;
+    margin: 0.35in;
+  }
+
+  .certificate-custom-image,
+  .certificate-afta-ifsac {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .certificate-custom-image,
+  .certificate-afta-ifsac {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .certificate-custom-image article,
+  .certificate-afta-ifsac article {
+    box-shadow: none !important;
+  }
+}

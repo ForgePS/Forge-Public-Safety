@@ -1,0 +1,47 @@
+{
+  "productModules": [
+    {
+      "id": "forge-rms",
+      "name": "Forge RMS",
+      "subtitle": "Records Management System",
+      "description": "Complete incident and records management. NFIRS-compliant reporting, narrative tools, and seamless data flow from dispatch to documentation.",
+      "liveLink": true
+    },
+    {
+      "id": "personnel",
+      "name": "Forge Personnel",
+      "subtitle": "Personnel Management",
+      "description": "Scheduling, staffing, certifications, and accountability — all connected. Manage your entire workforce from a single dashboard."
+    },
+    {
+      "id": "training",
+      "name": "Forge Training",
+      "subtitle": "Training Management",
+      "description": "Training management and compliance tracking. Assign, track, and verify training across your entire department with automated compliance alerts."
+    },
+    {
+      "id": "prevention",
+      "name": "Forge Prevention",
+      "subtitle": "Fire Prevention",
+      "description": "Inspections and prevention workflows built for modern fire prevention bureaus. Manage inspections, violations, and community risk reduction."
+    },
+    {
+      "id": "fleet",
+      "name": "Forge Fleet",
+      "subtitle": "Fleet & Asset Management",
+      "description": "Fleet and asset readiness at your fingertips. Track maintenance schedules, apparatus status, and equipment inventory across every station."
+    },
+    {
+      "id": "analytics",
+      "name": "Forge Analytics",
+      "subtitle": "Operational Intelligence",
+      "description": "Executive dashboards and performance metrics that transform raw operational data into strategic decisions. Real-time KPIs for every level of command."
+    },
+    {
+      "id": "command",
+      "name": "Forge Command",
+      "subtitle": "Incident Command",
+      "description": "Operational command and incident awareness for every mission. Real-time unit tracking, ICS integration, and situational awareness tools."
+    }
+  ]
+}

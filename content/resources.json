@@ -1,0 +1,30 @@
+{
+  "resources": {
+    "eyebrow": "Resources",
+    "title": "Documentation, support, and live platform access.",
+    "description": "Start with the live RMS platform, request a guided walkthrough, or contact our team for implementation help.",
+    "cards": [
+      {
+        "title": "Live RMS platform",
+        "copy": "Explore the production Forge RMS gateway, demo environment, and department portals.",
+        "linkLabel": "Open rms.forgepublicsafety.com",
+        "linkHref": "https://rms.forgepublicsafety.com",
+        "external": true
+      },
+      {
+        "title": "Support",
+        "copy": "Agency support, onboarding questions, and demo requests go straight to our team.",
+        "linkLabel": "Contact support",
+        "linkHref": "/contact",
+        "external": false
+      },
+      {
+        "title": "Implementation",
+        "copy": "We help agencies configure modules, migrate data, and roll out by station or shift.",
+        "linkLabel": "Request Demo",
+        "linkHref": "/contact",
+        "external": false
+      }
+    ]
+  }
+}

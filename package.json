@@ -1,0 +1,26 @@
+{
+  "name": "forgepublicsafety-website",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cms:server": "decap-server"
+  },
+  "dependencies": {
+    "lucide-react": "^0.525.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.11",
+    "@vitejs/plugin-react": "^4.7.0",
+    "decap-cms": "^3.8.0",
+    "decap-server": "^3.3.0",
+    "tailwindcss": "^4.1.11",
+    "vite": "^7.0.4"
+  }
+}

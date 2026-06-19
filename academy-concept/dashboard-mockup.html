@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forge Academy · AFTA Training Portal — Dashboard Concept</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #020617;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .frame {
+      width: 1280px;
+      height: 800px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 32px 80px rgba(0, 0, 0, 0.65);
+      display: grid;
+      grid-template-columns: 248px 1fr;
+      background: #0b1220;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #070d18;
+      border-right: 1px solid #1e293b;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px 24px;
+      border-bottom: 1px solid #1e293b;
+      margin-bottom: 20px;
+    }
+
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      flex-shrink: 0;
+      display: block;
+      background: transparent;
+    }
+
+    .brand-text strong {
+      display: block;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-text span {
+      display: block;
+      font-size: 10px;
+      color: #64748b;
+      margin-top: 2px;
+      line-height: 1.3;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #475569;
+      padding: 0 10px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 2px;
+    }
+
+    .nav-item.active {
+      background: rgba(200, 16, 46, 0.12);
+      color: #fff;
+      border: 1px solid rgba(200, 16, 46, 0.25);
+    }
+
+    .nav-item .icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: #334155;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .icon {
+      background: #c8102e;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 10px 8px;
+      border-top: 1px solid #1e293b;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1e293b;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #c8102e;
+    }
+
+    .user-chip div strong {
+      display: block;
+      font-size: 12px;
+    }
+
+    .user-chip div span {
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    /* Main */
+    .main {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .topbar {
+      height: 64px;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(11, 18, 32, 0.95);
+    }
+
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .topbar h1 span {
+      color: #64748b;
+      font-weight: 400;
+      font-size: 14px;
+      margin-left: 8px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #64748b;
+      width: 220px;
+    }
+
+    .btn-primary {
+      background: #c8102e;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .content {
+      flex: 1;
+      padding: 24px 28px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .stat-card {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 6px 0 4px;
+    }
+
+    .stat-card .delta {
+      font-size: 11px;
+      color: #22c55e;
+    }
+
+    .stat-card .delta.warn { color: #c8102e; }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 16px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    .panel {
+      background: #111827;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .panel-header h2 {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .panel-header a {
+      font-size: 11px;
+      color: #c8102e;
+      font-weight: 600;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th {
+      text-align: left;
+      color: #64748b;
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0 8px 10px 0;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    td {
+      padding: 10px 8px 10px 0;
+      border-bottom: 1px solid #1e293b;
+      color: #cbd5e1;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge.open { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+    .badge.waitlist { background: rgba(200, 16, 46, 0.15); color: #f87171; }
+    .badge.full { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+
+    .compliance-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .compliance-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .compliance-item .dept {
+      width: 110px;
+      font-size: 12px;
+      color: #cbd5e1;
+      flex-shrink: 0;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #c8102e, #e11d48);
+    }
+
+    .compliance-item .pct {
+      width: 36px;
+      text-align: right;
+      font-size: 11px;
+      font-weight: 700;
+      color: #c8102e;
+    }
+
+    .alert-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .alert {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      padding: 10px 12px;
+      background: #0b1220;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+    }
+
+    .alert-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .alert-dot.orange { background: #c8102e; }
+    .alert-dot.red { background: #ef4444; }
+    .alert-dot.blue { background: #3b82f6; }
+
+    .alert p {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+
+    .alert p strong {
+      color: #e2e8f0;
+      font-weight: 600;
+    }
+
+    .concept-tag {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(200, 16, 46, 0.15);
+      border: 1px solid rgba(200, 16, 46, 0.35);
+      color: #f87171;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 8px 14px;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <aside class="sidebar">
+      <div class="brand">
+        <img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" />
+        <div class="brand-text">
+          <strong>AFTA Portal</strong>
+          <span>Arkansas Fire Training Academy · Camden</span>
+        </div>
+      </div>
+
+      <div class="nav-label">Portals</div>
+      <div class="nav-item"><span class="icon"></span> Student Portal</div>
+      <div class="nav-item"><span class="icon"></span> Department Portal</div>
+      <div class="nav-item active"><span class="icon"></span> Academy Admin</div>
+      <div class="nav-item"><span class="icon"></span> Instructor Portal</div>
+
+      <div class="nav-label" style="margin-top: 20px;">Modules</div>
+      <div class="nav-item"><span class="icon"></span> Course Catalog</div>
+      <div class="nav-item"><span class="icon"></span> Scheduling</div>
+      <div class="nav-item"><span class="icon"></span> Attendance</div>
+      <div class="nav-item"><span class="icon"></span> Certifications</div>
+      <div class="nav-item"><span class="icon"></span> Reports</div>
+
+      <div class="sidebar-footer">
+        <div class="user-chip">
+          <div class="avatar">JW</div>
+          <div>
+            <strong>Academy Admin</strong>
+            <span>Director view</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="main">
+      <header class="topbar">
+        <h1>Academy Dashboard <span>Spring 2026 · Statewide</span></h1>
+        <div class="topbar-actions">
+          <div class="search">Search students, courses, departments…</div>
+          <button class="btn-primary">+ New Class</button>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="label">Students Trained YTD</div>
+            <div class="value">2,847</div>
+            <div class="delta">↑ 12% vs last year</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Active Classes</div>
+            <div class="value">34</div>
+            <div class="delta">18 on-campus · 16 remote</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Certs Issued</div>
+            <div class="value">1,926</div>
+            <div class="delta">↑ 8% this quarter</div>
+          </div>
+          <div class="stat-card">
+            <div class="label">Departments Enrolled</div>
+            <div class="value">412</div>
+            <div class="delta warn">23 renewals due in 30 days</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <section class="panel">
+            <div class="panel-header">
+              <h2>Upcoming Classes</h2>
+              <a href="#">View full schedule →</a>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th>Roster</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Firefighter I</strong></td>
+                  <td>Mar 18–22</td>
+                  <td>Camden</td>
+                  <td>18 / 20</td>
+                  <td><span class="badge open">Open</span></td>
+                </tr>
+                <tr>
+                  <td><strong>HazMat Ops</strong></td>
+                  <td>Mar 24–26</td>
+                  <td>On-campus</td>
+                  <td>20 / 20</td>
+                  <td><span class="badge waitlist">Waitlist</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Driver/Operator</strong></td>
+                  <td>Apr 2–4</td>
+                  <td>Jonesboro</td>
+                  <td>14 / 16</td>
+                  <td><span class="badge open">Open</span></td>
+                </tr>
+                <tr>
+                  <td><strong>Fire Instructor I</strong></td>
+                  <td>Apr 7–11</td>
+                  <td>On-campus</td>
+                  <td>12 / 12</td>
+                  <td><span class="badge full">Full</span></td>
+                </tr>
+                <tr>
+                  <td><strong>EMT Refresher</strong></td>
+                  <td>Apr 14–16</td>
+                  <td>Virtual</td>
+                  <td>22 / 30</td>
+                  <td><span class="badge open">Open</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <div style="display: flex; flex-direction: column; gap: 16px; min-height: 0;">
+            <section class="panel" style="flex: 1;">
+              <div class="panel-header">
+                <h2>Department Compliance</h2>
+                <a href="#">Export report →</a>
+              </div>
+              <div class="compliance-list">
+                <div class="compliance-item">
+                  <div class="dept">Pulaski Co.</div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 94%;"></div></div>
+                  <div class="pct">94%</div>
+                </div>
+                <div class="compliance-item">
+                  <div class="dept">Washington Co.</div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 88%;"></div></div>
+                  <div class="pct">88%</div>
+                </div>
+                <div class="compliance-item">
+                  <div class="dept">Garland Co.</div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 76%;"></div></div>
+                  <div class="pct">76%</div>
+                </div>
+                <div class="compliance-item">
+                  <div class="dept">Craighead Co.</div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 71%;"></div></div>
+                  <div class="pct">71%</div>
+                </div>
+                <div class="compliance-item">
+                  <div class="dept">Sebastian Co.</div>
+                  <div class="bar-track"><div class="bar-fill" style="width: 65%;"></div></div>
+                  <div class="pct">65%</div>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Action Items</h2>
+              </div>
+              <div class="alert-list">
+                <div class="alert">
+                  <div class="alert-dot orange"></div>
+                  <p><strong>47 certificates</strong> pending approval after class completion</p>
+                </div>
+                <div class="alert">
+                  <div class="alert-dot red"></div>
+                  <p><strong>12 students</strong> missing FEMA SID or prerequisite docs</p>
+                </div>
+                <div class="alert">
+                  <div class="alert-dot blue"></div>
+                  <p><strong>HazMat Ops</strong> waitlist has 6 departments requesting seats</p>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="concept-tag">Concept Rendering · AFTA · Developed by Forge Public Safety</div>
+</body>
+</html>

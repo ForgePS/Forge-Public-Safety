@@ -1,0 +1,29 @@
+{
+  "addOnModules": [
+    {
+      "name": "Forge Operations",
+      "subtitle": "Field Intelligence & Mapping",
+      "description": "Preplans, hydrants, occupancies, GIS mapping, Knox Box tracking, and target hazards."
+    },
+    {
+      "name": "Forge Prevention",
+      "subtitle": "Fire Prevention & Code Enforcement",
+      "description": "Mobile inspections, code enforcement, investigations, permits, and business contacts."
+    },
+    {
+      "name": "Forge EMS",
+      "subtitle": "EMS Operations & QA/QI",
+      "description": "EMS staffing, QA/QI workflows, medication inventory, and unit utilization analytics."
+    },
+    {
+      "name": "Forge Command",
+      "subtitle": "Dashboards, Analytics & ISO",
+      "description": "Live dashboards, staffing reports, budget analytics, and ISO documentation support."
+    },
+    {
+      "name": "Forge Mobile",
+      "subtitle": "Field-Ready Mobile Tools",
+      "description": "Tablet inspections, mobile preplans, training sign-offs, and daily truck checks."
+    }
+  ]
+}

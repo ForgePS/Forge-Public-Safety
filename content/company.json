@@ -1,0 +1,14 @@
+{
+  "company": {
+    "eyebrow": "Company",
+    "title": "Built by responders. Built for responders.",
+    "description": "Forge Public Safety exists to give fire, EMS, and emergency management agencies one platform that actually matches how they work.",
+    "paragraphs": [
+      "Forge was developed from real-world public safety experience — not from a generic software playbook. We understand shift schedules, compliance pressure, apparatus readiness, prevention workloads, and the reporting burden that pulls crews away from the mission.",
+      "Our platform connects personnel, training, operations, prevention, fleet, analytics, and command into one agency-ready system. Agencies start with a strong base package and add modules as their mission grows.",
+      "Today, Forge powers department platforms like Horn Lake Fire/EMS and demo environments for agencies evaluating the stack. We partner directly with departments — no bloated module catalogs. Every agency gets a conversation and a walkthrough built around their workflow."
+    ],
+    "closingTitle": "Let's talk about your agency.",
+    "closingDescription": "Request a demo and we'll show you the platform with your workflows in mind."
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "products": {
+    "heroEyebrow": "Platform modules",
+    "heroTitle": "Start Strong. Grow As You Go.",
+    "heroDescription": "Every agency gets a powerful base package — then adds the modules that match their mission. No bloat. No paying for what you don't use.",
+    "heroSecondaryLink": "Talk to our team about your agency",
+    "baseEyebrow": "Included",
+    "baseTitle": "Base Package",
+    "baseDescription": "Everything your agency needs to run — included from day one.",
+    "addonsEyebrow": "Add-ons",
+    "addonsTitle": "Expand when you're ready.",
+    "addonsDescription": "Each module is purpose-built for a specific operational area. Add one, add all — your platform grows with your agency.",
+    "coreTitle": "Core products",
+    "coreDescription": "Explore the Forge product line."
+  },
+  "basePackageFeatures": [
+    "Personnel, scheduling, certifications, and accountability",
+    "Training records, ISO/NFPA compliance mapping, and career development",
+    "Automated renewal alerts, digital cert storage, and compliance dashboards",
+    "Drag-and-drop shift scheduling with overtime, callback, and union rules",
+    "Daily inspection checklists, maintenance scheduling, and out-of-service tracking",
+    "Station supply tracking, equipment logs, and automated reorder alerts",
+    "NFIRS & NERIS-compliant reporting with CAD integration and offline capture"
+  ]
+}

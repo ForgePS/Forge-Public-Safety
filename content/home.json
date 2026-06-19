@@ -1,0 +1,34 @@
+{
+  "home": {
+    "heroEyebrow": "Built for public safety",
+    "heroTitle": "ONE PLATFORM. EVERY MISSION.",
+    "heroLead": "The all-in-one operating platform for Fire, EMS, Emergency Management, and Public Safety agencies.",
+    "heroBody": "Forge connects operations, reporting, personnel, training, prevention, fleet management, analytics, and command into a single mission-ready platform.",
+    "heroBullets": ["All Connected", "All In One Place", "Built For Public Safety"],
+    "modulesEyebrow": "Modular platform",
+    "modulesTitle": "Start Strong. Grow As You Go.",
+    "modulesDescription": "Every agency gets a powerful base package. Add the modules that match your mission — no bloat, no paying for what you don't use.",
+    "productsEyebrow": "Product ecosystem",
+    "productsTitle": "One Ecosystem. Multiple Solutions.",
+    "productsDescription": "Each Forge product is powerful on its own. Together, they're unstoppable.",
+    "whyEyebrow": "Why Forge",
+    "whyTitle": "Built By Responders. Built For Responders.",
+    "whyDescription": "Developed from real-world fire service experience. Designed by those who understand the mission.",
+    "whyCards": [
+      {
+        "title": "Unified Operations",
+        "copy": "Eliminate the chaos of disconnected software systems. Forge brings every operational function into a single, coherent platform."
+      },
+      {
+        "title": "Reliable By Design",
+        "copy": "Enterprise-grade infrastructure with secure cloud architecture. Built for 24/7 public safety operations where downtime is never an option."
+      },
+      {
+        "title": "Actionable Intelligence",
+        "copy": "Transform operational data into meaningful decisions with real-time dashboards and analytics for every level of command."
+      }
+    ],
+    "closingTitle": "Ready To Forge Your Future?",
+    "closingDescription": "See how Forge can unify your operations, reduce administrative burden, and give your crews the tools they need to focus on what matters most — the mission."
+  }
+}

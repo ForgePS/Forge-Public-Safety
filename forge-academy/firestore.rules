@@ -1,0 +1,757 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userRole() {
+      return userDoc().role;
+    }
+
+    function isAdmin() {
+      return signedIn() && userRole() in ['academy_admin', 'super_admin', 'creator'];
+    }
+
+    function isSystemSettingsAdmin() {
+      return signedIn() && userRole() in ['creator', 'super_admin'];
+    }
+
+    function isDepartmentOfficer() {
+      return signedIn() && userRole() == 'department_training_officer';
+    }
+
+    function isCertificationOfficer() {
+      return signedIn() && userRole() == 'certification_officer';
+    }
+
+    function isInstructor() {
+      return signedIn() && userRole() == 'instructor';
+    }
+
+    function studentData() {
+      return resource.data;
+    }
+
+    function sameDepartment(student) {
+      return isDepartmentOfficer()
+        && userDoc().departmentId != null
+        && student.departmentId == userDoc().departmentId;
+    }
+
+    function ownsDepartment(departmentId) {
+      return isDepartmentOfficer()
+        && userDoc().departmentId != null
+        && userDoc().departmentId == departmentId;
+    }
+
+    function ownsStudentRecord(studentId) {
+      return signedIn()
+        && userRole() == 'student'
+        && userDoc().studentId != null
+        && userDoc().studentId == studentId;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin()
+        || (signedIn()
+          && request.auth.uid == userId
+          && !exists(/databases/$(database)/documents/users/$(userId))
+          && request.resource.data.role == 'academy_admin'
+          && request.resource.data.email is string
+          && request.resource.data.displayName is string);
+      allow update, delete: if isAdmin();
+    }
+
+    match /departments/{departmentId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || isInstructor()
+        || ownsDepartment(departmentId);
+
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /students/{studentId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || isInstructor()
+        || sameDepartment(studentData())
+        || ownsStudentRecord(studentId);
+
+      allow create, delete: if isAdmin();
+
+      allow update: if isAdmin() || studentSelfProfileUpdate(studentId);
+    }
+
+    function studentSelfProfileUpdate(studentId) {
+      return ownsStudentRecord(studentId)
+        && request.resource.data.firstName == resource.data.firstName
+        && request.resource.data.lastName == resource.data.lastName
+        && request.resource.data.dateOfBirth == resource.data.dateOfBirth
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.femaSid == resource.data.femaSid
+        && request.resource.data.departmentId == resource.data.departmentId
+        && request.resource.data.employmentStatus == resource.data.employmentStatus
+        && request.resource.data.emsLicense == resource.data.emsLicense
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.notes == resource.data.notes
+        && request.resource.data.profilePictureUrl is string
+        && request.resource.data.phone is string
+        && request.resource.data.mailingAddressLine1 is string
+        && request.resource.data.mailingAddressLine2 is string
+        && request.resource.data.mailingCity is string
+        && request.resource.data.mailingState is string
+        && request.resource.data.mailingZip is string
+        && request.resource.data.emergencyContactName is string
+        && request.resource.data.emergencyContactRelationship is string
+        && request.resource.data.emergencyContactPhone is string
+        && request.resource.data.emergencyContactAddressLine1 is string
+        && request.resource.data.emergencyContactCity is string
+        && request.resource.data.emergencyContactState is string
+        && request.resource.data.emergencyContactZip is string
+        && request.resource.data.departmentName is string
+        && request.resource.data.rank is string
+        && request.resource.data.specialConsiderations is string;
+    }
+
+    match /courses/{courseId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /classes/{classId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    function registrationData() {
+      return resource.data;
+    }
+
+    function ownsRegistrationDepartment() {
+      return isDepartmentOfficer()
+        && userDoc().departmentId != null
+        && registrationData().departmentId == userDoc().departmentId;
+    }
+
+    function ownsRegistrationDepartmentRequest() {
+      return isDepartmentOfficer()
+        && userDoc().departmentId != null
+        && request.resource.data.departmentId == userDoc().departmentId;
+    }
+
+    function isRegistrationStudent() {
+      return signedIn()
+        && userRole() == 'student'
+        && (
+          (userDoc().studentId != null && registrationData().studentId == userDoc().studentId)
+          || (request.auth.token.email != null
+            && registrationData().studentEmail == request.auth.token.email)
+        );
+    }
+
+    function isRegistrationStudentRequest() {
+      return signedIn()
+        && userRole() == 'student'
+        && request.resource.data.submittedByUid == request.auth.uid
+        && (
+          (userDoc().studentId != null
+            && request.resource.data.studentId == userDoc().studentId)
+          || (request.auth.token.email != null
+            && request.resource.data.studentEmail == request.auth.token.email)
+        );
+    }
+
+    match /registrations/{registrationId} {
+      allow read: if isAdmin()
+        || isRegistrationStudent()
+        || ownsRegistrationDepartment()
+        || (isInstructor()
+          && request.auth.uid in get(/databases/$(database)/documents/classes/$(registrationData().classId)).data.instructorIds);
+
+      allow create: if isRegistrationStudentRequest()
+        || (isDepartmentOfficer()
+          && ownsRegistrationDepartmentRequest()
+          && request.resource.data.submittedByUid == request.auth.uid);
+
+      allow update: if isAdmin()
+        || ownsRegistrationDepartment()
+        || (isRegistrationStudent()
+          && request.resource.data.status == 'cancelled'
+          && registrationData().status in [
+            'pending_department',
+            'pending_academy',
+            'enrolled',
+            'waitlisted'
+          ]);
+
+      allow delete: if isAdmin();
+    }
+
+    function attendanceDayData() {
+      return resource.data;
+    }
+
+    function attendanceDayRequest() {
+      return request.resource.data;
+    }
+
+    function attendanceClassId() {
+      return resource == null ? attendanceDayRequest().classId : attendanceDayData().classId;
+    }
+
+    function isClassInstructor(classId) {
+      return isInstructor()
+        && request.auth.uid in get(/databases/$(database)/documents/classes/$(classId)).data.instructorIds;
+    }
+
+    match /attendanceDays/{attendanceDayId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || isClassInstructor(attendanceClassId());
+
+      allow create: if isAdmin() || isClassInstructor(attendanceDayRequest().classId);
+
+      allow update: if isAdmin()
+        || (isClassInstructor(attendanceDayData().classId)
+          && !attendanceDayData().finalized);
+
+      allow delete: if isAdmin();
+    }
+
+    function ownsInstructorProfile(instructorId) {
+      return isInstructor()
+        && get(/databases/$(database)/documents/instructors/$(instructorId)).data.userId == request.auth.uid;
+    }
+
+    match /instructors/{instructorId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || ownsInstructorProfile(instructorId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /instructorCertifications/{certificationId} {
+      allow read: if isAdmin()
+        || ownsInstructorProfile(resource.data.instructorId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /instructorAvailability/{availabilityId} {
+      allow read: if isAdmin()
+        || ownsInstructorProfile(resource.data.instructorId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /instructorAssignments/{assignmentId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || (isInstructor() && resource.data.instructorUserId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /instructorEvaluations/{evaluationId} {
+      allow read: if isAdmin()
+        || ownsInstructorProfile(resource.data.instructorId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /completions/{completionId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || ownsStudentRecord(resource.data.studentId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /certificates/{certificateId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || ownsStudentRecord(resource.data.studentId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /certificateTemplates/{templateId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /certificateCounters/{counterId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /publicCertificateLookup/{validationCode} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    function skillEvaluationClassId() {
+      return resource == null
+        ? request.resource.data.classId
+        : resource.data.classId;
+    }
+
+    function assignmentClassId() {
+      return resource.data.classId;
+    }
+
+    function isAssignmentClassInstructor() {
+      return isInstructor()
+        && request.auth.uid in get(/databases/$(database)/documents/classes/$(assignmentClassId())).data.instructorIds;
+    }
+
+    match /skillTemplates/{templateId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /skills/{skillId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /skillStations/{stationId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /evaluatorAssignments/{assignmentId} {
+      allow read: if isAdmin()
+        || isAssignmentClassInstructor()
+        || (isInstructor() && resource.data.evaluatorUserId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    function isSkillEvaluationClassInstructor() {
+      return isInstructor()
+        && request.auth.uid in get(/databases/$(database)/documents/classes/$(skillEvaluationClassId())).data.instructorIds;
+    }
+
+    match /skillEvaluations/{evaluationId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || isSkillEvaluationClassInstructor()
+        || ownsStudentRecord(resource.data.studentId)
+        || (isInstructor() && resource.data.evaluatorUserId == request.auth.uid);
+
+      allow create: if isAdmin();
+
+      allow update: if isAdmin()
+        || isSkillEvaluationClassInstructor()
+        || (isInstructor() && request.resource.data.evaluatorUserId == request.auth.uid);
+
+      allow delete: if isAdmin();
+    }
+
+    match /certificationTypes/{typeId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /studentCertifications/{certificationId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || ownsStudentRecord(resource.data.studentId);
+      allow create, update: if isAdmin() || isCertificationOfficer();
+      allow delete: if isAdmin();
+    }
+
+    match /certificationAuditLog/{auditId} {
+      allow read: if isAdmin() || isCertificationOfficer();
+      allow create: if isAdmin() || isCertificationOfficer();
+      allow update, delete: if isAdmin();
+    }
+
+    match /questionBanks/{bankId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testCategories/{categoryId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /questionPools/{poolId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testQuestions/{questionId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testBlueprints/{blueprintId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /tests/{testId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testEligibility/{eligibilityId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testingWindows/{windowId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testingRooms/{roomId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testingSeats/{seatId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /proctorAssignments/{assignmentId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /testAccommodations/{accommodationId} {
+      allow read: if isAdmin() || isInstructor();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /auditLogs/{auditId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /testVersions/{versionId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if false;
+    }
+
+    function studentCanReadAssignment() {
+      return userRole() == 'student'
+        && userDoc().studentId != null
+        && (
+          resource.data.studentId == userDoc().studentId
+          || (resource.data.studentId == '' && resource.data.classId != '')
+        );
+    }
+
+    match /testAssignments/{assignmentId} {
+      allow read: if isAdmin() || isInstructor() || studentCanReadAssignment();
+      allow create, update, delete: if isAdmin();
+    }
+
+    function canReadTestSession() {
+      return isAdmin()
+        || ownsStudentRecord(resource.data.studentId)
+        || (isInstructor()
+          && resource.data.classId != ''
+          && request.auth.uid in get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.instructorIds);
+    }
+
+    match /testSessions/{sessionId} {
+      allow read: if canReadTestSession();
+      allow write: if false;
+    }
+
+    match /testEvents/{eventId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if false;
+    }
+
+    match /proctorEvents/{eventId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if false;
+    }
+
+    match /manualGradingQueue/{itemId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if false;
+    }
+
+    match /questionAnalytics/{analyticsId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if false;
+    }
+
+    match /examReviewQueue/{itemId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if isAdmin();
+    }
+
+    match /retestRequests/{requestId} {
+      allow read: if isAdmin() || isInstructor() || ownsStudentRecord(resource.data.studentId);
+      allow create: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    match /remediationAssignments/{assignmentId} {
+      allow read: if isAdmin() || isInstructor() || ownsStudentRecord(resource.data.studentId);
+      allow create, update, delete: if isAdmin() || isInstructor();
+    }
+
+    match /certificateReleaseQueue/{itemId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /certificateApprovals/{approvalId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /scoreOverrides/{overrideId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /stateCertificationTests/{recordId} {
+      allow read: if isAdmin() || isCertificationOfficer() || ownsStudentRecord(resource.data.studentId);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /challengeTestRequests/{requestId} {
+      allow read: if isAdmin() || ownsStudentRecord(resource.data.studentId);
+      allow create: if false;
+      allow update, delete: if isAdmin();
+    }
+
+    match /transcriptEntries/{entryId} {
+      allow read: if isAdmin() || ownsStudentRecord(resource.data.studentId);
+      allow write: if false;
+    }
+
+    match /courseCompletions/{completionId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if isAdmin();
+    }
+
+    match /lmsIntegrationSettings/{settingsId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /lmsCompletions/{completionId} {
+      allow read: if isAdmin() || isInstructor();
+      allow write: if isAdmin();
+    }
+
+    match /lmsGradePassbackLog/{logId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /systemSettings/{settingsId} {
+      allow read: if signedIn();
+      allow write: if isSystemSettingsAdmin();
+    }
+
+    match /scheduledReportExports/{exportId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if signedIn() && resource.data.recipientUid == request.auth.uid;
+      allow update: if signedIn()
+        && resource.data.recipientUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read', 'readAt']);
+      allow create, delete: if false;
+    }
+
+    function isOnlineAttempt() {
+      return resource.data.deliveryMode == 'online';
+    }
+
+    function testRecordClassId() {
+      return resource == null ? request.resource.data.classId : resource.data.classId;
+    }
+
+    function isTestRecordClassInstructor() {
+      return isInstructor()
+        && request.auth.uid in get(/databases/$(database)/documents/classes/$(testRecordClassId())).data.instructorIds;
+    }
+
+    match /testAttempts/{attemptId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || isTestRecordClassInstructor()
+        || ownsStudentRecord(resource.data.studentId);
+      allow create: if isAdmin() || isTestRecordClassInstructor();
+      allow update: if isAdmin()
+        || (isTestRecordClassInstructor() && !isOnlineAttempt());
+      allow delete: if isAdmin();
+    }
+
+    match /testResults/{resultId} {
+      allow read: if isAdmin()
+        || isCertificationOfficer()
+        || isTestRecordClassInstructor()
+        || ownsStudentRecord(resource.data.studentId);
+      allow create, update: if isAdmin() || isTestRecordClassInstructor();
+      allow delete: if isAdmin();
+    }
+
+    function roomAssignmentClassId() {
+      return resource == null ? request.resource.data.classId : resource.data.classId;
+    }
+
+    function roomAssignmentStudentId() {
+      return resource == null ? request.resource.data.studentId : resource.data.studentId;
+    }
+
+    function ownsRoomAssignmentDepartment() {
+      return isDepartmentOfficer()
+        && userDoc().departmentId != null
+        && get(/databases/$(database)/documents/students/$(roomAssignmentStudentId())).data.departmentId
+          == userDoc().departmentId;
+    }
+
+    function canReadRoomAssignment() {
+      return isAdmin()
+        || ownsStudentRecord(roomAssignmentStudentId())
+        || isClassInstructor(roomAssignmentClassId())
+        || ownsRoomAssignmentDepartment();
+    }
+
+    match /rooms/{roomId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /roomAssignments/{assignmentId} {
+      allow read: if canReadRoomAssignment();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /housingRosters/{classId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /housingSettings/{settingsId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /housingAuditLog/{auditId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /mail/{mailId} {
+      allow read, write: if false;
+    }
+
+    match /emailOutbox/{emailId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /digitalDashboardMedia/{mediaId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardPlaylists/{playlistId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardDisplays/{displayId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardSchedules/{scheduleId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardGroups/{groupId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardLayouts/{layoutId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardAlerts/{alertId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardDiningMenus/{menuId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardMediaFolders/{folderId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /digitalDashboardRssFeeds/{feedId} {
+      allow read, write: if isAdmin();
+    }
+
+    function portalAudienceForRole(role) {
+      return role in ['academy_admin', 'super_admin', 'creator'] ? 'admin'
+        : role == 'student' ? 'student'
+        : role == 'instructor' ? 'instructor'
+        : role == 'department_training_officer' ? 'department'
+        : role == 'certification_officer' ? 'certification'
+        : '';
+    }
+
+    function isInstructorManagedAnnouncement(data) {
+      return data.audiences.size() > 0
+        && !('admin' in data.audiences)
+        && !('department' in data.audiences)
+        && !('certification' in data.audiences)
+        && (
+          'student' in data.audiences
+          || 'instructor' in data.audiences
+        );
+    }
+
+    function instructorOwnsAnnouncement(data) {
+      return isInstructor()
+        && isInstructorManagedAnnouncement(data)
+        && data.createdByUid == request.auth.uid;
+    }
+
+    function canReadPortalAnnouncement() {
+      return isAdmin()
+        || instructorOwnsAnnouncement(resource.data)
+        || (
+          signedIn()
+          && resource.data.active == true
+          && portalAudienceForRole(userRole()) in resource.data.audiences
+        );
+    }
+
+    match /portalAnnouncements/{announcementId} {
+      allow read: if canReadPortalAnnouncement();
+      allow create: if isAdmin()
+        || (isInstructor() && isInstructorManagedAnnouncement(request.resource.data));
+      allow update: if isAdmin()
+        || (
+          instructorOwnsAnnouncement(resource.data)
+          && isInstructorManagedAnnouncement(request.resource.data)
+        );
+      allow delete: if isAdmin()
+        || instructorOwnsAnnouncement(resource.data);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

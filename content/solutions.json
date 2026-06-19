@@ -1,0 +1,27 @@
+{
+  "solutions": {
+    "eyebrow": "Solutions",
+    "title": "Built for every public safety mission.",
+    "description": "Forge adapts to your agency type with modules that match how your crews actually work — in the station, in the field, and in command.",
+    "items": [
+      {
+        "title": "Fire & Rescue",
+        "copy": "Unified RMS, preplans, hydrants, inspections, personnel, training, and command dashboards built for fire service workflows."
+      },
+      {
+        "title": "EMS",
+        "copy": "Staffing, QA/QI, medication inventory, training compliance, and operational analytics for EMS agencies."
+      },
+      {
+        "title": "Emergency Management",
+        "copy": "Situational awareness, resource tracking, and reporting tools for emergency management and multi-agency coordination."
+      },
+      {
+        "title": "Public Safety",
+        "copy": "A modular platform that connects operations, prevention, fleet, personnel, and analytics across your agency."
+      }
+    ],
+    "closingTitle": "Not sure where to start?",
+    "closingDescription": "We'll walk you through the platform and help you build the right stack for your agency's size and mission."
+  }
+}

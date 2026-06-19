@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "rms-dashboard-7562e"
+  },
+  "targets": {
+    "rms-dashboard-7562e": {
+      "hosting": {
+        "marketing": [
+          "forgepublicsafety-com"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

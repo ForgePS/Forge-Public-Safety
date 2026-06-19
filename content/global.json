@@ -1,0 +1,21 @@
+{
+  "site": {
+    "name": "Forge Public Safety",
+    "tagline": "One Platform. Every Mission.",
+    "footerBlurb": "One Platform. Every Mission. The unified operating system for public safety agencies.",
+    "demoEmail": "demo@forgepublicsafety.com",
+    "privacyEmail": "privacy@forgepublicsafety.com",
+    "securityEmail": "security@forgepublicsafety.com",
+    "rmsUrl": "https://rms.forgepublicsafety.com",
+    "pricingNote": "Custom agency pricing available — contact us for a quote tailored to your department."
+  },
+  "navigation": {
+    "main": [
+      { "label": "Solutions", "href": "/solutions" },
+      { "label": "Products", "href": "/products" },
+      { "label": "Resources", "href": "/resources" },
+      { "label": "Company", "href": "/company" }
+    ],
+    "ctaLabel": "Request Demo"
+  }
+}

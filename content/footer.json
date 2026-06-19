@@ -1,0 +1,28 @@
+{
+  "footerColumns": {
+    "Solutions": [
+      { "label": "Fire & Rescue", "href": "/solutions" },
+      { "label": "EMS", "href": "/solutions" },
+      { "label": "Emergency Management", "href": "/solutions" },
+      { "label": "Public Safety", "href": "/solutions" }
+    ],
+    "Products": [
+      { "label": "Forge RMS", "href": "/products#forge-rms" },
+      { "label": "Forge Personnel", "href": "/products#personnel" },
+      { "label": "Forge Training", "href": "/products#training" },
+      { "label": "Forge Prevention", "href": "/products#prevention" },
+      { "label": "Forge Fleet", "href": "/products#fleet" },
+      { "label": "Forge Analytics", "href": "/products#analytics" },
+      { "label": "Forge Command", "href": "/products#command" }
+    ],
+    "Resources": [
+      { "label": "Documentation", "href": "/resources" },
+      { "label": "Support", "href": "/contact" }
+    ],
+    "Company": [
+      { "label": "About Us", "href": "/company" },
+      { "label": "Contact", "href": "/contact" },
+      { "label": "Privacy Policy", "href": "/privacy" }
+    ]
+  }
+}

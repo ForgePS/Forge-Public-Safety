@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forge Academy Management System — Prototype</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #0b1220;
+      --panel: #111827;
+      --sidebar: #070d18;
+      --border: #1e293b;
+      --accent: #c8102e;
+      --accent-soft: #e11d48;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --gold: #c5a572;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #020617;
+      color: #f8fafc;
+      min-height: 100vh;
+    }
+
+    .demo-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(2, 6, 23, 0.95);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .demo-bar strong {
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-right: 8px;
+    }
+
+    .demo-bar button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .demo-bar button:hover,
+    .demo-bar button.active {
+      border-color: rgba(200, 16, 46, 0.45);
+      color: #fff;
+      background: rgba(200, 16, 46, 0.12);
+    }
+
+    .viewport {
+      padding: 72px 24px 24px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .frame {
+      width: 1280px;
+      height: 780px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 32px 80px rgba(0,0,0,0.65);
+      background: var(--navy);
+    }
+
+    .frame.layout { display: grid; grid-template-columns: 248px 1fr; }
+    .frame.centered { display: grid; place-items: center; }
+
+    .sidebar {
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 10px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+
+    .brand-logo {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+      flex-shrink: 0;
+      display: block;
+      background: transparent;
+    }
+
+    .brand-logo.large {
+      width: 88px;
+      height: 88px;
+    }
+
+    .brand-text strong { display: block; font-size: 14px; }
+    .brand-text span { display: block; font-size: 10px; color: var(--dim); margin-top: 2px; line-height: 1.3; }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #475569;
+      padding: 0 10px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 2px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .nav-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      background: #334155;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active {
+      background: rgba(200, 16, 46, 0.12);
+      color: #fff;
+      border-color: rgba(200, 16, 46, 0.25);
+    }
+
+    .nav-item.active .dot { background: var(--accent); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-chip { display: flex; align-items: center; gap: 10px; }
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--border);
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .user-chip strong { display: block; font-size: 12px; }
+    .user-chip span { font-size: 10px; color: var(--dim); }
+
+    .main { display: flex; flex-direction: column; overflow: hidden; height: 100%; }
+
+    .topbar {
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(11, 18, 32, 0.95);
+      flex-shrink: 0;
+    }
+
+    .topbar h1 { font-size: 18px; font-weight: 600; }
+    .topbar h1 em { font-style: normal; color: var(--dim); font-weight: 400; font-size: 14px; margin-left: 8px; }
+
+    .topbar-actions { display: flex; gap: 12px; align-items: center; }
+
+    .search {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: var(--dim);
+      width: 220px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 9px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-ghost { background: var(--panel); color: #fff; border: 1px solid var(--border); }
+
+    .content {
+      flex: 1;
+      padding: 24px 28px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .cards.four { grid-template-columns: repeat(4, 1fr); }
+    .cards.six { grid-template-columns: repeat(3, 1fr); }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 18px;
+    }
+
+    .card .label {
+      font-size: 10px;
+      color: var(--dim);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+
+    .card .value { font-size: 26px; font-weight: 700; margin: 6px 0 4px; }
+    .card .sub { font-size: 11px; color: var(--muted); }
+    .card .sub.warn { color: var(--accent); }
+    .card .sub.ok { color: #4ade80; }
+
+    .grid-2 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 20px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .panel-header h2 { font-size: 14px; font-weight: 600; }
+    .panel-header a { font-size: 11px; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      text-align: left;
+      color: var(--dim);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 0 8px 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 10px 8px 10px 0;
+      border-bottom: 1px solid var(--border);
+      color: #cbd5e1;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .badge.open { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .badge.wait { background: rgba(200,16,46,0.15); color: #f87171; }
+    .badge.pending { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .badge.full { background: rgba(100,116,139,0.2); color: var(--muted); }
+    .badge.active { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .badge.expire { background: rgba(239,68,68,0.15); color: #f87171; }
+
+    .workflow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .workflow span {
+      background: var(--navy);
+      border: 1px solid var(--border);
+      padding: 6px 10px;
+      border-radius: 8px;
+    }
+
+    .workflow span.done { border-color: rgba(34,197,94,0.35); color: #4ade80; }
+    .workflow span.current { border-color: rgba(200,16,46,0.45); color: #f87171; }
+
+    .login-card {
+      width: 420px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 36px;
+    }
+
+    .login-card h2 { font-size: 22px; margin-bottom: 6px; }
+    .login-card p { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 11px; color: var(--dim); margin-bottom: 6px; font-weight: 600; }
+    .field input, .field select {
+      width: 100%;
+      background: var(--navy);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .role-grid button {
+      background: var(--navy);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+
+    .role-grid button:hover { border-color: rgba(249,115,22,0.4); color: #fff; }
+
+    .course-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .course-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      cursor: pointer;
+      transition: 0.15s;
+    }
+
+    .course-card:hover { border-color: rgba(249,115,22,0.35); transform: translateY(-1px); }
+
+    .course-card .code { font-size: 10px; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
+    .course-card h3 { font-size: 15px; margin: 8px 0 6px; }
+    .course-card p { font-size: 12px; color: var(--muted); line-height: 1.45; margin-bottom: 12px; }
+    .course-card .meta { font-size: 11px; color: var(--dim); }
+
+    .detail-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; }
+
+    .info-list { display: flex; flex-direction: column; gap: 10px; }
+    .info-row { display: flex; justify-content: space-between; font-size: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+    .info-row span:first-child { color: var(--dim); }
+
+    .transcript, .certificate {
+      background: #fff;
+      color: #0f172a;
+      border-radius: 12px;
+      padding: 32px;
+      min-height: 520px;
+    }
+
+    .transcript header, .certificate header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .transcript header strong, .certificate header strong { font-size: 18px; color: #0f172a; }
+    .transcript header span, .certificate header span { font-size: 11px; color: #64748b; display: block; margin-top: 4px; }
+
+    .cert-seal {
+      width: 110px;
+      height: 110px;
+      object-fit: contain;
+      display: block;
+      background: transparent;
+    }
+
+    .transcript table { color: #334155; }
+    .transcript th { color: #64748b; border-color: #e2e8f0; }
+    .transcript td { border-color: #e2e8f0; }
+
+    .certificate { text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .certificate h2 { font-size: 28px; margin: 18px 0 8px; }
+    .certificate .name { font-size: 36px; font-weight: 700; color: #0f172a; margin: 16px 0; border-bottom: 2px solid var(--accent); padding-bottom: 8px; }
+    .certificate p { font-size: 14px; color: #475569; max-width: 520px; line-height: 1.6; }
+
+    .concept-footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: #475569;
+    }
+  </style>
+</head>
+<body>
+  <nav class="demo-bar">
+    <strong>Prototype · Phase 1</strong>
+    <button data-screen="login" class="active">Login</button>
+    <button data-screen="admin">Admin Dashboard</button>
+    <button data-screen="student">Student Dashboard</button>
+    <button data-screen="department">Department Dashboard</button>
+    <button data-screen="instructor">Instructor Dashboard</button>
+    <button data-screen="catalog">Course Catalog</button>
+    <button data-screen="registration">Registration</button>
+    <button data-screen="transcript">Transcript</button>
+    <button data-screen="certificate">Certificate</button>
+  </nav>
+
+  <div class="viewport">
+    <!-- LOGIN -->
+    <section id="login" class="screen active">
+      <div class="frame centered">
+        <div class="login-card">
+          <div class="brand" style="border:none;padding:0;margin-bottom:24px;">
+            <img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" />
+            <div class="brand-text">
+              <strong>Forge Academy Management System</strong>
+              <span>Arkansas Fire Training Academy · Camden</span>
+            </div>
+          </div>
+          <h2>Sign in</h2>
+          <p>Statewide training, certification, and department compliance — one centralized platform.</p>
+          <div class="field"><label>Email</label><input type="text" value="training.officer@stcharlesfd.org" readonly /></div>
+          <div class="field"><label>Password</label><input type="password" value="••••••••" readonly /></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="showScreen('admin')">Sign In</button>
+          <div class="role-grid">
+            <button onclick="showScreen('admin')">Admin view</button>
+            <button onclick="showScreen('student')">Student view</button>
+            <button onclick="showScreen('department')">Department view</button>
+            <button onclick="showScreen('instructor')">Instructor view</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="admin" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand">
+            <img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" />
+            <div class="brand-text"><strong>AFTA Portal</strong><span>Academy Admin</span></div>
+          </div>
+          <div class="nav-label">Administration</div>
+          <div class="nav-item active"><span class="dot"></span> Dashboard</div>
+          <div class="nav-item"><span class="dot"></span> Departments</div>
+          <div class="nav-item"><span class="dot"></span> Students</div>
+          <div class="nav-item" onclick="showScreen('catalog')"><span class="dot"></span> Course Catalog</div>
+          <div class="nav-item"><span class="dot"></span> Scheduling</div>
+          <div class="nav-item"><span class="dot"></span> Certifications</div>
+          <div class="nav-item"><span class="dot"></span> Reports</div>
+          <div class="sidebar-footer">
+            <div class="user-chip"><div class="avatar">AD</div><div><strong>Academy Admin</strong><span>Director view</span></div></div>
+          </div>
+        </aside>
+        <div class="main">
+          <header class="topbar">
+            <h1>Admin Dashboard <em>Statewide overview</em></h1>
+            <div class="topbar-actions">
+              <div class="search">Search students, courses, departments…</div>
+              <button class="btn btn-primary">+ Schedule Class</button>
+            </div>
+          </header>
+          <div class="content">
+            <div class="cards six">
+              <div class="card"><div class="label">Pending Registrations</div><div class="value">38</div><div class="sub warn">12 awaiting academy approval</div></div>
+              <div class="card"><div class="label">Classes This Week</div><div class="value">11</div><div class="sub">6 on-campus · 5 regional</div></div>
+              <div class="card"><div class="label">Open Seats</div><div class="value">147</div><div class="sub ok">Across 18 open classes</div></div>
+              <div class="card"><div class="label">Certs Pending</div><div class="value">47</div><div class="sub warn">Awaiting certification officer</div></div>
+              <div class="card"><div class="label">Attendance Incomplete</div><div class="value">6</div><div class="sub warn">Classes need closeout</div></div>
+              <div class="card"><div class="label">Documents to Review</div><div class="value">23</div><div class="sub">Prerequisites & waivers</div></div>
+            </div>
+            <div class="grid-2">
+              <div class="panel">
+                <div class="panel-header"><h2>Registration Queue</h2><a>View all →</a></div>
+                <table>
+                  <thead><tr><th>Student</th><th>Department</th><th>Class</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>M. Thompson</td><td>St. Charles FD</td><td>Firefighter I</td><td><span class="badge pending">Awaiting academy</span></td></tr>
+                    <tr><td>J. Rivera</td><td>Horn Lake FD</td><td>HazMat Ops</td><td><span class="badge wait">Missing prereq</span></td></tr>
+                    <tr><td>A. Collins</td><td>Camden FD</td><td>Driver/Operator</td><td><span class="badge open">Approved</span></td></tr>
+                    <tr><td>Bulk · 8 students</td><td>Pulaski Co.</td><td>Fire Instructor I</td><td><span class="badge pending">Dept approved</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="panel">
+                <div class="panel-header"><h2>Statewide Analytics</h2><a>Full report →</a></div>
+                <div class="cards" style="grid-template-columns:1fr 1fr;gap:10px;">
+                  <div class="card"><div class="label">Students Trained YTD</div><div class="value" style="font-size:22px;">2,847</div></div>
+                  <div class="card"><div class="label">Active Departments</div><div class="value" style="font-size:22px;">412</div></div>
+                  <div class="card"><div class="label">Certs Issued</div><div class="value" style="font-size:22px;">1,926</div></div>
+                  <div class="card"><div class="label">Expiring in 30 Days</div><div class="value" style="font-size:22px;">186</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STUDENT -->
+    <section id="student" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Student Portal</span></div></div>
+          <div class="nav-label">My Training</div>
+          <div class="nav-item active"><span class="dot"></span> Dashboard</div>
+          <div class="nav-item" onclick="showScreen('catalog')"><span class="dot"></span> Register for Class</div>
+          <div class="nav-item" onclick="showScreen('transcript')"><span class="dot"></span> My Transcript</div>
+          <div class="nav-item" onclick="showScreen('certificate')"><span class="dot"></span> Certificates</div>
+          <div class="nav-item"><span class="dot"></span> Documents</div>
+          <div class="sidebar-footer"><div class="user-chip"><div class="avatar">JP</div><div><strong>Jeremy Powell</strong><span>St. Charles FD</span></div></div></div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Student Dashboard <em>Jeremy Powell</em></h1><div class="topbar-actions"><button class="btn btn-primary" onclick="showScreen('catalog')">Browse Courses</button></div></header>
+          <div class="content">
+            <div class="cards">
+              <div class="card"><div class="label">Upcoming Classes</div><div class="value">2</div><div class="sub">Fire Instructor I · Apr 7</div></div>
+              <div class="card"><div class="label">Missing Prerequisites</div><div class="value">1</div><div class="sub warn">Medical clearance upload</div></div>
+              <div class="card"><div class="label">Active Certifications</div><div class="value">6</div><div class="sub">1 expiring in 45 days</div></div>
+            </div>
+            <div class="grid-2">
+              <div class="panel">
+                <div class="panel-header"><h2>My Schedule</h2></div>
+                <table>
+                  <thead><tr><th>Course</th><th>Date</th><th>Location</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>Fire Instructor I</td><td>Apr 7–11</td><td>On-campus</td><td><span class="badge open">Enrolled</span></td></tr>
+                    <tr><td>Driver/Operator</td><td>May 2–4</td><td>Jonesboro</td><td><span class="badge pending">Requested</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="panel">
+                <div class="panel-header"><h2>Certification Status</h2></div>
+                <table>
+                  <thead><tr><th>Certification</th><th>Expires</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>Firefighter II</td><td>Mar 2027</td><td><span class="badge active">Active</span></td></tr>
+                    <tr><td>HazMat Ops</td><td>Jun 2026</td><td><span class="badge expire">Expiring soon</span></td></tr>
+                    <tr><td>EMT-B</td><td>Aug 2028</td><td><span class="badge active">Active</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- DEPARTMENT -->
+    <section id="department" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Department Portal</span></div></div>
+          <div class="nav-label">St. Charles Fire Department</div>
+          <div class="nav-item active"><span class="dot"></span> Dashboard</div>
+          <div class="nav-item"><span class="dot"></span> Roster</div>
+          <div class="nav-item"><span class="dot"></span> Bulk Registration</div>
+          <div class="nav-item"><span class="dot"></span> Approvals</div>
+          <div class="nav-item"><span class="dot"></span> Compliance Report</div>
+          <div class="sidebar-footer"><div class="user-chip"><div class="avatar">JP</div><div><strong>Training Officer</strong><span>FDID 04218</span></div></div></div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Department Dashboard <em>St. Charles Fire Department</em></h1><div class="topbar-actions"><button class="btn btn-primary">Bulk Enroll</button></div></header>
+          <div class="content">
+            <div class="cards four">
+              <div class="card"><div class="label">Active Roster</div><div class="value">34</div><div class="sub">28 career · 6 volunteer</div></div>
+              <div class="card"><div class="label">Members in Training</div><div class="value">9</div><div class="sub">Currently enrolled</div></div>
+              <div class="card"><div class="label">Expiring Certifications</div><div class="value">5</div><div class="sub warn">Next 60 days</div></div>
+              <div class="card"><div class="label">Pending Approvals</div><div class="value">4</div><div class="sub warn">Registration requests</div></div>
+            </div>
+            <div class="grid-2">
+              <div class="panel">
+                <div class="panel-header"><h2>Pending Approvals</h2><a>View all →</a></div>
+                <table>
+                  <thead><tr><th>Member</th><th>Class</th><th>Prerequisites</th><th>Action</th></tr></thead>
+                  <tbody>
+                    <tr><td>K. Adams</td><td>Firefighter I</td><td><span class="badge open">Eligible</span></td><td><button class="btn btn-ghost" style="padding:5px 10px;">Approve</button></td></tr>
+                    <tr><td>R. Davis</td><td>HazMat Ops</td><td><span class="badge wait">Missing doc</span></td><td><button class="btn btn-ghost" style="padding:5px 10px;">Review</button></td></tr>
+                    <tr><td>M. Thompson</td><td>Driver/Operator</td><td><span class="badge open">Eligible</span></td><td><button class="btn btn-ghost" style="padding:5px 10px;">Approve</button></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="panel">
+                <div class="panel-header"><h2>Department Compliance</h2><a>Download PDF →</a></div>
+                <div class="info-list">
+                  <div class="info-row"><span>Firefighter I/II current</span><span>82%</span></div>
+                  <div class="info-row"><span>HazMat compliance</span><span>76%</span></div>
+                  <div class="info-row"><span>Driver/Operator</span><span>68%</span></div>
+                  <div class="info-row"><span>Incomplete prerequisites</span><span>3 members</span></div>
+                  <div class="info-row"><span>Recently completed</span><span>2 this month</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INSTRUCTOR -->
+    <section id="instructor" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Instructor Portal</span></div></div>
+          <div class="nav-label">Instructor</div>
+          <div class="nav-item active"><span class="dot"></span> Dashboard</div>
+          <div class="nav-item"><span class="dot"></span> My Classes</div>
+          <div class="nav-item"><span class="dot"></span> Attendance</div>
+          <div class="nav-item"><span class="dot"></span> Skills Sheets</div>
+          <div class="nav-item"><span class="dot"></span> Closeout Reports</div>
+          <div class="sidebar-footer"><div class="user-chip"><div class="avatar">DW</div><div><strong>Capt. Williams</strong><span>Lead Instructor</span></div></div></div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Instructor Dashboard <em>Assigned classes</em></h1></header>
+          <div class="content">
+            <div class="cards four">
+              <div class="card"><div class="label">Assigned Classes</div><div class="value">3</div><div class="sub">Next 30 days</div></div>
+              <div class="card"><div class="label">Attendance Needed</div><div class="value">1</div><div class="sub warn">Yesterday's session</div></div>
+              <div class="card"><div class="label">Grades Pending</div><div class="value">8</div><div class="sub">Written exam scores</div></div>
+              <div class="card"><div class="label">Skills Sheets Pending</div><div class="value">12</div><div class="sub warn">Live fire practicals</div></div>
+            </div>
+            <div class="panel">
+              <div class="panel-header"><h2>Active Class — Firefighter I · Camden</h2><a>Open roster →</a></div>
+              <table>
+                <thead><tr><th>Student</th><th>Department</th><th>Attendance</th><th>Skills</th><th>Grade</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>M. Thompson</td><td>Camden FD</td><td>5/5</td><td>Complete</td><td>92%</td><td><span class="badge open">Passing</span></td></tr>
+                  <tr><td>S. Nguyen</td><td>Pine Bluff FD</td><td>4/5</td><td>Pending</td><td>—</td><td><span class="badge pending">In progress</span></td></tr>
+                  <tr><td>T. Brooks</td><td>El Dorado FD</td><td>5/5</td><td>Complete</td><td>88%</td><td><span class="badge open">Passing</span></td></tr>
+                  <tr><td>L. Carter</td><td>Hope FD</td><td>3/5</td><td>Remediation</td><td>74%</td><td><span class="badge wait">Retest</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CATALOG -->
+    <section id="catalog" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Course Catalog</span></div></div>
+          <div class="nav-label">Categories</div>
+          <div class="nav-item active"><span class="dot"></span> All Courses</div>
+          <div class="nav-item"><span class="dot"></span> Firefighter I/II</div>
+          <div class="nav-item"><span class="dot"></span> HazMat</div>
+          <div class="nav-item"><span class="dot"></span> Driver/Operator</div>
+          <div class="nav-item"><span class="dot"></span> Officer / Instructor</div>
+          <div class="nav-item"><span class="dot"></span> EMS / Rescue</div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Course Catalog <em>Spring 2026 offerings</em></h1><div class="topbar-actions"><div class="search">Search courses…</div></div></header>
+          <div class="content">
+            <div class="course-grid">
+              <div class="course-card" onclick="showScreen('registration')">
+                <div class="code">FF-101</div><h3>Firefighter I</h3>
+                <p>Entry-level structural firefighting certification. 40 hours.</p>
+                <div class="meta">Prereq: None · Cert issued · Skills required</div>
+              </div>
+              <div class="course-card" onclick="showScreen('registration')">
+                <div class="code">HM-201</div><h3>HazMat Operations</h3>
+                <p>Operations-level hazardous materials response. 24 hours.</p>
+                <div class="meta">Prereq: HazMat Awareness · Cert issued</div>
+              </div>
+              <div class="course-card" onclick="showScreen('registration')">
+                <div class="code">DO-301</div><h3>Driver/Operator</h3>
+                <p>Apparatus operation and pump fundamentals. 16 hours.</p>
+                <div class="meta">Prereq: Firefighter I · Skills required</div>
+              </div>
+              <div class="course-card" onclick="showScreen('registration')">
+                <div class="code">IN-401</div><h3>Fire Instructor I</h3>
+                <p>Instructor methodology and delivery standards. 40 hours.</p>
+                <div class="meta">Prereq: FF II · Application required</div>
+              </div>
+              <div class="course-card" onclick="showScreen('registration')">
+                <div class="code">FF-102</div><h3>Firefighter II</h3>
+                <p>Advanced fireground operations and leadership skills.</p>
+                <div class="meta">Prereq: FF I · HazMat Ops</div>
+              </div>
+              <div class="course-card" onclick="showScreen('registration')">
+                <div class="code">LF-501</div><h3>Live Fire Training</h3>
+                <p>Live burn evolution with full PPE and skills evaluation.</p>
+                <div class="meta">Prereq: FF I · Medical clearance</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- REGISTRATION -->
+    <section id="registration" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Class Registration</span></div></div>
+          <div class="nav-item" onclick="showScreen('catalog')"><span class="dot"></span> Back to Catalog</div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Firefighter I <em>Mar 18–22 · Camden</em></h1><div class="topbar-actions"><button class="btn btn-primary">Submit Registration</button></div></header>
+          <div class="content">
+            <div class="workflow">
+              <span class="done">Student selects class</span> →
+              <span class="done">Prerequisites checked</span> →
+              <span class="current">Department approves</span> →
+              <span>Academy approves</span> →
+              <span>Enrolled</span>
+            </div>
+            <div class="detail-grid">
+              <div class="panel">
+                <div class="panel-header"><h2>Class Details</h2></div>
+                <div class="info-list">
+                  <div class="info-row"><span>Course number</span><span>FF-101</span></div>
+                  <div class="info-row"><span>Hours</span><span>40</span></div>
+                  <div class="info-row"><span>Instructor</span><span>Capt. Williams</span></div>
+                  <div class="info-row"><span>Seats</span><span>18 / 20 available</span></div>
+                  <div class="info-row"><span>Registration deadline</span><span>Mar 10, 2026</span></div>
+                  <div class="info-row"><span>Required PPE</span><span>Full structural gear, SCBA</span></div>
+                  <div class="info-row"><span>Skills evaluation</span><span>Required</span></div>
+                  <div class="info-row"><span>Certificate issued</span><span>Yes — upon completion</span></div>
+                </div>
+              </div>
+              <div class="panel">
+                <div class="panel-header"><h2>Prerequisite Check</h2></div>
+                <div class="info-list">
+                  <div class="info-row"><span>Firefighter I</span><span style="color:#4ade80;">Not required</span></div>
+                  <div class="info-row"><span>Valid ID</span><span style="color:#4ade80;">On file</span></div>
+                  <div class="info-row"><span>Medical clearance</span><span style="color:#f87171;">Upload needed</span></div>
+                  <div class="info-row"><span>Department approval</span><span style="color:#60a5fa;">Pending</span></div>
+                </div>
+                <div style="margin-top:18px;padding:14px;background:var(--navy);border-radius:10px;border:1px solid var(--border);">
+                  <div class="label" style="font-size:10px;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Eligibility</div>
+                  <div style="font-size:14px;font-weight:600;color:#f87171;">Eligible with pending documents</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TRANSCRIPT -->
+    <section id="transcript" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Student Transcript</span></div></div>
+          <div class="nav-item" onclick="showScreen('student')"><span class="dot"></span> Back to Dashboard</div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Training Transcript <em>Jeremy Powell</em></h1><div class="topbar-actions"><button class="btn btn-primary">Download PDF</button></div></header>
+          <div class="content">
+            <div class="transcript">
+              <header style="display:flex;gap:16px;align-items:flex-start;">
+                <img src="afta-logo.png" alt="" class="brand-logo" style="width:72px;height:72px;" />
+                <div><strong>Arkansas Fire Training Academy</strong><span>Official Training Transcript · Forge Academy Management System</span></div>
+                <div style="text-align:right;font-size:12px;color:#64748b;">
+                  Jeremy Powell<br/>St. Charles Fire Department<br/>FEMA SID: 1234567890
+                </div>
+              </header>
+              <table>
+                <thead><tr><th>Course</th><th>Number</th><th>Completed</th><th>Hours</th><th>Result</th><th>Certificate</th></tr></thead>
+                <tbody>
+                  <tr><td>Firefighter I</td><td>FF-101</td><td>Mar 2022</td><td>40</td><td>Pass</td><td>FF-2022-1847</td></tr>
+                  <tr><td>HazMat Operations</td><td>HM-201</td><td>Jun 2023</td><td>24</td><td>Pass</td><td>HM-2023-0921</td></tr>
+                  <tr><td>Firefighter II</td><td>FF-102</td><td>Jan 2024</td><td>40</td><td>Pass</td><td>FF-2024-0312</td></tr>
+                  <tr><td>Driver/Operator</td><td>DO-301</td><td>Sep 2024</td><td>16</td><td>Pass</td><td>DO-2024-1188</td></tr>
+                  <tr><td>Fire Instructor I</td><td>IN-401</td><td>In progress</td><td>—</td><td>—</td><td>—</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CERTIFICATE -->
+    <section id="certificate" class="screen">
+      <div class="frame layout">
+        <aside class="sidebar">
+          <div class="brand"><img class="brand-logo" src="afta-logo.png" alt="Arkansas Fire Training Academy" /><div class="brand-text"><strong>AFTA Portal</strong><span>Certificate</span></div></div>
+          <div class="nav-item" onclick="showScreen('student')"><span class="dot"></span> Back to Dashboard</div>
+        </aside>
+        <div class="main">
+          <header class="topbar"><h1>Certificate of Completion <em>FF-2024-0312</em></h1><div class="topbar-actions"><button class="btn btn-primary">Download PDF</button></div></header>
+          <div class="content">
+            <div class="certificate">
+              <img class="cert-seal" src="afta-logo.png" alt="Arkansas Fire Training Academy seal" />
+              <span style="font-size:11px;color:#64748b;letter-spacing:0.14em;text-transform:uppercase;">Arkansas Fire Training Academy</span>
+              <h2>Certificate of Completion</h2>
+              <p>This certifies that</p>
+              <div class="name">Jeremy Powell</div>
+              <p>has successfully completed <strong>Firefighter II (FF-102)</strong> consisting of 40 training hours, meeting all practical skills and written requirements as prescribed by the Arkansas Fire Training Academy.</p>
+              <p style="margin-top:24px;font-size:12px;">Issued January 18, 2024 · Cert #FF-2024-0312<br/>Instructor: Capt. Williams · Location: On-campus</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <p class="concept-footer">Forge Academy Management System · Arkansas Fire Training Academy · Phase 1 Prototype · Developed by Forge Public Safety</p>
+
+  <script>
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.demo-bar button').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      const btn = document.querySelector(`.demo-bar button[data-screen="${id}"]`);
+      if (btn) btn.classList.add('active');
+    }
+
+    document.querySelectorAll('.demo-bar button').forEach(btn => {
+      btn.addEventListener('click', () => showScreen(btn.dataset.screen));
+    });
+  </script>
+</body>
+</html>
