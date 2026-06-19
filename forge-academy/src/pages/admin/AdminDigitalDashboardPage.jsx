@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import PageHeader from "../../components/PageHeader.jsx";
+import ForgeEcosystemOverview from "../../components/ForgeEcosystemOverview.jsx";
 import DigitalDashboardPanel from "../../components/digitalDashboard/DigitalDashboardPanel.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import {
@@ -271,7 +272,7 @@ export default function AdminDigitalDashboardPage() {
     <>
       <PageHeader
         title="Forge Displays"
-        subtitle="Campus digital signage — MVIX-style content management with Amazon Signage Stick web player support"
+        subtitle="Campus digital signage for AFTA training-site TVs — separate from ForgePS/Dashboard (RMS-fed org displays)"
         actions={
           canSeed ? (
             <button
@@ -287,6 +288,8 @@ export default function AdminDigitalDashboardPage() {
       />
 
       <div className="flex flex-1 flex-col gap-5 p-6 lg:p-7">
+        <ForgeEcosystemOverview variant="compact" showCampusNote />
+
         <div className="rounded-[14px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] px-5 py-4 shadow-sm">
           <p className="text-sm font-semibold text-[var(--color-afta-text)]">Quick start · Amazon Signage Stick</p>
           <p className="mt-1 text-sm text-[var(--color-afta-muted)]">

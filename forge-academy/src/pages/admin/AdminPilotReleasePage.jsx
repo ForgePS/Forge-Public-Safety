@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import PageHeader from "../../components/PageHeader.jsx";
+import ForgeEcosystemOverview from "../../components/ForgeEcosystemOverview.jsx";
 import {
   PILOT_HOSTING_URL,
   PILOT_MANUAL_CHECKS,
@@ -27,6 +28,8 @@ const MIGRATION_NOTES = [
   "Department users need `users.departmentId` pointing at an existing `departments` document.",
   "Historical spreadsheet imports are out of scope for pilot — use admin forms or the seed script for baseline records.",
   "After schema changes, redeploy rules with `npm run deploy:rules` before retesting affected workflows.",
+  "Forge Academy is separate from Forge RMS and ForgePS/Dashboard — integrate via APIs later, not shared Firestore.",
+  "Campus TV signage is managed in Admin → Digital Dashboard; org-wide RMS displays live in the ForgePS/Dashboard repo.",
 ];
 
 function statusClasses(status) {
@@ -77,6 +80,7 @@ export default function AdminPilotReleasePage() {
     { id: "training", label: "Training" },
     { id: "deployment", label: "Deployment" },
     { id: "migration", label: "Migration" },
+    { id: "ecosystem", label: "Ecosystem" },
   ];
 
   return (
@@ -250,6 +254,10 @@ export default function AdminPilotReleasePage() {
               ))}
             </ul>
           </section>
+        ) : null}
+
+        {activeTab === "ecosystem" ? (
+          <ForgeEcosystemOverview variant="full" showCampusNote />
         ) : null}
       </div>
     </>
