@@ -6,6 +6,7 @@ import {
 } from "firebase/auth";
 import { auth } from "../lib/firebase.js";
 import { fetchUserProfile, tryBootstrapAdminProfile } from "../lib/users.js";
+import { syncUserDirectoryEntry } from "../lib/messaging/userDirectory.js";
 
 /** @param {unknown} error */
 export function getAuthErrorMessage(error) {
@@ -111,6 +112,7 @@ export function AuthProvider({ children }) {
         } else {
           setError(null);
           setUser(profile);
+          syncUserDirectoryEntry(profile).catch(() => {});
         }
       } catch (err) {
         if (requestId !== profileRequestId.current) return;

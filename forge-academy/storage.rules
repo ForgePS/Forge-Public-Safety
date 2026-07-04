@@ -63,5 +63,27 @@ service firebase.storage {
       allow create, update: if isAdmin() && isCertificateTemplateImage();
       allow delete: if isAdmin();
     }
+
+    function isConversationParticipant(conversationId) {
+      return signedIn()
+        && request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participantUids;
+    }
+
+    function isMessageAttachment() {
+      return request.resource.size < 100 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+          || request.resource.contentType == 'text/plain'
+          || request.resource.contentType.matches('application/vnd.*')
+          || request.resource.contentType == 'application/msword'
+        );
+    }
+
+    match /message-attachments/{conversationId}/{messageId}/{fileName} {
+      allow read: if isConversationParticipant(conversationId);
+      allow create, update: if isConversationParticipant(conversationId) && isMessageAttachment();
+      allow delete: if false;
+    }
   }
 }
