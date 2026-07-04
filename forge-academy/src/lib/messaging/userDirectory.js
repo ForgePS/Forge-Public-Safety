@@ -9,6 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase.js";
+import { listAllPortalUsers } from "../users.js";
 
 /**
  * @typedef {Object} MessagingDirectoryEntry
@@ -21,20 +22,42 @@ import { db } from "../firebase.js";
  */
 
 /** @param {import('../users.js').AppUserRecord} user */
+function directoryPayloadFromUser(user) {
+  return {
+    displayName: user.displayName ?? "",
+    email: user.email ?? "",
+    photoUrl: user.photoUrl ?? "",
+    role: user.role ?? "",
+    disabled: Boolean(user.disabled),
+    updatedAt: serverTimestamp(),
+  };
+}
+
+/** @param {import('../users.js').AppUserRecord} user */
 export async function syncUserDirectoryEntry(user) {
   if (!user?.uid) return;
-  await setDoc(
-    doc(db, "userDirectory", user.uid),
-    {
-      displayName: user.displayName ?? "",
-      email: user.email ?? "",
-      photoUrl: user.photoUrl ?? "",
-      role: user.role ?? "",
-      disabled: Boolean(user.disabled),
-      updatedAt: serverTimestamp(),
-    },
-    { merge: true },
-  );
+  await setDoc(doc(db, "userDirectory", user.uid), directoryPayloadFromUser(user), { merge: true });
+}
+
+let backfillPromise = null;
+
+/** Admin-only: sync all portal users into userDirectory for the contact picker. */
+export async function backfillMessagingDirectoryFromPortalUsers() {
+  if (backfillPromise) return backfillPromise;
+
+  backfillPromise = (async () => {
+    const users = await listAllPortalUsers();
+    const chunkSize = 20;
+    for (let index = 0; index < users.length; index += chunkSize) {
+      const chunk = users.slice(index, index + chunkSize);
+      await Promise.all(chunk.map((entry) => syncUserDirectoryEntry(entry)));
+    }
+  })().catch((error) => {
+    backfillPromise = null;
+    throw error;
+  });
+
+  return backfillPromise;
 }
 
 /** @returns {Promise<MessagingDirectoryEntry[]>} */

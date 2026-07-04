@@ -12,7 +12,11 @@ import {
   saveMessagingPreferences,
 } from "../lib/messaging/preferences.js";
 import { useMessagingEnabled } from "../lib/messaging/useMessagingEnabled.js";
-import { syncUserDirectoryEntry } from "../lib/messaging/userDirectory.js";
+import {
+  backfillMessagingDirectoryFromPortalUsers,
+  syncUserDirectoryEntry,
+} from "../lib/messaging/userDirectory.js";
+import { isFullAdmin } from "../lib/roles.js";
 
 /** @typedef {import('../lib/messaging/conversations.js').ConversationRecord} ConversationRecord */
 
@@ -39,7 +43,15 @@ export function MessagingProvider({ children }) {
 
   useEffect(() => {
     if (!user?.uid || !enabled) return undefined;
-    syncUserDirectoryEntry(user).catch(() => {});
+
+    const setup = async () => {
+      if (isFullAdmin(user.role)) {
+        await backfillMessagingDirectoryFromPortalUsers().catch(() => {});
+      }
+      await syncUserDirectoryEntry(user).catch(() => {});
+    };
+    setup();
+
     return subscribeToConversations(user.uid, setConversations);
   }, [user, enabled]);
 

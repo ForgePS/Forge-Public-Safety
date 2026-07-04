@@ -68,7 +68,7 @@ function assertCanAssignRole(callerRole, role) {
 
 async function getCustomRoleDefinition(role) {
   const snap = await getFirestore().doc(`portalRoleDefinitions/${role}`).get();
-  if (!snap.exists()) return null;
+  if (!snap.exists) return null;
   const data = snap.data() ?? {};
   if (data.status === "archived") return null;
 
@@ -84,7 +84,7 @@ async function getCustomRoleDefinition(role) {
   }
 
   const portalSnap = await getFirestore().doc(`portalDefinitions/${portalType}`).get();
-  if (portalSnap.exists() && portalSnap.data()?.status !== "archived") {
+  if (portalSnap.exists && portalSnap.data()?.status !== "archived") {
     return { id: snap.id, portalType, status: "active" };
   }
 
