@@ -6,7 +6,8 @@
     "rules": "storage.rules"
   },
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "predeploy": ["npm --prefix \"$RESOURCE_DIR\" ci"]
   },
   "hosting": {
     "site": "forge-academy-95f84",

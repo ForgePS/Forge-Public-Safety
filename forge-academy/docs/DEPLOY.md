@@ -14,6 +14,7 @@
 
 ```bash
 cd forge-academy
+npm ci --prefix functions          # install nodemailer, firebase-admin, etc.
 npx firebase-tools login          # one-time browser login
 npm run deploy:functions          # updates Cloud Functions only
 ```

@@ -10,7 +10,7 @@
     "deploy": "npm run build && DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs) && npx firebase-tools deploy --only \"$DEPLOY_ONLY\"",
     "deploy:hosting": "npm run build && DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs hosting) && npx firebase-tools deploy --only \"$DEPLOY_ONLY\"",
     "deploy:rules": "npx firebase-tools deploy --only firestore:rules,storage",
-    "deploy:functions": "DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs functions) && npx firebase-tools deploy --only \"$DEPLOY_ONLY\"",
+    "deploy:functions": "npm ci --prefix functions && npx firebase-tools deploy --only \"$(node scripts/firebase-deploy-targets.mjs functions)\"",
     "pilot:seed": "node scripts/seed-pilot.mjs",
     "schedule:import": "node scripts/import-schedules-2026.mjs",
     "catalog:import": "node scripts/import-catalog-2026.mjs",
