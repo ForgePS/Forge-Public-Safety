@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FileQuestion,
   FileText,
+  Globe,
   GraduationCap,
   Home,
   LayoutDashboard,
@@ -36,7 +37,7 @@ const adminNavBase = [
   { group: "People", label: "Departments", to: "/admin/departments", icon: Building2, module: "departments" },
   { group: "People", label: "Instructors", to: "/admin/instructors", icon: GraduationCap, module: "instructors" },
   { group: "People", label: "Portal Users", to: "/admin/users", icon: UserCog },
-  { group: "People", label: "Portal Access Roles", to: "/admin/roles", icon: Tags, adminOnly: true },
+  { group: "People", label: "User Roles", to: "/admin/roles", icon: Tags, adminOnly: true },
 
   { group: "Training", label: "Courses", to: "/admin/courses", icon: BookOpen, module: "classes" },
   { group: "Training", label: "Classes & Schedule", to: "/admin/scheduling", icon: Calendar, module: "classes" },
@@ -54,6 +55,7 @@ const adminNavBase = [
   { group: "Reports", label: "Reports & Analytics", to: "/admin/reports", icon: BarChart3, module: "reports" },
   { group: "Reports", label: "Digital Dashboard", to: "/admin/digital-dashboard", icon: MonitorPlay, module: "digitalDashboard" },
 
+  { group: "System", label: "Portal Access", to: "/admin/portal-access", icon: Globe, settingsOnly: true },
   { group: "System", label: "Creator Console", to: "/admin/creator", icon: Shield, platformManagerOnly: true },
   { group: "System", label: "System Settings", to: "/admin/settings", icon: Settings, settingsOnly: true },
   { group: "System", label: "Pilot Release", to: "/admin/pilot", icon: Rocket, pilotOnly: true },

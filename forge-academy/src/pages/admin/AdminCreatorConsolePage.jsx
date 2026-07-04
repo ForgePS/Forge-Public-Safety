@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Settings, Shield, Tags, UserCog, Users, MonitorPlay, Sparkles } from "lucide-react";
+import { Globe, Settings, Shield, Tags, UserCog, Users, MonitorPlay, Sparkles } from "lucide-react";
 import PageHeader from "../../components/PageHeader.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import {
@@ -26,8 +26,15 @@ const QUICK_LINKS = [
     action: "Create user",
   },
   {
-    title: "Portal Access Roles",
-    description: "Create custom portal access roles and assign them to portal users.",
+    title: "Portal Access",
+    description: "Turn entire portals on or off and edit how each portal appears to users.",
+    to: "/admin/portal-access",
+    icon: Globe,
+    action: "Manage portals",
+  },
+  {
+    title: "User Roles",
+    description: "Create custom user roles and assign them to portal users.",
     to: "/admin/roles",
     icon: Tags,
     action: "Manage roles",

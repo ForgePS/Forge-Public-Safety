@@ -133,9 +133,14 @@ export default function UsersListPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             {canManageRoles ? (
-              <Link to="/admin/roles" className="app-btn-secondary inline-flex items-center gap-2 px-4 py-2 text-xs">
-                Portal access roles
-              </Link>
+              <>
+                <Link to="/admin/portal-access" className="app-btn-secondary inline-flex items-center gap-2 px-4 py-2 text-xs">
+                  Portal access
+                </Link>
+                <Link to="/admin/roles" className="app-btn-secondary inline-flex items-center gap-2 px-4 py-2 text-xs">
+                  User roles
+                </Link>
+              </>
             ) : null}
             <Link
               to="/admin/users/new"

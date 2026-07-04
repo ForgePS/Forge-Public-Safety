@@ -175,6 +175,27 @@ export const DEFAULT_SYSTEM_SETTINGS = {
     showPilotReleasePage: true,
     aiBuilderEnabled: true,
   },
+  portals: {
+    adminLabel: "Academy Admin",
+    adminDescription: "Full academy management portal for staff and administrators.",
+    adminSignInMessage: "",
+    studentEnabled: true,
+    studentLabel: "Student Portal",
+    studentDescription: "Training registration, transcripts, tests, skills, housing, and certificates.",
+    studentSignInMessage: "",
+    departmentEnabled: true,
+    departmentLabel: "Department Portal",
+    departmentDescription: "Department roster, bulk registration, approvals, and compliance reporting.",
+    departmentSignInMessage: "",
+    instructorEnabled: true,
+    instructorLabel: "Instructor Portal",
+    instructorDescription: "Classes, attendance, skills evaluation, proctoring, and housing rosters.",
+    instructorSignInMessage: "",
+    certificationEnabled: true,
+    certificationLabel: "Certification Portal",
+    certificationDescription: "Professional certification review, renewals, and audit trail.",
+    certificationSignInMessage: "",
+  },
 };
 
 /** @param {Record<string, unknown>} stored @param {Record<string, unknown>} defaults */

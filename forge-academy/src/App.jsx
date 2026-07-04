@@ -93,7 +93,9 @@ import AdminLmsIntegrationPage from "./pages/admin/AdminLmsIntegrationPage.jsx";
 import AdminSystemSettingsPage from "./pages/admin/AdminSystemSettingsPage.jsx";
 import AdminCreatorConsolePage from "./pages/admin/AdminCreatorConsolePage.jsx";
 import AdminPortalRolesPage from "./pages/admin/AdminPortalRolesPage.jsx";
+import AdminPortalAccessPage from "./pages/admin/AdminPortalAccessPage.jsx";
 import AdminPortalShell from "./components/AdminPortalShell.jsx";
+import PortalAccessGuard from "./components/PortalAccessGuard.jsx";
 import ModuleGuard, { VerifyModuleGuard } from "./components/ModuleGuard.jsx";
 import StudentPortalShell, {
   CertificationPortalShell,
@@ -167,6 +169,7 @@ export default function App() {
           <Route path="/admin/users/new" element={<UserFormPage />} />
           <Route path="/admin/users/:userId" element={<UserFormPage />} />
           <Route path="/admin/creator" element={<AdminCreatorConsolePage />} />
+          <Route path="/admin/portal-access" element={<AdminPortalAccessPage />} />
           <Route path="/admin/roles" element={<AdminPortalRolesPage />} />
           <Route
             path="/admin/settings"
@@ -247,6 +250,7 @@ export default function App() {
         </Route>
       </Route>
 
+      <Route element={<PortalAccessGuard portal="student" />}>
       <Route element={<ProtectedRoute allowedRoles={ROLES.STUDENT} />}>
         <Route element={<StudentPortalShell />}>
           <Route element={<ModuleGuard portal="student" />}>
@@ -276,7 +280,9 @@ export default function App() {
           </Route>
         </Route>
       </Route>
+      </Route>
 
+      <Route element={<PortalAccessGuard portal="department" />}>
       <Route element={<ProtectedRoute allowedRoles={ROLES.DEPARTMENT} />}>
         <Route element={<DepartmentPortalShell />}>
           <Route element={<ModuleGuard portal="department" />}>
@@ -290,7 +296,9 @@ export default function App() {
           </Route>
         </Route>
       </Route>
+      </Route>
 
+      <Route element={<PortalAccessGuard portal="instructor" />}>
       <Route element={<ProtectedRoute allowedRoles={ROLES.INSTRUCTOR} />}>
         <Route element={<InstructorPortalShell />}>
           <Route element={<ModuleGuard portal="instructor" />}>
@@ -317,7 +325,9 @@ export default function App() {
           </Route>
         </Route>
       </Route>
+      </Route>
 
+      <Route element={<PortalAccessGuard portal="certification" />}>
       <Route element={<ProtectedRoute allowedRoles={ROLES.CERTIFICATION_OFFICER} />}>
         <Route element={<CertificationPortalShell />}>
           <Route element={<ModuleGuard portal="certification" />}>
@@ -328,6 +338,7 @@ export default function App() {
           <Route path="/certification/*" element={<PlaceholderPage title="Certification module" />} />
           </Route>
         </Route>
+      </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

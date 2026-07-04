@@ -1,8 +1,9 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { usePortalRolesOptional } from "../context/PortalRolesContext.jsx";
+import { useSystemSettingsOptional } from "../context/SystemSettingsContext.jsx";
+import { resolveSafeHomePath } from "../lib/portalAccess.js";
 import {
-  homePathForRole,
   isAdminPortalRole,
   isFullAdmin,
   roleAllowed,
@@ -15,8 +16,10 @@ import {
 export default function ProtectedRoute({ allowedRoles }) {
   const { user, ready, signingIn } = useAuth();
   const portalRoles = usePortalRolesOptional();
+  const settingsContext = useSystemSettingsOptional();
   const location = useLocation();
   const customById = portalRoles?.customById ?? {};
+  const settings = settingsContext?.settings;
 
   if (!ready || signingIn) {
     return (
@@ -36,7 +39,7 @@ export default function ProtectedRoute({ allowedRoles }) {
     !roleAllowedWithCustom(user.role, allowedRoles, customById)
   ) {
     if (isFullAdmin(user.role) || isAdminPortalRole(user.role, customById)) {
-      return <Navigate to={homePathForRole(user.role, customById)} replace />;
+      return <Navigate to={resolveSafeHomePath(user, customById, settings)} replace />;
     }
     return <Navigate to="/unauthorized" replace state={{ from: location.pathname }} />;
   }
@@ -47,7 +50,9 @@ export default function ProtectedRoute({ allowedRoles }) {
 export function RoleRedirect() {
   const { user, ready, signingIn } = useAuth();
   const portalRoles = usePortalRolesOptional();
+  const settingsContext = useSystemSettingsOptional();
   const customById = portalRoles?.customById ?? {};
+  const settings = settingsContext?.settings;
 
   if (!ready || signingIn) {
     return (
@@ -61,5 +66,5 @@ export function RoleRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  return <Navigate to={homePathForRole(user.role, customById)} replace />;
+  return <Navigate to={resolveSafeHomePath(user, customById, settings)} replace />;
 }

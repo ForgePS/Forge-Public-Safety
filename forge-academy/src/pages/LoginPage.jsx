@@ -6,15 +6,18 @@ import { ForgeOrgBadge, ForgeWordmark } from "../components/auth/ForgeLoginBrand
 import { ForgeLoginThemeToggle } from "../components/auth/ForgeLoginThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { usePortalRolesOptional } from "../context/PortalRolesContext.jsx";
+import { useSystemSettingsOptional } from "../context/SystemSettingsContext.jsx";
 import { useForgeLoginTheme } from "../hooks/useForgeLoginTheme.js";
-import { homePathForRole, pathAllowedForRole } from "../lib/roles.js";
+import { resolveLoginRedirectPath } from "../lib/portalAccess.js";
 
 const ACADEMY_HOSTING_URL = "forge-academy-95f84.web.app";
 
 export default function LoginPage() {
   const { user, signIn, signingIn, error } = useAuth();
   const portalRoles = usePortalRolesOptional();
+  const settingsContext = useSystemSettingsOptional();
   const customById = portalRoles?.customById ?? {};
+  const settings = settingsContext?.settings;
   const location = useLocation();
   const { theme, isDark, toggleTheme } = useForgeLoginTheme();
   const [email, setEmail] = useState("");
@@ -32,10 +35,7 @@ export default function LoginPage() {
   }
 
   if (user) {
-    const home = homePathForRole(user.role, customById);
-    const requested = location.state?.from;
-    const redirect =
-      requested && pathAllowedForRole(user.role, requested, customById) ? requested : home;
+    const redirect = resolveLoginRedirectPath(user, customById, settings, location.state?.from);
     return <Navigate to={redirect} replace />;
   }
 
