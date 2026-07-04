@@ -142,7 +142,7 @@ export default function AdminSystemSettingsPage() {
     <>
       <PageHeader
         title="System Settings"
-        subtitle="Global configuration for every module — Creator and Super Admin only"
+        subtitle="Global configuration for every module — Academy Admin and above"
         actions={
           <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
             Portal users

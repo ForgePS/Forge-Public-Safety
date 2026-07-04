@@ -55,10 +55,13 @@ jobs:
         run: npm run build
 
       - name: Deploy hosting and Firestore rules
-        if: ${{ secrets.FIREBASE_TOKEN != '' }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "Skipping hosting deploy — FIREBASE_TOKEN not set (set repo secret or deploy locally)."
+            exit 0
+          fi
           npx firebase-tools@13 deploy \
             --only "$(node scripts/firebase-deploy-targets.mjs hosting)" \
             --project forge-academy-95f84 \

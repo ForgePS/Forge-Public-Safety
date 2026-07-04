@@ -1,5 +1,9 @@
 import { Link } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import PageHeader from "../../components/PageHeader.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
+import { isFullAdmin } from "../../lib/roles.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 
 const SECTIONS = [
   {
@@ -47,6 +51,10 @@ const SECTIONS = [
 ];
 
 export default function AdminTestingHomePage() {
+  const { user } = useAuth();
+  const aiBuilderEnabled = useAiBuilderEnabled();
+  const showAiBuilderCard = isFullAdmin(user?.role);
+
   return (
     <>
       <PageHeader
@@ -60,6 +68,30 @@ export default function AdminTestingHomePage() {
       />
 
       <div className="flex flex-1 flex-col gap-8 p-6 lg:p-7">
+        {showAiBuilderCard ? (
+          <section className="rounded-[14px] border border-violet-200 bg-violet-50/40 p-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-violet-900">
+                  <Sparkles className="h-4 w-4" />
+                  AI Builder
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm text-violet-800">
+                  {aiBuilderEnabled
+                    ? "Enabled — look for the violet AI Builder button on question banks, blueprints, manual grading, skill/certificate templates, and digital dashboard editors."
+                    : "Disabled in system settings — turn it on to show AI assist panels across admin modules."}
+                </p>
+              </div>
+              <Link
+                to="/admin/settings?section=features"
+                className="app-btn-secondary inline-flex items-center gap-1.5 px-4 py-2 text-xs"
+              >
+                {aiBuilderEnabled ? "Manage in settings" : "Enable AI Builder"}
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
         {SECTIONS.map((section) => (
           <section key={section.title}>
             <div className="mb-4">

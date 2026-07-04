@@ -7,10 +7,10 @@ import { useAuth } from "../../context/AuthContext.jsx";
  */
 export function useAiBuilderEnabled() {
   const settingsContext = useSystemSettingsOptional();
-  const { profile } = useAuth();
+  const { user } = useAuth();
   const settings = settingsContext?.settings;
 
-  if (!isFullAdmin(profile?.role)) return false;
+  if (!isFullAdmin(user?.role)) return false;
   if (!settings) return true;
   return settings.features?.aiBuilderEnabled !== false;
 }

@@ -582,7 +582,7 @@ export const SYSTEM_SETTINGS_SECTIONS = /** @type {SettingsSectionDef[]} */ ([
       { key: "announcementEnabled", label: "Show announcement banner", type: "boolean" },
       { key: "announcementBanner", label: "Announcement banner text", type: "textarea" },
       { key: "showPilotReleasePage", label: "Show pilot release checklist page", type: "boolean" },
-      { key: "aiBuilderEnabled", label: "Enable AI Builder (admin modules)", type: "boolean" },
+      { key: "aiBuilderEnabled", label: "Enable AI Builder (admin modules)", type: "boolean", hint: "Shows AI Builder panels on question banks, blueprints, grading, skill/certificate templates, and digital dashboard editors." },
     ],
   },
 ]);
