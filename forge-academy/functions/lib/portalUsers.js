@@ -80,7 +80,22 @@ function validateRoleLinks(role, { departmentId, studentId }) {
   }
 }
 
-function buildProfilePayload({ email, displayName, role, departmentId, studentId, disabled, permissions }) {
+function buildProfilePayload({
+  email,
+  displayName,
+  role,
+  departmentId,
+  studentId,
+  disabled,
+  permissions,
+  jobTitle,
+  phone,
+  phoneExtension,
+  photoUrl,
+  profileUrl,
+  organizationUnit,
+  staffSlug,
+}) {
   const payload = {
     email,
     displayName,
@@ -93,6 +108,18 @@ function buildProfilePayload({ email, displayName, role, departmentId, studentId
 
   if (permissions && typeof permissions === "object") {
     payload.permissions = permissions;
+  }
+
+  for (const [key, value] of Object.entries({
+    jobTitle,
+    phone,
+    phoneExtension,
+    photoUrl,
+    profileUrl,
+    organizationUnit,
+    staffSlug,
+  })) {
+    if (value !== undefined) payload[key] = normalizeText(value);
   }
 
   return payload;
@@ -110,6 +137,13 @@ export async function createPortalUserAccount(callerUid, input) {
   const instructorId = normalizeText(input.instructorId);
   const createInstructorProfile = Boolean(input.createInstructorProfile);
   const permissions = input.permissions ?? null;
+  const jobTitle = normalizeText(input.jobTitle);
+  const phone = normalizeText(input.phone);
+  const phoneExtension = normalizeText(input.phoneExtension);
+  const photoUrl = normalizeText(input.photoUrl);
+  const profileUrl = normalizeText(input.profileUrl);
+  const organizationUnit = normalizeText(input.organizationUnit);
+  const staffSlug = normalizeText(input.staffSlug);
 
   if (!email || !password || !displayName || !role) {
     throw new HttpsError("invalid-argument", "Email, password, display name, and role are required.");
@@ -162,6 +196,13 @@ export async function createPortalUserAccount(callerUid, input) {
         studentId,
         disabled: false,
         permissions,
+        jobTitle,
+        phone,
+        phoneExtension,
+        photoUrl,
+        profileUrl,
+        organizationUnit,
+        staffSlug,
       }),
       createdAt: FieldValue.serverTimestamp(),
     });
@@ -171,6 +212,7 @@ export async function createPortalUserAccount(callerUid, input) {
         await db.doc(`instructors/${instructorId}`).update({
           userId: authUser.uid,
           email,
+          phone,
           updatedAt: FieldValue.serverTimestamp(),
         });
       } else if (createInstructorProfile) {
@@ -180,10 +222,10 @@ export async function createPortalUserAccount(callerUid, input) {
           firstName: firstName || displayName,
           lastName: rest.join(" ") || "",
           email,
-          phone: "",
-          employeeId: "",
+          phone,
+          employeeId: staffSlug,
           specialties: [],
-          bio: "",
+          bio: jobTitle,
           status: "active",
           notes: "Created from portal account setup.",
           createdAt: FieldValue.serverTimestamp(),
@@ -240,6 +282,13 @@ export async function updatePortalUserAccount(callerUid, input) {
     studentId,
     disabled,
     permissions: permissionsProvided && input.permissions && typeof input.permissions === "object" ? input.permissions : undefined,
+    jobTitle: input.jobTitle,
+    phone: input.phone,
+    phoneExtension: input.phoneExtension,
+    photoUrl: input.photoUrl,
+    profileUrl: input.profileUrl,
+    organizationUnit: input.organizationUnit,
+    staffSlug: input.staffSlug,
   });
 
   if (permissionsProvided && input.permissions === null) {

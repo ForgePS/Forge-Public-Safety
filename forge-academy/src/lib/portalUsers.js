@@ -47,6 +47,13 @@ export function generateTempPassword(length = 12) {
  *   instructorId?: string,
  *   createInstructorProfile?: boolean,
  *   permissions?: { digitalDashboard?: Record<string, { view?: boolean, edit?: boolean }> } | null,
+ *   jobTitle?: string,
+ *   phone?: string,
+ *   phoneExtension?: string,
+ *   photoUrl?: string,
+ *   profileUrl?: string,
+ *   organizationUnit?: string,
+ *   staffSlug?: string,
  * }} input
  */
 export async function createPortalUser(input) {
@@ -65,6 +72,13 @@ export async function createPortalUser(input) {
  *   instructorId?: string,
  *   disabled?: boolean,
  *   permissions?: { digitalDashboard?: Record<string, { view?: boolean, edit?: boolean }> } | null,
+ *   jobTitle?: string,
+ *   phone?: string,
+ *   phoneExtension?: string,
+ *   photoUrl?: string,
+ *   profileUrl?: string,
+ *   organizationUnit?: string,
+ *   staffSlug?: string,
  * }} input
  */
 export async function updatePortalUser(input) {

@@ -33,6 +33,13 @@ const emptyForm = {
   instructorId: "",
   createInstructorProfile: true,
   disabled: false,
+  jobTitle: "",
+  phone: "",
+  phoneExtension: "",
+  photoUrl: "",
+  profileUrl: "",
+  organizationUnit: "",
+  staffSlug: "",
 };
 
 export default function UserFormPage() {
@@ -133,6 +140,13 @@ export default function UserFormPage() {
           instructorId: "",
           createInstructorProfile: false,
           disabled: Boolean(portalUser.disabled),
+          jobTitle: portalUser.jobTitle ?? "",
+          phone: portalUser.phone ?? "",
+          phoneExtension: portalUser.phoneExtension ?? "",
+          photoUrl: portalUser.photoUrl ?? "",
+          profileUrl: portalUser.profileUrl ?? "",
+          organizationUnit: portalUser.organizationUnit ?? "",
+          staffSlug: portalUser.staffSlug ?? "",
         });
         const customPermissions = hasCustomDigitalDashboardPermissions(portalUser);
         setUseCustomDigitalDashboardPermissions(customPermissions);
@@ -194,6 +208,13 @@ export default function UserFormPage() {
           instructorId: form.instructorId,
           createInstructorProfile: form.createInstructorProfile,
           permissions: permissionsPayload,
+          jobTitle: form.jobTitle,
+          phone: form.phone,
+          phoneExtension: form.phoneExtension,
+          photoUrl: form.photoUrl,
+          profileUrl: form.profileUrl,
+          organizationUnit: form.organizationUnit,
+          staffSlug: form.staffSlug,
         });
         navigate(`/admin/users/${result.uid}`);
         return;
@@ -208,6 +229,13 @@ export default function UserFormPage() {
         instructorId: form.instructorId,
         disabled: form.disabled,
         permissions: permissionsPayload,
+        jobTitle: form.jobTitle,
+        phone: form.phone,
+        phoneExtension: form.phoneExtension,
+        photoUrl: form.photoUrl,
+        profileUrl: form.profileUrl,
+        organizationUnit: form.organizationUnit,
+        staffSlug: form.staffSlug,
       });
       setSuccess("Portal user updated.");
     } catch (err) {
@@ -410,6 +438,61 @@ export default function UserFormPage() {
               No additional record link is required for this role.
             </p>
           ) : null}
+        </FormSection>
+
+        <FormSection title="Staff profile">
+          <p className="text-sm text-[var(--color-afta-subtle)]">
+            Optional directory details for academy staff. Populated automatically when importing from
+            the AFTA website.
+          </p>
+          <FormField
+            label="Job title"
+            name="jobTitle"
+            value={form.jobTitle}
+            onChange={handleChange}
+          />
+          <FormField label="Phone" name="phone" value={form.phone} onChange={handleChange} />
+          <FormField
+            label="Phone extension"
+            name="phoneExtension"
+            value={form.phoneExtension}
+            onChange={handleChange}
+          />
+          <FormField
+            label="Photo URL"
+            name="photoUrl"
+            type="url"
+            value={form.photoUrl}
+            onChange={handleChange}
+            hint="Public image URL for staff directory display."
+          />
+          {form.photoUrl ? (
+            <img
+              src={form.photoUrl}
+              alt=""
+              className="h-20 w-20 rounded-full border border-[var(--color-afta-border)] object-cover"
+            />
+          ) : null}
+          <FormField
+            label="SAU Tech profile URL"
+            name="profileUrl"
+            type="url"
+            value={form.profileUrl}
+            onChange={handleChange}
+          />
+          <FormField
+            label="Organization unit"
+            name="organizationUnit"
+            value={form.organizationUnit}
+            onChange={handleChange}
+          />
+          <FormField
+            label="Staff slug"
+            name="staffSlug"
+            value={form.staffSlug}
+            onChange={handleChange}
+            hint="Directory slug from sau.tech (e.g. gwarner)."
+          />
         </FormSection>
 
         {showDigitalDashboardPermissions ? (
