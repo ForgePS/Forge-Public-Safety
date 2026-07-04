@@ -21,16 +21,20 @@ import { db } from "./firebase.js";
  * @property {PortalDefinitionStatus} status
  */
 
-export const RESERVED_PORTAL_SLUGS = new Set([
+export const BUILTIN_PORTAL_SLUGS = new Set([
   "admin",
   "student",
   "department",
   "instructor",
   "certification",
+]);
+
+export const RESERVED_PORTAL_SLUGS = new Set([
+  ...BUILTIN_PORTAL_SLUGS,
   "login",
   "verify",
   "unauthorized",
-  "p",
+  "display",
 ]);
 
 /** @param {string} slug */
@@ -43,15 +47,23 @@ export function normalizePortalSlug(slug) {
 }
 
 /** @param {string} slug */
-export function customPortalPath(slug) {
-  return `/p/${normalizePortalSlug(slug)}`;
+export function portalPathFromSlug(slug) {
+  return `/${normalizePortalSlug(slug)}`;
+}
+
+/** @param {string} slug */
+export function isBuiltinPortalSlug(slug) {
+  return BUILTIN_PORTAL_SLUGS.has(normalizePortalSlug(slug));
 }
 
 /** @param {string} pathname @returns {string | null} */
-export function customPortalSlugFromPath(pathname) {
+export function definedPortalSlugFromPath(pathname) {
   const clean = pathname.split("?")[0].split("#")[0];
-  const match = clean.match(/^\/p\/([^/]+)/);
-  return match ? match[1] : null;
+  const match = clean.match(/^\/([^/]+)/);
+  if (!match) return null;
+  const slug = match[1];
+  if (RESERVED_PORTAL_SLUGS.has(slug)) return null;
+  return slug;
 }
 
 /** @param {string} slug */
@@ -153,4 +165,14 @@ export async function deletePortalDefinition(slug) {
 /** @param {PortalDefinition[]} portals */
 export function portalDefinitionsBySlug(portals) {
   return Object.fromEntries(portals.map((portal) => [portal.slug, portal]));
+}
+
+/** @deprecated Use portalPathFromSlug */
+export function customPortalPath(slug) {
+  return portalPathFromSlug(slug);
+}
+
+/** @deprecated Use definedPortalSlugFromPath */
+export function customPortalSlugFromPath(pathname) {
+  return definedPortalSlugFromPath(pathname);
 }

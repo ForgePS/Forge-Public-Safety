@@ -62,7 +62,7 @@ service cloud.firestore {
     }
 
     function isNonAdminPortalRoleDefinition(data) {
-      return data.portalType in ['student', 'instructor', 'department', 'certification', 'custom'];
+      return data.portalType != 'admin';
     }
 
     match /portalDefinitions/{portalSlug} {

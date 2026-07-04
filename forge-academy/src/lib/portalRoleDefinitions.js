@@ -10,7 +10,7 @@ import {
 import { db } from "./firebase.js";
 import { ALL_ROLES, ROLES } from "./roles.js";
 
-/** @typedef {'admin' | 'student' | 'instructor' | 'department' | 'certification' | 'custom'} PortalType */
+/** @typedef {string} PortalType */
 
 /**
  * @typedef {Object} PortalRoleDefinition
@@ -78,21 +78,12 @@ export async function getPortalRoleDefinition(roleId) {
 
 /** @param {string} id @param {Record<string, unknown>} data @returns {PortalRoleDefinition | null} */
 function normalizeDefinition(id, data) {
-  const portalType = String(data.portalType ?? "admin");
-  const customPortalSlug = String(data.customPortalSlug ?? "").trim() || undefined;
-  const isBuiltin = PORTAL_TYPE_OPTIONS.some((option) => option.value === portalType);
-  if (portalType === "custom") {
-    if (!customPortalSlug) return null;
-    return {
-      id,
-      label: String(data.label ?? id),
-      description: String(data.description ?? ""),
-      portalType: "custom",
-      customPortalSlug,
-      status: data.status === "archived" ? "archived" : "active",
-    };
+  let portalType = String(data.portalType ?? "student").trim();
+  const legacySlug = String(data.customPortalSlug ?? "").trim();
+  if (portalType === "custom" && legacySlug) {
+    portalType = legacySlug;
   }
-  if (!isBuiltin) return null;
+  if (!portalType || portalType === "custom") return null;
   return {
     id,
     label: String(data.label ?? id),
@@ -104,36 +95,32 @@ function normalizeDefinition(id, data) {
 
 /**
  * @param {string} roleId
- * @param {{ label: string, description?: string, portalType: PortalType, customPortalSlug?: string, status?: 'active' | 'archived' }} input
+ * @param {{ label: string, description?: string, portalType: PortalType, status?: 'active' | 'archived' }} input
  * @param {string} userId
  */
 export async function savePortalRoleDefinition(roleId, input, userId) {
   const id = validateCustomRoleId(roleId);
   const ref = doc(db, "portalRoleDefinitions", id);
   const existing = await getDoc(ref);
-  const payload = {
-    label: String(input.label ?? id).trim(),
-    description: String(input.description ?? "").trim(),
-    portalType: input.portalType,
-    status: input.status === "archived" ? "archived" : "active",
-    updatedAt: serverTimestamp(),
-    updatedBy: userId,
-    ...(existing.exists()
-      ? {}
-      : {
-          createdAt: serverTimestamp(),
-          createdBy: userId,
-        }),
-  };
-  if (input.portalType === "custom") {
-    payload.customPortalSlug = String(input.customPortalSlug ?? "").trim();
-    if (!payload.customPortalSlug) {
-      throw new Error("Custom portal slug is required for custom portal roles.");
-    }
-  } else {
-    payload.customPortalSlug = "";
-  }
-  await setDoc(ref, payload, { merge: true });
+  await setDoc(
+    ref,
+    {
+      label: String(input.label ?? id).trim(),
+      description: String(input.description ?? "").trim(),
+      portalType: input.portalType,
+      customPortalSlug: "",
+      status: input.status === "archived" ? "archived" : "active",
+      updatedAt: serverTimestamp(),
+      updatedBy: userId,
+      ...(existing.exists()
+        ? {}
+        : {
+            createdAt: serverTimestamp(),
+            createdBy: userId,
+          }),
+    },
+    { merge: true },
+  );
   return id;
 }
 

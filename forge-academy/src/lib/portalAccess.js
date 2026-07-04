@@ -4,7 +4,7 @@ import {
   isFullAdmin,
   pathAllowedForRole,
 } from "./roles.js";
-import { customPortalSlugFromPath } from "./portalDefinitions.js";
+import { definedPortalSlugFromPath, portalPathFromSlug } from "./portalDefinitions.js";
 
 /** @typedef {'admin' | 'student' | 'department' | 'instructor' | 'certification'} BuiltinPortalKey */
 
@@ -50,24 +50,25 @@ export const PORTAL_ACCESS_DEFINITIONS = [
  * @property {string} title
  * @property {string} subtitle
  * @property {boolean} [alwaysOn]
- * @property {boolean} [isCustom]
+ * @property {boolean} [alwaysOn]
+ * @property {boolean} [isDefined]
  * @property {string} [slug]
  */
 
-/** @param {import('./portalDefinitions.js').PortalDefinition[]} customPortals */
-export function mergePortalDefinitions(customPortals = []) {
+/** @param {import('./portalDefinitions.js').PortalDefinition[]} definedPortals */
+export function mergePortalDefinitions(definedPortals = []) {
   /** @type {PortalDefinitionEntry[]} */
-  const customEntries = customPortals
+  const definedEntries = definedPortals
     .filter((portal) => portal.status === "active")
     .map((portal) => ({
       key: portal.slug,
       slug: portal.slug,
-      path: `/p/${portal.slug}`,
+      path: portalPathFromSlug(portal.slug),
       title: portal.label,
       subtitle: portal.description,
-      isCustom: true,
+      isDefined: true,
     }));
-  return [...PORTAL_ACCESS_DEFINITIONS, ...customEntries];
+  return [...PORTAL_ACCESS_DEFINITIONS, ...definedEntries];
 }
 
 /** @returns {Record<string, { enabled: boolean, label: string, description: string, signInMessage: string }>} */
@@ -88,15 +89,15 @@ export function defaultPortalAccessConfig() {
 /**
  * @param {ReturnType<import('./systemSettings.js').mergeSystemSettings>} settings
  * @param {string} portalKey
- * @param {import('./portalDefinitions.js').PortalDefinition | null} [customPortal]
+ * @param {import('./portalDefinitions.js').PortalDefinition | null} [definedPortal]
  */
-export function getPortalAccessConfig(settings, portalKey, customPortal = null) {
-  if (customPortal) {
+export function getPortalAccessConfig(settings, portalKey, definedPortal = null) {
+  if (definedPortal) {
     return {
-      enabled: customPortal.enabled !== false,
-      label: customPortal.label,
-      description: customPortal.description,
-      signInMessage: customPortal.signInMessage ?? "",
+      enabled: definedPortal.enabled !== false,
+      label: definedPortal.label,
+      description: definedPortal.description,
+      signInMessage: definedPortal.signInMessage ?? "",
     };
   }
 
@@ -123,12 +124,12 @@ export function getPortalAccessConfig(settings, portalKey, customPortal = null) 
 /**
  * @param {ReturnType<import('./systemSettings.js').mergeSystemSettings>} settings
  * @param {string} portalKey
- * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [customPortalsBySlug]
+ * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [definedPortalsBySlug]
  */
-export function isPortalAccessEnabled(settings, portalKey, customPortalsBySlug = {}) {
+export function isPortalAccessEnabled(settings, portalKey, definedPortalsBySlug = {}) {
   if (portalKey === "admin") return true;
-  if (customPortalsBySlug[portalKey]) {
-    return customPortalsBySlug[portalKey].enabled !== false;
+  if (definedPortalsBySlug[portalKey]) {
+    return definedPortalsBySlug[portalKey].enabled !== false;
   }
   return getPortalAccessConfig(settings, portalKey).enabled;
 }
@@ -141,7 +142,7 @@ export function portalKeyFromPath(pathname) {
       return portal.key;
     }
   }
-  return customPortalSlugFromPath(clean);
+  return definedPortalSlugFromPath(clean);
 }
 
 /**

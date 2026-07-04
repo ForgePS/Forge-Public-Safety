@@ -7,7 +7,7 @@ import { usePortalDefinitions } from "../../context/PortalDefinitionsContext.jsx
 import { useSystemSettings } from "../../context/SystemSettingsContext.jsx";
 import {
   archivePortalDefinition,
-  customPortalPath,
+  portalPathFromSlug,
   deletePortalDefinition,
   normalizePortalSlug,
   savePortalDefinition,
@@ -21,7 +21,7 @@ import {
 } from "../../lib/portalAccess.js";
 import { isSystemSettingsAdmin } from "../../lib/roles.js";
 
-const emptyCustomForm = {
+const emptyPortalForm = {
   slug: "",
   label: "",
   description: "",
@@ -36,7 +36,7 @@ export default function AdminPortalAccessPage() {
   const [draft, setDraft] = useState(() => readPortalAccessConfig(settings, customPortals));
   const [activePortal, setActivePortal] = useState("student");
   const [creatingPortal, setCreatingPortal] = useState(false);
-  const [customForm, setCustomForm] = useState(emptyCustomForm);
+  const [portalForm, setPortalForm] = useState(emptyPortalForm);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -58,7 +58,7 @@ export default function AdminPortalAccessPage() {
   );
 
   const activeDraft = draft[activeDefinition?.key ?? "student"];
-  const isCustomPortal = Boolean(activeDefinition?.isCustom);
+  const isDefinedPortal = Boolean(activeDefinition?.isDefined);
 
   function updateActiveField(field, value) {
     if (!activeDefinition) return;
@@ -75,14 +75,14 @@ export default function AdminPortalAccessPage() {
 
   function startCreatePortal() {
     setCreatingPortal(true);
-    setCustomForm(emptyCustomForm);
+    setPortalForm(emptyPortalForm);
     setSuccess(null);
     setError(null);
   }
 
   function cancelCreatePortal() {
     setCreatingPortal(false);
-    setCustomForm(emptyCustomForm);
+    setPortalForm(emptyPortalForm);
   }
 
   async function handleSave(event) {
@@ -95,27 +95,27 @@ export default function AdminPortalAccessPage() {
 
     try {
       if (creatingPortal) {
-        const slug = validatePortalSlug(customForm.slug);
+        const slug = validatePortalSlug(portalForm.slug);
         await savePortalDefinition(
           slug,
           {
-            label: customForm.label || customForm.slug,
-            description: customForm.description,
-            enabled: customForm.enabled,
-            signInMessage: customForm.signInMessage,
+            label: portalForm.label || portalForm.slug,
+            description: portalForm.description,
+            enabled: portalForm.enabled,
+            signInMessage: portalForm.signInMessage,
             status: "active",
           },
           user.uid,
         );
         await reloadCustomPortals();
         setCreatingPortal(false);
-        setCustomForm(emptyCustomForm);
+        setPortalForm(emptyPortalForm);
         setActivePortal(slug);
-        setSuccess("Custom portal created.");
+        setSuccess("Portal created.");
         return;
       }
 
-      if (isCustomPortal) {
+      if (isDefinedPortal) {
         await savePortalDefinition(
           activeDefinition.key,
           {
@@ -128,7 +128,7 @@ export default function AdminPortalAccessPage() {
           user.uid,
         );
         await reloadCustomPortals();
-        setSuccess("Custom portal settings saved.");
+        setSuccess("Portal settings saved.");
         return;
       }
 
@@ -141,8 +141,8 @@ export default function AdminPortalAccessPage() {
     }
   }
 
-  async function handleArchiveCustomPortal() {
-    if (!user?.uid || !canManage || !isCustomPortal || !activeDefinition) return;
+  async function handleArchivePortal() {
+    if (!user?.uid || !canManage || !isDefinedPortal || !activeDefinition) return;
     if (!window.confirm(`Archive portal "${activeDefinition.title}"? Users will no longer reach this portal.`)) {
       return;
     }
@@ -153,16 +153,16 @@ export default function AdminPortalAccessPage() {
       await archivePortalDefinition(activeDefinition.key);
       await reloadCustomPortals();
       setActivePortal(PORTAL_ACCESS_DEFINITIONS[1]?.key ?? "student");
-      setSuccess("Custom portal archived.");
+      setSuccess("Portal archived.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to archive custom portal.");
+      setError(err instanceof Error ? err.message : "Unable to archive portal.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDeleteCustomPortal() {
-    if (!user?.uid || !canManage || !isCustomPortal || !activeDefinition) return;
+  async function handleDeletePortal() {
+    if (!user?.uid || !canManage || !isDefinedPortal || !activeDefinition) return;
     if (!window.confirm(`Delete portal "${activeDefinition.title}" permanently?`)) return;
     setSaving(true);
     setError(null);
@@ -171,9 +171,9 @@ export default function AdminPortalAccessPage() {
       await deletePortalDefinition(activeDefinition.key);
       await reloadCustomPortals();
       setActivePortal(PORTAL_ACCESS_DEFINITIONS[1]?.key ?? "student");
-      setSuccess("Custom portal deleted.");
+      setSuccess("Portal deleted.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to delete custom portal.");
+      setError(err instanceof Error ? err.message : "Unable to delete portal.");
     } finally {
       setSaving(false);
     }
@@ -233,14 +233,7 @@ export default function AdminPortalAccessPage() {
                       : "hover:bg-[var(--color-afta-bg)]"
                   }`}
                 >
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-[var(--color-afta-text)]">{entry.label}</p>
-                    {portal.isCustom ? (
-                      <span className="rounded-full bg-[var(--color-afta-bg)] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[var(--color-afta-muted)]">
-                        Custom
-                      </span>
-                    ) : null}
-                  </div>
+                  <p className="text-sm font-semibold text-[var(--color-afta-text)]">{entry.label}</p>
                   <p className="mt-0.5 text-xs text-[var(--color-afta-muted)]">{portal.path}</p>
                   <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-[var(--color-afta-subtle)]">
                     {portal.alwaysOn || entry.enabled ? "Enabled" : "Disabled"}
@@ -250,7 +243,7 @@ export default function AdminPortalAccessPage() {
             })}
             {creatingPortal ? (
               <div className="rounded-[10px] bg-[#c8102e]/10 px-3 py-3 ring-1 ring-[#c8102e]/20">
-                <p className="text-sm font-semibold text-[var(--color-afta-text)]">New custom portal</p>
+                <p className="text-sm font-semibold text-[var(--color-afta-text)]">New portal</p>
                 <p className="mt-0.5 text-xs text-[var(--color-afta-muted)]">Draft</p>
               </div>
             ) : null}
@@ -269,16 +262,15 @@ export default function AdminPortalAccessPage() {
           <form onSubmit={handleSave} className="app-panel p-5">
             <div className="border-b border-[var(--color-afta-border)] pb-4">
               <h2 className="text-lg font-semibold text-[var(--color-afta-text)]">
-                {creatingPortal ? "New custom portal" : activeDefinition?.title}
+                {creatingPortal ? "New portal" : activeDefinition?.title}
               </h2>
               <p className="mt-1 text-sm text-[var(--color-afta-subtle)]">
                 {creatingPortal ? (
-                  "Custom portals live at /p/your-slug. Assign access with User Roles after creating the portal."
+                  "New portals use the same URL pattern as Student or Instructor — for example /partner. Assign user roles after creating the portal."
                 ) : (
                   <>
                     Route: <code>{activeDefinition?.path}</code>
                     {activeDefinition?.alwaysOn ? " · always available to admin staff" : null}
-                    {isCustomPortal ? " · custom portal" : null}
                   </>
                 )}
               </p>
@@ -290,34 +282,34 @@ export default function AdminPortalAccessPage() {
                   <FormField
                     label="Portal slug"
                     name="slug"
-                    value={customForm.slug}
-                    onChange={(event) => setCustomForm((current) => ({ ...current, slug: event.target.value }))}
+                    value={portalForm.slug}
+                    onChange={(event) => setPortalForm((current) => ({ ...current, slug: event.target.value }))}
                     disabled={loading || saving}
                     hint="Lowercase slug used in the URL, e.g. partner or regional_coordinator"
                   />
                   <p className="text-xs text-[var(--color-afta-muted)]">
                     Preview route:{" "}
-                    <code>{customForm.slug ? customPortalPath(normalizePortalSlug(customForm.slug)) : "/p/your-slug"}</code>
+                    <code>{portalForm.slug ? portalPathFromSlug(normalizePortalSlug(portalForm.slug)) : "/your-portal"}</code>
                   </p>
                   <FormField
                     label="Portal name"
                     name="label"
-                    value={customForm.label}
-                    onChange={(event) => setCustomForm((current) => ({ ...current, label: event.target.value }))}
+                    value={portalForm.label}
+                    onChange={(event) => setPortalForm((current) => ({ ...current, label: event.target.value }))}
                     disabled={loading || saving}
                   />
                   <FormField
                     label="Description"
                     name="description"
-                    value={customForm.description}
-                    onChange={(event) => setCustomForm((current) => ({ ...current, description: event.target.value }))}
+                    value={portalForm.description}
+                    onChange={(event) => setPortalForm((current) => ({ ...current, description: event.target.value }))}
                     disabled={loading || saving}
                   />
                   <label className="flex items-start gap-3 rounded-[10px] border border-[var(--color-afta-border)] bg-[var(--color-afta-bg)] px-4 py-3 text-sm text-[var(--color-afta-text)]">
                     <input
                       type="checkbox"
-                      checked={Boolean(customForm.enabled)}
-                      onChange={(event) => setCustomForm((current) => ({ ...current, enabled: event.target.checked }))}
+                      checked={Boolean(portalForm.enabled)}
+                      onChange={(event) => setPortalForm((current) => ({ ...current, enabled: event.target.checked }))}
                       disabled={loading || saving}
                       className="mt-0.5"
                     />
@@ -331,8 +323,8 @@ export default function AdminPortalAccessPage() {
                   <FormField
                     label="Unavailable message"
                     name="signInMessage"
-                    value={customForm.signInMessage}
-                    onChange={(event) => setCustomForm((current) => ({ ...current, signInMessage: event.target.value }))}
+                    value={portalForm.signInMessage}
+                    onChange={(event) => setPortalForm((current) => ({ ...current, signInMessage: event.target.value }))}
                     disabled={loading || saving}
                   />
                 </>
@@ -395,12 +387,12 @@ export default function AdminPortalAccessPage() {
                   Cancel
                 </button>
               ) : null}
-              {!creatingPortal && isCustomPortal ? (
+              {!creatingPortal && isDefinedPortal ? (
                 <>
                   <button
                     type="button"
                     disabled={loading || saving}
-                    onClick={handleArchiveCustomPortal}
+                    onClick={handleArchivePortal}
                     className="app-btn-secondary px-4 py-2 text-xs disabled:opacity-60"
                   >
                     Archive portal
@@ -408,7 +400,7 @@ export default function AdminPortalAccessPage() {
                   <button
                     type="button"
                     disabled={loading || saving}
-                    onClick={handleDeleteCustomPortal}
+                    onClick={handleDeletePortal}
                     className="px-4 py-2 text-xs font-semibold text-red-700 disabled:opacity-60"
                   >
                     Delete portal

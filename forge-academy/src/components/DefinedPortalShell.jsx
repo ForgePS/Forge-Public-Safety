@@ -3,13 +3,13 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import DashboardLayout from "./DashboardLayout.jsx";
 import { usePortalDefinitionsOptional } from "../context/PortalDefinitionsContext.jsx";
-import { customPortalPath } from "../lib/portalDefinitions.js";
+import { portalPathFromSlug } from "../lib/portalDefinitions.js";
 
-export default function CustomPortalShell() {
+export default function DefinedPortalShell() {
   const { portalSlug } = useParams();
   const portalDefs = usePortalDefinitionsOptional();
   const portal = portalSlug ? portalDefs?.bySlug[portalSlug] : null;
-  const basePath = portalSlug ? customPortalPath(portalSlug) : "/";
+  const basePath = portalSlug ? portalPathFromSlug(portalSlug) : "/";
 
   const navItems = useMemo(
     () => [
@@ -26,8 +26,8 @@ export default function CustomPortalShell() {
 
   return (
     <DashboardLayout
-      portalLabel={portal?.label ?? "Custom Portal"}
-      portalTitle={portal?.label ?? "Custom Portal"}
+      portalLabel={portal?.label ?? "Portal"}
+      portalTitle={portal?.label ?? "Portal"}
       navItems={navItems}
     />
   );
