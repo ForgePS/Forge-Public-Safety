@@ -20,6 +20,7 @@ import ModuleFormRenderer from "./ModuleFormRenderer.jsx";
  *   onApply: (output: Record<string, unknown>) => void | Promise<void>,
  *   disabled?: boolean,
  *   className?: string,
+ *   defaultOpen?: boolean,
  * }} props
  */
 export default function ForgeBuilderPanel({
@@ -30,9 +31,10 @@ export default function ForgeBuilderPanel({
   onApply,
   disabled = false,
   className = "",
+  defaultOpen = false,
 }) {
   const fileInputRef = useRef(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [prompt, setPrompt] = useState("");
   const [files, setFiles] = useState(/** @type {File[]} */ ([]));
   const [loading, setLoading] = useState(false);

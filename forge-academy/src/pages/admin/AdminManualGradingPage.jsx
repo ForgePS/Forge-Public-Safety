@@ -49,6 +49,7 @@ export default function AdminManualGradingPage() {
             <p className="mt-1 text-xs text-[var(--color-afta-subtle)]">Generate scoring criteria for short-answer items.</p>
             <div className="mt-4">
               <ForgeBuilderPanel
+                defaultOpen
                 targetType="gradingRubric"
                 currentState={rubric ?? {}}
                 onApply={(output) => setRubric(output)}

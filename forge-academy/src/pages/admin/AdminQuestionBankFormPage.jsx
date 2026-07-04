@@ -300,6 +300,7 @@ export default function AdminQuestionBankFormPage() {
                     </p>
                     <div className="mt-4">
                       <ForgeBuilderPanel
+                        defaultOpen
                         targetType="questionBank"
                         targetId={bankId}
                         currentState={{ questions }}

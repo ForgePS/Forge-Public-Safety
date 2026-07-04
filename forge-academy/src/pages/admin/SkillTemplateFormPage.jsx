@@ -211,6 +211,7 @@ export default function SkillTemplateFormPage() {
               {aiBuilderEnabled && !isNew ? (
                 <div className="mt-4">
                   <ForgeBuilderPanel
+                    defaultOpen
                     targetType="skillTemplate"
                     targetId={templateId}
                     currentState={{ name: form.name, description: form.description, skills }}

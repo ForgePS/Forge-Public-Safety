@@ -387,6 +387,7 @@ export default function CertificateTemplateFormPage() {
           {aiBuilderEnabled ? (
             <div className="rounded-[14px] border border-violet-200 bg-violet-50/30 p-4">
               <ForgeBuilderPanel
+                defaultOpen
                 targetType="certificateTemplate"
                 targetId={templateId ?? ""}
                 currentState={{ name: form.name, descriptionText: form.descriptionText, fields: form.fields }}

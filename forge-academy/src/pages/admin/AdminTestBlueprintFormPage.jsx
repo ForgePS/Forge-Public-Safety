@@ -235,6 +235,7 @@ export default function AdminTestBlueprintFormPage() {
             {aiBuilderEnabled ? (
               <section className="rounded-[14px] border border-violet-200 bg-violet-50/30 p-5">
                 <ForgeBuilderPanel
+                  defaultOpen
                   targetType="testBlueprint"
                   targetId={blueprintId ?? ""}
                   currentState={buildPayload(courses.find((c) => c.id === form.courseId)?.name ?? "")}
