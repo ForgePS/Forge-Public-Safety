@@ -1,5 +1,20 @@
 # Forge Academy deploy
 
+## Blank page after deploy
+
+If https://forge-academy-95f84.web.app shows a gray screen with no UI, the hosting bundle was built without Firebase web config. The app needs `VITE_FIREBASE_*` at **build time** (Vite inlines them into the JS bundle).
+
+**Fix locally:**
+
+```bash
+cd forge-academy
+cp .env.example .env   # or set VITE_FIREBASE_* manually
+npm run build
+npm run deploy:hosting
+```
+
+CI sets these in `.github/workflows/deploy-forge-academy.yml`. The app also falls back to committed defaults for `forge-academy-95f84` so a bare `npm run build` works.
+
 ## What works in GitHub Actions
 
 | Target | `FIREBASE_TOKEN` (login:ci) | Workload Identity |
