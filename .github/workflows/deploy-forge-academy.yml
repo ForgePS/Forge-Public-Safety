@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "forge-academy/**"
+      - "packages/forge-ai-builder/**"
       - ".github/workflows/deploy-forge-academy.yml"
   workflow_dispatch:
 
@@ -23,10 +24,21 @@ jobs:
           cache: npm
           cache-dependency-path: forge-academy/package-lock.json
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      - name: Require FIREBASE_TOKEN
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "::error::GitHub secret FIREBASE_TOKEN is not set."
+            echo ""
+            echo "Run locally (no JSON key needed):"
+            echo "  cd forge-academy && npx firebase-tools login:ci"
+            echo ""
+            echo "Paste the printed token as repo secret FIREBASE_TOKEN, then re-run this workflow."
+            echo ""
+            echo "Or deploy from your machine: firebase login && npm run deploy"
+            exit 1
+          fi
 
       - name: Install app dependencies
         run: npm ci
@@ -39,4 +51,11 @@ jobs:
         run: npm run build
 
       - name: Deploy hosting, Firestore rules, and Cloud Functions
-        run: npx firebase-tools@13 deploy --only hosting,firestore:rules,functions --project forge-academy-95f84 --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: >
+          npx firebase-tools@13 deploy
+          --only hosting,firestore:rules,functions
+          --project forge-academy-95f84
+          --non-interactive
+          --token "$FIREBASE_TOKEN"
