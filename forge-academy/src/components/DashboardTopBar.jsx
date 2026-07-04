@@ -4,6 +4,7 @@ import BackButton from "./BackButton.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ROLE_LABELS } from "../lib/roles.js";
 import NotificationBell from "./NotificationBell.jsx";
+import MessagingLauncher from "./messaging/MessagingLauncher.jsx";
 import PortalThemeToggle from "./PortalThemeToggle.jsx";
 
 function formatToday() {
@@ -39,6 +40,7 @@ export default function DashboardTopBar({ portalTitle = "Arkansas Fire Training 
       </div>
       <div className="flex items-center gap-3">
         <p className="hidden text-xs text-[var(--color-afta-muted)] sm:block">{formatToday()}</p>
+        <MessagingLauncher />
         <NotificationBell />
         <div className="rounded-lg border border-[var(--color-afta-border)] px-3 py-2">
           <p className="text-xs font-semibold text-[var(--color-afta-text)]">{user?.displayName || user?.email}</p>

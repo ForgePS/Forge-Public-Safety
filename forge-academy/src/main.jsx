@@ -5,6 +5,7 @@ import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { PortalRolesProvider } from "./context/PortalRolesContext.jsx";
 import { PortalDefinitionsProvider } from "./context/PortalDefinitionsContext.jsx";
+import { MessagingProvider } from "./context/MessagingContext.jsx";
 import { PortalThemeProvider } from "./context/PortalThemeContext.jsx";
 import { SystemSettingsProvider } from "./context/SystemSettingsContext.jsx";
 import MaintenanceGate from "./components/SystemSettingsRoute.jsx";
@@ -18,9 +19,11 @@ createRoot(document.getElementById("root")).render(
           <PortalRolesProvider>
             <PortalDefinitionsProvider>
               <SystemSettingsProvider>
-                <MaintenanceGate>
-                  <App />
-                </MaintenanceGate>
+                <MessagingProvider>
+                  <MaintenanceGate>
+                    <App />
+                  </MaintenanceGate>
+                </MessagingProvider>
               </SystemSettingsProvider>
             </PortalDefinitionsProvider>
           </PortalRolesProvider>

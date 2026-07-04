@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { ROLE_LABELS } from "../lib/roles.js";
 import { manageAnnouncementsPathForRole } from "../lib/portalAnnouncements.js";
 import DashboardTopBar from "./DashboardTopBar.jsx";
+import MessagingDock from "./messaging/MessagingDock.jsx";
 
 /**
  * @param {{ label: string, to: string, end?: boolean, group?: string, icon?: import('react').ComponentType<{ className?: string }> }[]} navItems
@@ -131,6 +132,7 @@ export default function DashboardLayout({
           </div>
         ) : null}
         <Outlet />
+        <MessagingDock />
       </div>
     </div>
   );

@@ -132,6 +132,14 @@ export const DEFAULT_SYSTEM_SETTINGS = {
     notifyOnTestFailure: true,
     notifyOnCertificateRelease: true,
   },
+  messaging: {
+    enabled: true,
+    fileSharingEnabled: true,
+    maxAttachmentMb: 25,
+    showUnreadBadge: true,
+    toastOnNewMessage: true,
+    playNotificationSound: false,
+  },
   reports: {
     moduleEnabled: true,
     defaultDateRangeDays: 90,
@@ -497,6 +505,19 @@ export const SYSTEM_SETTINGS_SECTIONS = /** @type {SettingsSectionDef[]} */ ([
       { key: "notifyOnRegistrationSubmitted", label: "Notify on registration submitted", type: "boolean" },
       { key: "notifyOnTestFailure", label: "Notify on test failure", type: "boolean" },
       { key: "notifyOnCertificateRelease", label: "Notify on certificate release", type: "boolean" },
+    ],
+  },
+  {
+    id: "messaging",
+    title: "Messaging",
+    description: "Teams-style portal messaging, file sharing, and subtle notification defaults.",
+    fields: [
+      { key: "enabled", label: "Enable portal messaging", type: "boolean" },
+      { key: "fileSharingEnabled", label: "Allow file attachments in messages", type: "boolean" },
+      { key: "maxAttachmentMb", label: "Max attachment size (MB)", type: "number" },
+      { key: "showUnreadBadge", label: "Show unread badge on message launcher", type: "boolean" },
+      { key: "toastOnNewMessage", label: "Show subtle toast for new messages", type: "boolean" },
+      { key: "playNotificationSound", label: "Play soft notification sound", type: "boolean" },
     ],
   },
   {
