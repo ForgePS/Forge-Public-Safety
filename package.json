@@ -8,8 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "cms:server": "decap-server",
-    "staff:scrape": "npm run staff:scrape --prefix forge-academy",
-    "staff:import": "npm run staff:import --prefix forge-academy"
+    "staff:scrape": "node forge-academy/scripts/scrape-afta-staff.mjs",
+    "staff:import": "node forge-academy/scripts/import-afta-staff.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.525.0",
