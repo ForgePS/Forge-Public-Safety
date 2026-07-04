@@ -194,7 +194,7 @@ export default function AdminPortalRolesPage() {
     return (
       <PageHeader
         title="Access denied"
-        subtitle="Academy admin access is required to manage portal access roles."
+        subtitle="Academy admin access is required to manage user roles."
         backTo="/admin/users"
         backLabel="Back to portal users"
       />
@@ -204,15 +204,18 @@ export default function AdminPortalRolesPage() {
   return (
     <>
       <PageHeader
-        title="Portal Access Roles"
+        title="User Roles"
         subtitle="Create and edit custom roles, then assign them to portal users"
         actions={
           <div className="flex flex-wrap gap-2">
+            <Link to="/admin/portal-access" className="app-btn-secondary px-4 py-2 text-xs">
+              Portal access
+            </Link>
             <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
               Portal users
             </Link>
             <button type="button" onClick={startCreate} className="app-btn-primary px-4 py-2 text-xs">
-              New portal access role
+              New user role
             </button>
           </div>
         }
@@ -220,7 +223,7 @@ export default function AdminPortalRolesPage() {
 
       {!canManageAdminRoles ? (
         <div className="mx-6 mt-4 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 lg:mx-7">
-          Academy admins can create student, instructor, department, and certification portal access roles.
+          Academy admins can create student, instructor, department, and certification user roles.
           Creator or Super Admin access is required for admin portal roles.
         </div>
       ) : null}
@@ -243,11 +246,11 @@ export default function AdminPortalRolesPage() {
             ))}
           </ul>
 
-          <h2 className="mt-8 text-sm font-semibold text-[var(--color-afta-text)]">Custom portal access roles</h2>
+          <h2 className="mt-8 text-sm font-semibold text-[var(--color-afta-text)]">Custom user roles</h2>
           {loading ? (
             <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">Loading…</p>
           ) : roles.length === 0 ? (
-            <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">No custom portal access roles yet.</p>
+            <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">No custom user roles yet.</p>
           ) : (
             <div className="mt-3 overflow-x-auto">
               <table className="min-w-full text-left text-sm">
