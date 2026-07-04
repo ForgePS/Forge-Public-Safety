@@ -65,6 +65,7 @@ export default function UsersListPage() {
       return [
         portalUser.displayName,
         portalUser.email,
+        portalUser.jobTitle,
         ROLE_LABELS[portalUser.role],
         departmentNames[portalUser.departmentId],
         studentNames[portalUser.studentId],
@@ -171,8 +172,26 @@ export default function UsersListPage() {
                       return (
                         <tr key={portalUser.uid} className="border-b border-[var(--color-afta-border)] text-[var(--color-afta-text)]">
                           <td className="px-4 py-3">
-                            <p className="font-medium text-[var(--color-afta-text)]">{portalUser.displayName}</p>
-                            <p className="text-xs text-[var(--color-afta-muted)]">{portalUser.email}</p>
+                            <div className="flex items-center gap-3">
+                              {portalUser.photoUrl ? (
+                                <img
+                                  src={portalUser.photoUrl}
+                                  alt=""
+                                  className="h-9 w-9 shrink-0 rounded-full border border-[var(--color-afta-border)] object-cover"
+                                />
+                              ) : (
+                                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-afta-border)] bg-[var(--color-afta-bg)] text-xs font-bold text-[var(--color-afta-muted)]">
+                                  {portalUser.displayName?.charAt(0) ?? "?"}
+                                </span>
+                              )}
+                              <div>
+                                <p className="font-medium text-[var(--color-afta-text)]">{portalUser.displayName}</p>
+                                <p className="text-xs text-[var(--color-afta-muted)]">{portalUser.email}</p>
+                                {portalUser.jobTitle ? (
+                                  <p className="text-xs text-[var(--color-afta-subtle)]">{portalUser.jobTitle}</p>
+                                ) : null}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-4 py-3">{ROLE_LABELS[portalUser.role] ?? portalUser.role}</td>
                           <td className="px-4 py-3">{linked}</td>

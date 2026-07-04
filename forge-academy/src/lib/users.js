@@ -11,6 +11,13 @@ import { ROLES } from "./roles.js";
  * @property {string} [departmentId]
  * @property {string} [studentId]
  * @property {boolean} [disabled]
+ * @property {string} [jobTitle]
+ * @property {string} [phone]
+ * @property {string} [phoneExtension]
+ * @property {string} [photoUrl]
+ * @property {string} [profileUrl]
+ * @property {string} [organizationUnit]
+ * @property {string} [staffSlug]
  * @property {{ digitalDashboard?: Record<string, { view?: boolean, edit?: boolean }> }} [permissions]
  */
 
@@ -40,6 +47,13 @@ function fetchUserProfileFromSnap(uid, data) {
     departmentId: data.departmentId,
     studentId: data.studentId,
     disabled: Boolean(data.disabled),
+    jobTitle: data.jobTitle ?? "",
+    phone: data.phone ?? "",
+    phoneExtension: data.phoneExtension ?? "",
+    photoUrl: data.photoUrl ?? "",
+    profileUrl: data.profileUrl ?? "",
+    organizationUnit: data.organizationUnit ?? "",
+    staffSlug: data.staffSlug ?? "",
     permissions: data.permissions ?? undefined,
   };
 }

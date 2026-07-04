@@ -4,3 +4,4 @@ dist
 .env.local
 *.log
 NUL
+data/afta-staff-import-log.json

@@ -15,7 +15,9 @@
     "schedule:import": "node scripts/import-schedules-2026.mjs",
     "catalog:import": "node scripts/import-catalog-2026.mjs",
     "departments:import": "node scripts/import-arkansas-departments.mjs",
-    "certificates:prepare-base": "node scripts/prepare-afta-certificate-base.mjs"
+    "certificates:prepare-base": "node scripts/prepare-afta-certificate-base.mjs",
+    "staff:scrape": "node scripts/scrape-afta-staff.mjs",
+    "staff:import": "node scripts/import-afta-staff.mjs"
   },
   "dependencies": {
     "@forgeps/ai-builder": "file:../packages/forge-ai-builder",
