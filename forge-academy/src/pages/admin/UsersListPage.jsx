@@ -2,12 +2,21 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import PageHeader from "../../components/PageHeader.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { listActiveDepartments } from "../../lib/departments.js";
-import { ROLE_LABELS, ROLES } from "../../lib/roles.js";
+import {
+  ALL_ROLES,
+  ROLE_LABELS,
+  ROLES,
+  canAssignPortalRole,
+  canManagePortalUserWithRole,
+} from "../../lib/roles.js";
+import { canManagePortalUsers, savePortalUserRole } from "../../lib/portalUserAdmin.js";
 import { listStudents } from "../../lib/students.js";
 import { listAllPortalUsers } from "../../lib/users.js";
 
 export default function UsersListPage() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [students, setStudents] = useState([]);
@@ -15,6 +24,8 @@ export default function UsersListPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [savingRoleFor, setSavingRoleFor] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -76,6 +87,40 @@ export default function UsersListPage() {
     });
   }, [users, search, roleFilter, departmentNames, studentNames]);
 
+  const assignableRoles = useMemo(
+    () => ALL_ROLES.filter((role) => canAssignPortalRole(currentUser?.role, role)),
+    [currentUser?.role],
+  );
+
+  const canEditRoles = canManagePortalUsers(currentUser?.role) && assignableRoles.length > 0;
+
+  async function handleRoleChange(portalUser, newRole) {
+    if (portalUser.role === newRole) return;
+    if (!canManagePortalUserWithRole(currentUser?.role, portalUser.role)) {
+      setError("You do not have permission to manage this user.");
+      return;
+    }
+    if (!canAssignPortalRole(currentUser?.role, newRole)) {
+      setError("You do not have permission to assign that role.");
+      return;
+    }
+
+    setSavingRoleFor(portalUser.uid);
+    setError(null);
+    setSuccess(null);
+    try {
+      await savePortalUserRole(currentUser?.role, portalUser, newRole);
+      setUsers((current) =>
+        current.map((row) => (row.uid === portalUser.uid ? { ...row, role: newRole } : row)),
+      );
+      setSuccess(`Updated ${portalUser.displayName} to ${ROLE_LABELS[newRole]}.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to update role.");
+    } finally {
+      setSavingRoleFor("");
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -97,6 +142,11 @@ export default function UsersListPage() {
           Portal users receive Firebase Auth credentials plus a role profile. Student accounts must
           link to a student record. Department accounts must link to a department. Instructor
           accounts can optionally link to an instructor profile.
+          {canEditRoles ? (
+            <span className="mt-2 block font-medium text-[var(--color-afta-text)]">
+              Change roles directly in the table below, or use Edit for full account details.
+            </span>
+          ) : null}
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -127,6 +177,11 @@ export default function UsersListPage() {
         {error ? (
           <p className="rounded-[10px] border border-[#c8102e]/30 bg-[#c8102e]/10 px-4 py-3 text-sm text-red-700">
             {error}
+          </p>
+        ) : null}
+        {success ? (
+          <p className="rounded-[10px] border border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-800">
+            {success}
           </p>
         ) : null}
 
@@ -193,7 +248,24 @@ export default function UsersListPage() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-3">{ROLE_LABELS[portalUser.role] ?? portalUser.role}</td>
+                          <td className="px-4 py-3">
+                            {canEditRoles && canManagePortalUserWithRole(currentUser?.role, portalUser.role) ? (
+                              <select
+                                value={portalUser.role}
+                                disabled={savingRoleFor === portalUser.uid}
+                                onChange={(event) => handleRoleChange(portalUser, event.target.value)}
+                                className="min-w-[10rem] rounded-[8px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] px-2 py-1.5 text-sm text-[var(--color-afta-text)] outline-none focus:border-[#c8102e]/50 disabled:opacity-60"
+                              >
+                                {assignableRoles.map((role) => (
+                                  <option key={role} value={role}>
+                                    {ROLE_LABELS[role]}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              ROLE_LABELS[portalUser.role] ?? portalUser.role
+                            )}
+                          </td>
                           <td className="px-4 py-3">{linked}</td>
                           <td className="px-4 py-3">
                             <span

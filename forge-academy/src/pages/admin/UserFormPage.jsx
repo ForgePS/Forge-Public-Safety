@@ -10,8 +10,8 @@ import {
   generateTempPassword,
   getPortalUserErrorMessage,
   resetPortalUserPassword,
-  updatePortalUser,
 } from "../../lib/portalUsers.js";
+import { savePortalUserProfile } from "../../lib/portalUserAdmin.js";
 import { ALL_ROLES, ROLE_LABELS, ROLES, canAssignPortalRole, isSystemSettingsAdmin } from "../../lib/roles.js";
 import { listStudents } from "../../lib/students.js";
 import { fetchUserProfile } from "../../lib/users.js";
@@ -214,7 +214,7 @@ export default function UserFormPage() {
         return;
       }
 
-      await updatePortalUser({
+      await savePortalUserProfile(currentUser?.role, {
         uid: userId,
         displayName: form.displayName,
         role: form.role,
@@ -320,8 +320,14 @@ export default function UserFormPage() {
             name="role"
             value={form.role}
             onChange={handleChange}
-            options={roleOptions}
+            options={roleOptions.length ? roleOptions : [{ value: form.role, label: ROLE_LABELS[form.role] ?? form.role }]}
           />
+          {!roleOptions.length ? (
+            <p className="text-sm text-amber-800">
+              Your account cannot assign portal roles. Ask a Super Admin or Creator to upgrade your
+              access.
+            </p>
+          ) : null}
 
           {isNew ? (
             <div>
