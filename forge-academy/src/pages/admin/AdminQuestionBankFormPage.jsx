@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader.jsx";
 import QuestionEditor, { buildQuestionPayload, emptyQuestion } from "../../components/QuestionEditor.jsx";
 import QuestionImportPanel from "../../components/QuestionImportPanel.jsx";
+import ForgeBuilderPanel from "../../components/aiBuilder/ForgeBuilderPanel.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
 import { FormField, FormSection, FormSelect, FormTextarea } from "../../components/StudentFormFields.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { listCourses } from "../../lib/courses.js";
@@ -52,6 +54,7 @@ export default function AdminQuestionBankFormPage() {
     () => Object.fromEntries(pools.map((pool) => [pool.id, pool.poolName])),
     [pools],
   );
+  const aiBuilderEnabled = useAiBuilderEnabled();
 
   async function reloadQuestionsAndPools(currentBankId = bankId) {
     if (!currentBankId) return;
@@ -288,6 +291,40 @@ export default function AdminQuestionBankFormPage() {
                   userId={user?.uid ?? ""}
                   onImported={reloadQuestionsAndPools}
                 />
+
+                {aiBuilderEnabled ? (
+                  <section className="rounded-[14px] border border-violet-200 bg-violet-50/30 p-5">
+                    <h2 className="text-sm font-semibold text-[var(--color-afta-text)]">AI question generation</h2>
+                    <p className="mt-1 text-xs text-[var(--color-afta-subtle)]">
+                      Upload a textbook chapter, PDF notes, or CSV and generate questions into this bank.
+                    </p>
+                    <div className="mt-4">
+                      <ForgeBuilderPanel
+                        targetType="questionBank"
+                        targetId={bankId}
+                        currentState={{ questions }}
+                        context={{ courseId: form.courseId, questionBankId: bankId, pools }}
+                        disabled={!bankId || !form.courseId}
+                        onApply={async (output) => {
+                          const generated = Array.isArray(output.questions) ? output.questions : [];
+                          const defaultPoolId = pools[0]?.id ?? "";
+                          for (const question of generated) {
+                            await createTestQuestion(
+                              {
+                                ...question,
+                                questionBankId: bankId,
+                                questionPoolId: defaultPoolId,
+                                courseId: form.courseId,
+                              },
+                              user?.uid ?? "",
+                            );
+                          }
+                          await reloadQuestionsAndPools();
+                        }}
+                      />
+                    </div>
+                  </section>
+                ) : null}
 
                 <section className="overflow-hidden rounded-[14px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] shadow-sm">
                   <div className="border-b border-[var(--color-afta-border)] px-5 py-4">

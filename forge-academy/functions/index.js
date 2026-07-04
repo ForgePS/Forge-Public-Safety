@@ -46,6 +46,7 @@ import {
 import { fetchPublishedGoogleSheet } from "./lib/googleSheetsFetch.js";
 import { getDigitalDisplayPayload } from "./lib/digitalDashboardPlayer.js";
 import { syncDigitalDashboardRssFeed } from "./lib/digitalDashboardRss.js";
+import { forgeAiBuild, logAiBuilderApply } from "./lib/aiBuilder.js";
 
 initializeApp();
 setGlobalOptions({
@@ -270,6 +271,9 @@ export const getDigitalDisplayPayloadCallable = onCall(async (request) => {
     throw new HttpsError("internal", error instanceof Error ? error.message : "Request failed.");
   }
 });
+
+export const forgeAiBuildCallable = wrapCallable(forgeAiBuild);
+export const logAiBuilderApplyCallable = wrapCallable(logAiBuilderApply);
 
 export const fetchPublishedGoogleSheetCallable = onCall(async (request) => {
   const url = String(request.data?.url ?? "").trim();

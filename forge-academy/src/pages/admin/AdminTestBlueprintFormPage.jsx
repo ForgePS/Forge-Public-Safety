@@ -15,6 +15,8 @@ import {
   updateTestBlueprint,
   validateBlueprint,
 } from "../../lib/testBlueprints.js";
+import ForgeBuilderPanel from "../../components/aiBuilder/ForgeBuilderPanel.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
 
 const emptyBlueprint = {
   testName: "",
@@ -47,6 +49,7 @@ export default function AdminTestBlueprintFormPage() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const aiBuilderEnabled = useAiBuilderEnabled();
 
   const configuredTotal = useMemo(
     () => poolRules.reduce((sum, rule) => sum + Number(rule.numberOfQuestions || 0), 0),
@@ -228,6 +231,42 @@ export default function AdminTestBlueprintFormPage() {
                 </div>
               </FormSection>
             </section>
+
+            {aiBuilderEnabled ? (
+              <section className="rounded-[14px] border border-violet-200 bg-violet-50/30 p-5">
+                <ForgeBuilderPanel
+                  targetType="testBlueprint"
+                  targetId={blueprintId ?? ""}
+                  currentState={buildPayload(courses.find((c) => c.id === form.courseId)?.name ?? "")}
+                  context={{
+                    pools: pools.map((pool) => ({ questionPoolId: pool.id, name: pool.poolName })),
+                    poolRules,
+                  }}
+                  onApply={(output) => {
+                    setForm((prev) => ({
+                      ...prev,
+                      testName: String(output.testName ?? prev.testName),
+                      totalQuestions: String(output.totalQuestions ?? prev.totalQuestions),
+                      passingScore: String(output.passingScore ?? prev.passingScore),
+                      timeLimitMinutes:
+                        output.timeLimitMinutes != null ? String(output.timeLimitMinutes) : prev.timeLimitMinutes,
+                      randomizeQuestions: output.randomizeQuestions !== false,
+                      randomizeAnswers: output.randomizeAnswers !== false,
+                      allowRetakes: Boolean(output.allowRetakes),
+                      maxAttempts: output.maxAttempts != null ? String(output.maxAttempts) : prev.maxAttempts,
+                    }));
+                    if (Array.isArray(output.poolRules) && output.poolRules.length) {
+                      setPoolRules(
+                        output.poolRules.map((rule) => ({
+                          questionPoolId: String(rule.questionPoolId ?? ""),
+                          numberOfQuestions: String(rule.numberOfQuestions ?? ""),
+                        })),
+                      );
+                    }
+                  }}
+                />
+              </section>
+            ) : null}
 
             <section className="rounded-[14px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] shadow-sm p-5">
               <div className="mb-4 flex items-center justify-between gap-3">

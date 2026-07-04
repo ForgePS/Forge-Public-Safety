@@ -1,0 +1,42 @@
+name: Deploy Forge Academy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "forge-academy/**"
+      - ".github/workflows/deploy-forge-academy.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: forge-academy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: forge-academy/package-lock.json
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FORGE_ACADEMY_FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install functions dependencies
+        run: npm ci
+        working-directory: forge-academy/functions
+
+      - name: Build hosting bundle
+        run: npm run build
+
+      - name: Deploy hosting, Firestore rules, and Cloud Functions
+        run: npx firebase-tools@13 deploy --only hosting,firestore:rules,functions --project forge-academy-95f84 --non-interactive
