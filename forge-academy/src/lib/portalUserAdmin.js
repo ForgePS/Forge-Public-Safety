@@ -39,13 +39,14 @@ export async function updatePortalUserProfileDirect(uid, patch) {
  * Change a portal user's role from the admin UI.
  * @param {import('./roles.js').Role | null | undefined} callerRole
  * @param {import('./users.js').AppUserRecord} targetUser
- * @param {import('./roles.js').Role} newRole
+ * @param {string} newRole
+ * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]
  */
-export async function savePortalUserRole(callerRole, targetUser, newRole) {
-  if (!canAssignPortalRole(callerRole, newRole)) {
+export async function savePortalUserRole(callerRole, targetUser, newRole, customById = {}) {
+  if (!canAssignPortalRole(callerRole, newRole, customById)) {
     throw new Error("You do not have permission to assign that role.");
   }
-  if (!canManagePortalUserWithRole(callerRole, targetUser.role)) {
+  if (!canManagePortalUserWithRole(callerRole, targetUser.role, customById)) {
     throw new Error("You do not have permission to manage this user.");
   }
   if (targetUser.role === newRole) return;
@@ -79,8 +80,9 @@ export async function savePortalUserRole(callerRole, targetUser, newRole) {
 /**
  * @param {import('./roles.js').Role | null | undefined} callerRole
  * @param {Record<string, unknown>} input
+ * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]
  */
-export async function savePortalUserProfile(callerRole, input) {
+export async function savePortalUserProfile(callerRole, input, customById = {}) {
   try {
     await updatePortalUser(input);
   } catch (error) {
@@ -92,7 +94,7 @@ export async function savePortalUserProfile(callerRole, input) {
     if (!uid) throw new Error("User id is required.");
 
     const targetRole = typeof input.role === "string" ? input.role : undefined;
-    if (targetRole && !canAssignPortalRole(callerRole, targetRole)) {
+    if (targetRole && !canAssignPortalRole(callerRole, targetRole, customById)) {
       throw new Error("You do not have permission to assign that role.");
     }
 

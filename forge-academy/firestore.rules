@@ -57,6 +57,15 @@ service cloud.firestore {
         && userDoc().studentId == studentId;
     }
 
+    function canManagePortalRoleDefinitions() {
+      return signedIn() && userRole() in ['creator', 'super_admin'];
+    }
+
+    match /portalRoleDefinitions/{roleId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if canManagePortalRoleDefinitions();
+    }
+
     match /users/{userId} {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if isAdmin()

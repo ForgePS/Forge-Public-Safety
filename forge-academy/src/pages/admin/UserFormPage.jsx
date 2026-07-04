@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import PageHeader from "../../components/PageHeader.jsx";
 import { FormField, FormSection, FormSelect } from "../../components/StudentFormFields.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { usePortalRoles } from "../../context/PortalRolesContext.jsx";
 import { listActiveDepartments } from "../../lib/departments.js";
 import { listInstructors, instructorDisplayName } from "../../lib/instructors.js";
 import {
@@ -12,7 +13,7 @@ import {
   resetPortalUserPassword,
 } from "../../lib/portalUsers.js";
 import { savePortalUserProfile } from "../../lib/portalUserAdmin.js";
-import { ALL_ROLES, ROLE_LABELS, ROLES, canAssignPortalRole, isSystemSettingsAdmin } from "../../lib/roles.js";
+import { ROLE_LABELS, ROLES, canAssignPortalRole, isAdminPortalRole, isSystemSettingsAdmin } from "../../lib/roles.js";
 import { listStudents } from "../../lib/students.js";
 import { fetchUserProfile } from "../../lib/users.js";
 import DigitalDashboardPermissionsEditor from "../../components/digitalDashboard/DigitalDashboardPermissionsEditor.jsx";
@@ -48,6 +49,7 @@ export default function UserFormPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user: currentUser } = useAuth();
+  const { customById, getRolePortalType, roleOptions } = usePortalRoles();
 
   const [form, setForm] = useState(() => ({
     ...emptyForm,
@@ -74,16 +76,24 @@ export default function UserFormPage() {
   const canManageDigitalDashboardPermissions = isSystemSettingsAdmin(currentUser?.role);
   const showDigitalDashboardPermissions =
     canManageDigitalDashboardPermissions &&
-    (form.role === ROLES.ACADEMY_ADMIN || form.role === ROLES.SUPER_ADMIN);
+    (form.role === ROLES.ACADEMY_ADMIN ||
+      form.role === ROLES.SUPER_ADMIN ||
+      isAdminPortalRole(form.role, customById));
 
-  const roleOptions = useMemo(
+  const assignableRoleOptions = useMemo(
     () =>
-      ALL_ROLES.filter((role) => canAssignPortalRole(currentUser?.role, role)).map((role) => ({
-        value: role,
-        label: ROLE_LABELS[role],
-      })),
-    [currentUser?.role],
+      roleOptions
+        .filter((option) => canAssignPortalRole(currentUser?.role, option.value, customById))
+        .map((option) => ({ value: option.value, label: option.label })),
+    [currentUser?.role, roleOptions, customById],
   );
+
+  const effectivePortalType = useMemo(() => {
+    if (form.role === ROLES.STUDENT) return "student";
+    if (form.role === ROLES.DEPARTMENT) return "department";
+    if (form.role === ROLES.INSTRUCTOR) return "instructor";
+    return getRolePortalType(form.role);
+  }, [form.role, getRolePortalType]);
 
   useEffect(() => {
     let active = true;
@@ -230,7 +240,7 @@ export default function UserFormPage() {
         profileUrl: form.profileUrl,
         organizationUnit: form.organizationUnit,
         staffSlug: form.staffSlug,
-      });
+      }, customById);
       setSuccess("Portal user updated.");
     } catch (err) {
       setError(getPortalUserErrorMessage(err));
@@ -320,9 +330,13 @@ export default function UserFormPage() {
             name="role"
             value={form.role}
             onChange={handleChange}
-            options={roleOptions.length ? roleOptions : [{ value: form.role, label: ROLE_LABELS[form.role] ?? form.role }]}
+            options={
+              assignableRoleOptions.length
+                ? assignableRoleOptions
+                : [{ value: form.role, label: ROLE_LABELS[form.role] ?? form.role }]
+            }
           />
-          {!roleOptions.length ? (
+          {!assignableRoleOptions.length ? (
             <p className="text-sm text-amber-800">
               Your account cannot assign portal roles. Ask a Super Admin or Creator to upgrade your
               access.
@@ -368,7 +382,7 @@ export default function UserFormPage() {
         </FormSection>
 
         <FormSection title="Role links">
-          {form.role === ROLES.DEPARTMENT ? (
+          {effectivePortalType === "department" ? (
             <FormSelect
               label="Department"
               name="departmentId"
@@ -385,7 +399,7 @@ export default function UserFormPage() {
             />
           ) : null}
 
-          {form.role === ROLES.STUDENT ? (
+          {effectivePortalType === "student" ? (
             <FormSelect
               label="Student record"
               name="studentId"
@@ -402,7 +416,7 @@ export default function UserFormPage() {
             />
           ) : null}
 
-          {form.role === ROLES.INSTRUCTOR ? (
+          {effectivePortalType === "instructor" ? (
             <>
               <FormSelect
                 label="Link existing instructor profile"
@@ -433,7 +447,10 @@ export default function UserFormPage() {
             </>
           ) : null}
 
-          {form.role === ROLES.ACADEMY_ADMIN || form.role === ROLES.CERTIFICATION_OFFICER ? (
+          {(form.role === ROLES.ACADEMY_ADMIN ||
+            form.role === ROLES.CERTIFICATION_OFFICER ||
+            effectivePortalType === "admin" ||
+            effectivePortalType === "certification") ? (
             <p className="text-sm text-[var(--color-afta-subtle)]">
               No additional record link is required for this role.
             </p>

@@ -4,6 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { ForgeOrgBadge, ForgeWordmark } from "../components/auth/ForgeLoginBrand.jsx";
 import { ForgeLoginThemeToggle } from "../components/auth/ForgeLoginThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import { usePortalRolesOptional } from "../context/PortalRolesContext.jsx";
 import { useForgeLoginTheme } from "../hooks/useForgeLoginTheme.js";
 import { homePathForRole, pathAllowedForRole } from "../lib/roles.js";
 
@@ -11,6 +12,8 @@ const ACADEMY_HOSTING_URL = "forge-academy-95f84.web.app";
 
 export default function LoginPage() {
   const { user, signIn, signingIn, error } = useAuth();
+  const portalRoles = usePortalRolesOptional();
+  const customById = portalRoles?.customById ?? {};
   const location = useLocation();
   const { theme, isDark, toggleTheme } = useForgeLoginTheme();
   const [email, setEmail] = useState("");
@@ -28,10 +31,10 @@ export default function LoginPage() {
   }
 
   if (user) {
-    const home = homePathForRole(user.role);
+    const home = homePathForRole(user.role, customById);
     const requested = location.state?.from;
     const redirect =
-      requested && pathAllowedForRole(user.role, requested) ? requested : home;
+      requested && pathAllowedForRole(user.role, requested, customById) ? requested : home;
     return <Navigate to={redirect} replace />;
   }
 

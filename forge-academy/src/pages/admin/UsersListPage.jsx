@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 import { Plus, Search } from "lucide-react";
 import PageHeader from "../../components/PageHeader.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { usePortalRoles } from "../../context/PortalRolesContext.jsx";
 import { listActiveDepartments } from "../../lib/departments.js";
 import {
-  ALL_ROLES,
   ROLE_LABELS,
   ROLES,
   canAssignPortalRole,
@@ -17,6 +17,7 @@ import { listAllPortalUsers } from "../../lib/users.js";
 
 export default function UsersListPage() {
   const { user: currentUser } = useAuth();
+  const { customById, getRoleLabel, getRolePortalType, roleOptions } = usePortalRoles();
   const [users, setUsers] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [students, setStudents] = useState([]);
@@ -78,6 +79,7 @@ export default function UsersListPage() {
         portalUser.email,
         portalUser.jobTitle,
         ROLE_LABELS[portalUser.role],
+        getRoleLabel(portalUser.role),
         departmentNames[portalUser.departmentId],
         studentNames[portalUser.studentId],
       ]
@@ -85,22 +87,22 @@ export default function UsersListPage() {
         .toLowerCase()
         .includes(term);
     });
-  }, [users, search, roleFilter, departmentNames, studentNames]);
+  }, [users, search, roleFilter, departmentNames, studentNames, getRoleLabel]);
 
   const assignableRoles = useMemo(
-    () => ALL_ROLES.filter((role) => canAssignPortalRole(currentUser?.role, role)),
-    [currentUser?.role],
+    () => roleOptions.filter((option) => canAssignPortalRole(currentUser?.role, option.value, customById)),
+    [currentUser?.role, roleOptions, customById],
   );
 
   const canEditRoles = canManagePortalUsers(currentUser?.role) && assignableRoles.length > 0;
 
   async function handleRoleChange(portalUser, newRole) {
     if (portalUser.role === newRole) return;
-    if (!canManagePortalUserWithRole(currentUser?.role, portalUser.role)) {
+    if (!canManagePortalUserWithRole(currentUser?.role, portalUser.role, customById)) {
       setError("You do not have permission to manage this user.");
       return;
     }
-    if (!canAssignPortalRole(currentUser?.role, newRole)) {
+    if (!canAssignPortalRole(currentUser?.role, newRole, customById)) {
       setError("You do not have permission to assign that role.");
       return;
     }
@@ -109,11 +111,11 @@ export default function UsersListPage() {
     setError(null);
     setSuccess(null);
     try {
-      await savePortalUserRole(currentUser?.role, portalUser, newRole);
+      await savePortalUserRole(currentUser?.role, portalUser, newRole, customById);
       setUsers((current) =>
         current.map((row) => (row.uid === portalUser.uid ? { ...row, role: newRole } : row)),
       );
-      setSuccess(`Updated ${portalUser.displayName} to ${ROLE_LABELS[newRole]}.`);
+      setSuccess(`Updated ${portalUser.displayName} to ${getRoleLabel(newRole)}.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to update role.");
     } finally {
@@ -166,9 +168,9 @@ export default function UsersListPage() {
             className="rounded-[10px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] px-3 py-2.5 text-sm text-[var(--color-afta-text)] outline-none"
           >
             <option value="all">All roles</option>
-            {Object.entries(ROLE_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
+            {roleOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
               </option>
             ))}
           </select>
@@ -216,11 +218,18 @@ export default function UsersListPage() {
 
                 {!loading
                   ? filtered.map((portalUser) => {
+                      const portalType =
+                        portalUser.role === ROLES.DEPARTMENT
+                          ? "department"
+                          : portalUser.role === ROLES.STUDENT
+                            ? "student"
+                            : getRolePortalType(portalUser.role);
+
                       let linked = "—";
-                      if (portalUser.role === ROLES.DEPARTMENT && portalUser.departmentId) {
+                      if (portalType === "department" && portalUser.departmentId) {
                         linked = departmentNames[portalUser.departmentId] || portalUser.departmentId;
                       }
-                      if (portalUser.role === ROLES.STUDENT && portalUser.studentId) {
+                      if (portalType === "student" && portalUser.studentId) {
                         linked = studentNames[portalUser.studentId] || portalUser.studentId;
                       }
 
@@ -249,21 +258,21 @@ export default function UsersListPage() {
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            {canEditRoles && canManagePortalUserWithRole(currentUser?.role, portalUser.role) ? (
+                            {canEditRoles && canManagePortalUserWithRole(currentUser?.role, portalUser.role, customById) ? (
                               <select
                                 value={portalUser.role}
                                 disabled={savingRoleFor === portalUser.uid}
                                 onChange={(event) => handleRoleChange(portalUser, event.target.value)}
                                 className="min-w-[10rem] rounded-[8px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] px-2 py-1.5 text-sm text-[var(--color-afta-text)] outline-none focus:border-[#c8102e]/50 disabled:opacity-60"
                               >
-                                {assignableRoles.map((role) => (
-                                  <option key={role} value={role}>
-                                    {ROLE_LABELS[role]}
+                                {assignableRoles.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
                                   </option>
                                 ))}
                               </select>
                             ) : (
-                              ROLE_LABELS[portalUser.role] ?? portalUser.role
+                              getRoleLabel(portalUser.role)
                             )}
                           </td>
                           <td className="px-4 py-3">{linked}</td>

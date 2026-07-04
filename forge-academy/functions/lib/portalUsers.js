@@ -66,22 +66,78 @@ function assertCanAssignRole(callerRole, role) {
   }
 }
 
-async function docExists(collection, id) {
-  if (!id) return false;
-  const snap = await getFirestore().doc(`${collection}/${id}`).get();
-  return snap.exists;
+async function getCustomRoleDefinition(role) {
+  const snap = await getFirestore().doc(`portalRoleDefinitions/${role}`).get();
+  if (!snap.exists()) return null;
+  const data = snap.data() ?? {};
+  if (data.status === "archived") return null;
+  const portalType = String(data.portalType ?? "");
+  if (!["admin", "student", "instructor", "department", "certification"].includes(portalType)) {
+    return null;
+  }
+  return { id: snap.id, portalType, status: "active" };
 }
 
-function validateRoleLinks(role, { departmentId, studentId }) {
-  if (role === "department_training_officer" && !departmentId) {
+async function assertValidPortalRole(role) {
+  if (VALID_ROLES.has(role)) return { isSystem: true, portalType: systemPortalType(role) };
+  const custom = await getCustomRoleDefinition(role);
+  if (!custom) {
+    throw new HttpsError("invalid-argument", "Invalid portal role.");
+  }
+  return { isSystem: false, portalType: custom.portalType };
+}
+
+async function assertCanAssignPortalRole(callerRole, role) {
+  assertCanAssignRole(callerRole, role);
+  if (VALID_ROLES.has(role)) return assertValidPortalRole(role);
+
+  const custom = await getCustomRoleDefinition(role);
+  if (!custom) {
+    throw new HttpsError("invalid-argument", "Invalid portal role.");
+  }
+  if (custom.portalType === "admin" && callerRole === "academy_admin") {
+    throw new HttpsError(
+      "permission-denied",
+      "Academy admins cannot assign admin portal custom roles.",
+    );
+  }
+  if (!ADMIN_ROLES.has(callerRole)) {
+    throw new HttpsError("permission-denied", "Academy admin access is required.");
+  }
+  return { isSystem: false, portalType: custom.portalType };
+}
+
+function systemPortalType(role) {
+  switch (role) {
+    case "student":
+      return "student";
+    case "department_training_officer":
+      return "department";
+    case "instructor":
+      return "instructor";
+    case "certification_officer":
+      return "certification";
+    default:
+      return "admin";
+  }
+}
+
+function validateRoleLinksForPortalType(portalType, { departmentId, studentId }) {
+  if (portalType === "department" && !departmentId) {
     throw new HttpsError("invalid-argument", "Department users require a department link.");
   }
-  if (role === "student" && !studentId) {
+  if (portalType === "student" && !studentId) {
     throw new HttpsError(
       "invalid-argument",
       "Student portal accounts require a linked student record.",
     );
   }
+}
+
+async function docExists(collection, id) {
+  if (!id) return false;
+  const snap = await getFirestore().doc(`${collection}/${id}`).get();
+  return snap.exists;
 }
 
 function buildProfilePayload({
@@ -155,12 +211,9 @@ export async function createPortalUserAccount(callerUid, input) {
   if (password.length < 8) {
     throw new HttpsError("invalid-argument", "Password must be at least 8 characters.");
   }
-  if (!VALID_ROLES.has(role)) {
-    throw new HttpsError("invalid-argument", "Invalid portal role.");
-  }
-  assertCanAssignRole(callerRole, role);
+  const roleDefinition = await assertCanAssignPortalRole(callerRole, role);
 
-  validateRoleLinks(role, { departmentId, studentId });
+  validateRoleLinksForPortalType(roleDefinition.portalType, { departmentId, studentId });
 
   if (departmentId && !(await docExists("departments", departmentId))) {
     throw new HttpsError("invalid-argument", "Selected department was not found.");
@@ -211,7 +264,7 @@ export async function createPortalUserAccount(callerUid, input) {
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    if (role === "instructor") {
+    if (roleDefinition.portalType === "instructor") {
       if (instructorId) {
         await db.doc(`instructors/${instructorId}`).update({
           userId: authUser.uid,
@@ -263,12 +316,9 @@ export async function updatePortalUserAccount(callerUid, input) {
   if (!displayName || !role) {
     throw new HttpsError("invalid-argument", "Display name and role are required.");
   }
-  if (!VALID_ROLES.has(role)) {
-    throw new HttpsError("invalid-argument", "Invalid portal role.");
-  }
-  assertCanAssignRole(callerRole, role);
+  const roleDefinition = await assertCanAssignPortalRole(callerRole, role);
 
-  validateRoleLinks(role, { departmentId, studentId });
+  validateRoleLinksForPortalType(roleDefinition.portalType, { departmentId, studentId });
 
   const db = getFirestore();
   const userRef = db.doc(`users/${uid}`);
@@ -307,7 +357,7 @@ export async function updatePortalUserAccount(callerUid, input) {
     disabled: Boolean(disabled),
   });
 
-  if (role === "instructor" && instructorId) {
+  if (roleDefinition.portalType === "instructor" && instructorId) {
     await db.doc(`instructors/${instructorId}`).update({
       userId: uid,
       updatedAt: FieldValue.serverTimestamp(),

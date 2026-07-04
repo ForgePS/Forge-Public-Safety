@@ -91,6 +91,7 @@ import AdminTestingAuditPage from "./pages/admin/AdminTestingAuditPage.jsx";
 import AdminLmsIntegrationPage from "./pages/admin/AdminLmsIntegrationPage.jsx";
 import AdminSystemSettingsPage from "./pages/admin/AdminSystemSettingsPage.jsx";
 import AdminCreatorConsolePage from "./pages/admin/AdminCreatorConsolePage.jsx";
+import AdminPortalRolesPage from "./pages/admin/AdminPortalRolesPage.jsx";
 import AdminPortalShell from "./components/AdminPortalShell.jsx";
 import ModuleGuard, { VerifyModuleGuard } from "./components/ModuleGuard.jsx";
 import StudentPortalShell, {
@@ -163,6 +164,7 @@ export default function App() {
           <Route path="/admin/users/new" element={<UserFormPage />} />
           <Route path="/admin/users/:userId" element={<UserFormPage />} />
           <Route path="/admin/creator" element={<AdminCreatorConsolePage />} />
+          <Route path="/admin/roles" element={<AdminPortalRolesPage />} />
           <Route
             path="/admin/settings"
             element={

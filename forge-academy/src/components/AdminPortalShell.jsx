@@ -18,6 +18,7 @@ import {
   Settings,
   Shield,
   Sparkles,
+  Tags,
   UserCog,
   Users,
 } from "lucide-react";
@@ -53,6 +54,7 @@ const adminNavBase = [
   { group: "Reports", label: "Digital Dashboard", to: "/admin/digital-dashboard", icon: MonitorPlay, module: "digitalDashboard" },
 
   { group: "System", label: "Creator Console", to: "/admin/creator", icon: Shield, platformManagerOnly: true },
+  { group: "System", label: "Portal Roles", to: "/admin/roles", icon: Tags, platformManagerOnly: true },
   { group: "System", label: "System Settings", to: "/admin/settings", icon: Settings, settingsOnly: true },
   { group: "System", label: "Pilot Release", to: "/admin/pilot", icon: Rocket, pilotOnly: true },
 ];
