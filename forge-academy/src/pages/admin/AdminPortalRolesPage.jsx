@@ -4,6 +4,7 @@ import PageHeader from "../../components/PageHeader.jsx";
 import { FormField, FormSelect } from "../../components/StudentFormFields.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { usePortalRoles } from "../../context/PortalRolesContext.jsx";
+import { usePortalDefinitions } from "../../context/PortalDefinitionsContext.jsx";
 import {
   PORTAL_TYPE_OPTIONS,
   archivePortalRoleDefinition,
@@ -29,9 +30,35 @@ const emptyForm = {
   portalType: "student",
 };
 
+function parsePortalTypeSelection(value) {
+  if (String(value).startsWith("custom:")) {
+    return {
+      portalType: "custom",
+      customPortalSlug: String(value).slice("custom:".length),
+    };
+  }
+  return { portalType: value, customPortalSlug: "" };
+}
+
+function formatPortalTypeSelection(role) {
+  if (role.portalType === "custom" && role.customPortalSlug) {
+    return `custom:${role.customPortalSlug}`;
+  }
+  return role.portalType;
+}
+
+function portalAccessLabel(role, customPortalsBySlug) {
+  if (role.portalType === "custom" && role.customPortalSlug) {
+    const portal = customPortalsBySlug[role.customPortalSlug];
+    return portal ? `${portal.label} (/p/${role.customPortalSlug})` : `Custom (/p/${role.customPortalSlug})`;
+  }
+  return PORTAL_TYPE_OPTIONS.find((option) => option.value === role.portalType)?.label ?? role.portalType;
+}
+
 export default function AdminPortalRolesPage() {
   const { user } = useAuth();
   const { reload: reloadAssignableRoles } = usePortalRoles();
+  const { portals: customPortals, bySlug: customPortalsBySlug } = usePortalDefinitions();
   const [roles, setRoles] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -43,20 +70,25 @@ export default function AdminPortalRolesPage() {
   const canManage = canManagePortalRoleDefinitions(user?.role);
   const canManageAdminRoles = canManageAdminPortalAccessRoles(user?.role);
 
-  const portalTypeOptions = useMemo(
-    () =>
-      canManageAdminRoles
-        ? PORTAL_TYPE_OPTIONS
-        : PORTAL_TYPE_OPTIONS.filter((option) => option.value !== "admin"),
-    [canManageAdminRoles],
-  );
+  const portalTypeOptions = useMemo(() => {
+    const builtin = canManageAdminRoles
+      ? PORTAL_TYPE_OPTIONS
+      : PORTAL_TYPE_OPTIONS.filter((option) => option.value !== "admin");
+    const custom = customPortals.map((portal) => ({
+      value: `custom:${portal.slug}`,
+      label: `${portal.label} (/p/${portal.slug})`,
+    }));
+    return [...builtin, ...custom];
+  }, [canManageAdminRoles, customPortals]);
+
+  const selectedPortal = parsePortalTypeSelection(form.portalType);
 
   const editingRole = useMemo(
     () => roles.find((role) => role.id === editingId) ?? null,
     [roles, editingId],
   );
 
-  const canSaveCurrentForm = canManagePortalAccessRoleType(user?.role, form.portalType)
+  const canSaveCurrentForm = canManagePortalAccessRoleType(user?.role, selectedPortal.portalType)
     && (!editingRole || canEditPortalRoleDefinition(user?.role, editingRole));
 
   async function loadRoles() {
@@ -101,7 +133,7 @@ export default function AdminPortalRolesPage() {
       roleId: role.id,
       label: role.label,
       description: role.description,
-      portalType: role.portalType,
+      portalType: formatPortalTypeSelection(role),
     });
     setSuccess(null);
     setError(null);
@@ -120,7 +152,8 @@ export default function AdminPortalRolesPage() {
     setSuccess(null);
     try {
       const roleId = editingId || validateCustomRoleId(form.roleId);
-      if (!canManagePortalAccessRoleType(user.role, form.portalType)) {
+      const portalSelection = parsePortalTypeSelection(form.portalType);
+      if (!canManagePortalAccessRoleType(user.role, portalSelection.portalType)) {
         throw new Error("You do not have permission to create admin portal access roles.");
       }
       await savePortalRoleDefinition(
@@ -128,7 +161,8 @@ export default function AdminPortalRolesPage() {
         {
           label: form.label,
           description: form.description,
-          portalType: form.portalType,
+          portalType: portalSelection.portalType,
+          customPortalSlug: portalSelection.customPortalSlug,
           status: "active",
         },
         user.uid,
@@ -272,8 +306,7 @@ export default function AdminPortalRolesPage() {
                           <p className="text-xs text-[var(--color-afta-muted)]">{role.id}</p>
                         </td>
                         <td className="px-3 py-2">
-                          {PORTAL_TYPE_OPTIONS.find((option) => option.value === role.portalType)?.label
-                            ?? role.portalType}
+                          {portalAccessLabel(role, customPortalsBySlug)}
                         </td>
                         <td className="px-3 py-2">{role.status}</td>
                         <td className="px-3 py-2">
@@ -340,7 +373,7 @@ export default function AdminPortalRolesPage() {
               disabled={Boolean(editingId && editingRole?.portalType === "admin" && !canManageAdminRoles)}
             />
             <p className="text-xs text-[var(--color-afta-muted)]">
-              Portal access controls which area users land in after sign-in. Student and department roles still need linked records on the user profile.
+              Portal access controls which area users land in after sign-in. Custom portals must be created under Portal Access first.
             </p>
             <div className="flex flex-wrap gap-2">
               <button type="submit" disabled={saving || !canSaveCurrentForm} className="app-btn-primary px-4 py-2 text-xs disabled:opacity-60">

@@ -104,7 +104,9 @@ export function canManageAdminPortalAccessRoles(role) {
 export function canManagePortalAccessRoleType(callerRole, portalType) {
   if (!callerRole) return false;
   if (canManageAllPortalRoles(callerRole)) return true;
-  if (callerRole === ROLES.ACADEMY_ADMIN) return portalType !== "admin";
+  if (callerRole === ROLES.ACADEMY_ADMIN) {
+    return portalType !== "admin";
+  }
   return false;
 }
 
@@ -181,13 +183,30 @@ const PATH_ROLE_PREFIXES = [
  * @param {Role | null | undefined} role
  * @param {string} pathname
  * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]
+ * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [customPortalsBySlug]
  */
-export function pathAllowedForRole(role, pathname, customById = {}) {
+export function pathAllowedForRole(role, pathname, customById = {}, customPortalsBySlug = {}) {
   if (!role || !pathname) return false;
   if (pathname.startsWith("/verify/")) return true;
 
+  const customSlugMatch = pathname.match(/^\/p\/([^/]+)/);
+  if (customSlugMatch) {
+    const slug = customSlugMatch[1];
+    if (isFullAdmin(role)) return true;
+    const custom = customById[role];
+    if (
+      custom?.status === "active" &&
+      custom.portalType === "custom" &&
+      custom.customPortalSlug === slug &&
+      customPortalsBySlug[slug]
+    ) {
+      return true;
+    }
+    return false;
+  }
+
   const custom = customById[role];
-  if (custom?.status === "active") {
+  if (custom?.status === "active" && custom.portalType !== "custom") {
     const prefixByPortalType = {
       admin: "/admin",
       student: "/student",
@@ -216,12 +235,20 @@ export function pathAllowedForRole(role, pathname, customById = {}) {
 /**
  * @param {Role | null | undefined} role
  * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]
+ * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [customPortalsBySlug]
  */
-export function homePathForRole(role, customById = {}) {
+export function homePathForRole(role, customById = {}, customPortalsBySlug = {}) {
   if (!role) return "/login";
   if (ROLE_HOME_PATHS[role]) return ROLE_HOME_PATHS[role];
   const custom = customById[role];
   if (!custom || custom.status !== "active") return "/login";
+  if (custom.portalType === "custom" && custom.customPortalSlug) {
+    const slug = custom.customPortalSlug;
+    if (customPortalsBySlug[slug]) {
+      return `/p/${slug}`;
+    }
+    return "/login";
+  }
   const paths = {
     admin: "/admin",
     student: "/student",

@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import { PortalRolesProvider } from "./context/PortalRolesContext.jsx";
+import { PortalDefinitionsProvider } from "./context/PortalDefinitionsContext.jsx";
 import { PortalThemeProvider } from "./context/PortalThemeContext.jsx";
 import { SystemSettingsProvider } from "./context/SystemSettingsContext.jsx";
 import MaintenanceGate from "./components/SystemSettingsRoute.jsx";
@@ -15,11 +16,13 @@ createRoot(document.getElementById("root")).render(
       <PortalThemeProvider>
         <AuthProvider>
           <PortalRolesProvider>
-            <SystemSettingsProvider>
-              <MaintenanceGate>
-                <App />
-              </MaintenanceGate>
-            </SystemSettingsProvider>
+            <PortalDefinitionsProvider>
+              <SystemSettingsProvider>
+                <MaintenanceGate>
+                  <App />
+                </MaintenanceGate>
+              </SystemSettingsProvider>
+            </PortalDefinitionsProvider>
           </PortalRolesProvider>
         </AuthProvider>
       </PortalThemeProvider>
