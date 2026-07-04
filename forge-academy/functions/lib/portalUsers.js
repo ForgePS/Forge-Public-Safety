@@ -71,11 +71,24 @@ async function getCustomRoleDefinition(role) {
   if (!snap.exists()) return null;
   const data = snap.data() ?? {};
   if (data.status === "archived") return null;
-  const portalType = String(data.portalType ?? "");
-  if (!["admin", "student", "instructor", "department", "certification"].includes(portalType)) {
-    return null;
+
+  let portalType = String(data.portalType ?? "");
+  if (portalType === "custom" && data.customPortalSlug) {
+    portalType = String(data.customPortalSlug);
   }
-  return { id: snap.id, portalType, status: "active" };
+  if (!portalType) return null;
+
+  const builtin = ["admin", "student", "instructor", "department", "certification"];
+  if (builtin.includes(portalType)) {
+    return { id: snap.id, portalType, status: "active" };
+  }
+
+  const portalSnap = await getFirestore().doc(`portalDefinitions/${portalType}`).get();
+  if (portalSnap.exists() && portalSnap.data()?.status !== "archived") {
+    return { id: snap.id, portalType, status: "active" };
+  }
+
+  return null;
 }
 
 async function assertValidPortalRole(role) {

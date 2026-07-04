@@ -170,6 +170,8 @@ export function roleAllowed(role, allowed) {
   return false;
 }
 
+import { portalPathFromSlug } from "./portalDefinitions.js";
+
 /** @type {{ prefix: string, roles: Role[] }[]} */
 const PATH_ROLE_PREFIXES = [
   { prefix: "/admin", roles: [ROLES.ACADEMY_ADMIN, ROLES.SUPER_ADMIN, ROLES.CREATOR] },
@@ -179,42 +181,33 @@ const PATH_ROLE_PREFIXES = [
   { prefix: "/certification", roles: [ROLES.CERTIFICATION_OFFICER] },
 ];
 
+const BUILTIN_PORTAL_PREFIXES = {
+  admin: "/admin",
+  student: "/student",
+  instructor: "/instructor",
+  department: "/department",
+  certification: "/certification",
+};
+
 /**
  * @param {Role | null | undefined} role
  * @param {string} pathname
  * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]
- * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [customPortalsBySlug]
+ * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [definedPortalsBySlug]
  */
-export function pathAllowedForRole(role, pathname, customById = {}, customPortalsBySlug = {}) {
+export function pathAllowedForRole(role, pathname, customById = {}, definedPortalsBySlug = {}) {
   if (!role || !pathname) return false;
   if (pathname.startsWith("/verify/")) return true;
 
-  const customSlugMatch = pathname.match(/^\/p\/([^/]+)/);
-  if (customSlugMatch) {
-    const slug = customSlugMatch[1];
-    if (isFullAdmin(role)) return true;
-    const custom = customById[role];
-    if (
-      custom?.status === "active" &&
-      custom.portalType === "custom" &&
-      custom.customPortalSlug === slug &&
-      customPortalsBySlug[slug]
-    ) {
-      return true;
-    }
-    return false;
-  }
-
   const custom = customById[role];
-  if (custom?.status === "active" && custom.portalType !== "custom") {
-    const prefixByPortalType = {
-      admin: "/admin",
-      student: "/student",
-      instructor: "/instructor",
-      department: "/department",
-      certification: "/certification",
-    };
-    const prefix = prefixByPortalType[custom.portalType];
+  if (custom?.status === "active") {
+    let portalType = custom.portalType;
+    if (portalType === "custom" && custom.customPortalSlug) {
+      portalType = custom.customPortalSlug;
+    }
+    const prefix =
+      BUILTIN_PORTAL_PREFIXES[portalType] ??
+      (definedPortalsBySlug[portalType] ? portalPathFromSlug(portalType) : null);
     if (prefix && (pathname === prefix || pathname.startsWith(`${prefix}/`))) {
       return true;
     }
@@ -229,34 +222,37 @@ export function pathAllowedForRole(role, pathname, customById = {}, customPortal
     }
   }
 
+  const definedSlug = pathname.match(/^\/([^/]+)/)?.[1];
+  if (definedSlug && definedPortalsBySlug[definedSlug] && isFullAdmin(role)) {
+    return true;
+  }
+
   return pathname === "/" || pathname === "/login";
 }
 
 /**
  * @param {Role | null | undefined} role
  * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]
- * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [customPortalsBySlug]
+ * @param {Record<string, import('./portalDefinitions.js').PortalDefinition>} [definedPortalsBySlug]
  */
-export function homePathForRole(role, customById = {}, customPortalsBySlug = {}) {
+export function homePathForRole(role, customById = {}, definedPortalsBySlug = {}) {
   if (!role) return "/login";
   if (ROLE_HOME_PATHS[role]) return ROLE_HOME_PATHS[role];
   const custom = customById[role];
   if (!custom || custom.status !== "active") return "/login";
-  if (custom.portalType === "custom" && custom.customPortalSlug) {
-    const slug = custom.customPortalSlug;
-    if (customPortalsBySlug[slug]) {
-      return `/p/${slug}`;
-    }
-    return "/login";
+
+  let portalType = custom.portalType;
+  if (portalType === "custom" && custom.customPortalSlug) {
+    portalType = custom.customPortalSlug;
   }
-  const paths = {
-    admin: "/admin",
-    student: "/student",
-    instructor: "/instructor",
-    department: "/department",
-    certification: "/certification",
-  };
-  return paths[custom.portalType] ?? "/login";
+
+  if (BUILTIN_PORTAL_PREFIXES[portalType]) {
+    return BUILTIN_PORTAL_PREFIXES[portalType];
+  }
+  if (definedPortalsBySlug[portalType]) {
+    return portalPathFromSlug(portalType);
+  }
+  return "/login";
 }
 
 /**
