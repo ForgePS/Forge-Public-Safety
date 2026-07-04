@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
+import BackButton from "../components/BackButton.jsx";
 import CertificateDisplay from "../components/CertificateDisplay.jsx";
 import { validateCertificateCode } from "../lib/certificates.js";
 import { resolveCertificateTemplate } from "../lib/certificateTemplates.js";
@@ -57,6 +58,7 @@ export default function CertificateVerifyPage() {
   return (
     <div className="min-h-screen bg-[var(--color-afta-bg)] px-4 py-10">
       <div className="mx-auto max-w-4xl">
+        <BackButton hideOnHome={false} className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-afta-muted)] hover:text-[#c8102e]" />
         <div className="mb-6 text-center">
           <p className="text-sm font-semibold text-[var(--color-afta-text)]">Forge Academy Certificate Verification</p>
           <p className="mt-1 text-xs text-[var(--color-afta-muted)]">Arkansas Fire Training Academy</p>

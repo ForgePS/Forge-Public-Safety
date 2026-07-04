@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
+import BackButton from "./BackButton.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ROLE_LABELS } from "../lib/roles.js";
 import NotificationBell from "./NotificationBell.jsx";
@@ -29,9 +30,12 @@ export default function DashboardTopBar({ portalTitle = "Arkansas Fire Training 
 
   return (
     <div className="no-print flex flex-col gap-3 border-b border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] px-6 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-7">
-      <div>
-        <p className="text-sm font-semibold text-[var(--color-afta-text)]">Welcome, {firstName}</p>
-        <p className="mt-0.5 text-xs text-[var(--color-afta-muted)]">{portalTitle}</p>
+      <div className="flex items-center gap-4">
+        <BackButton hideOnHome={false} />
+        <div>
+          <p className="text-sm font-semibold text-[var(--color-afta-text)]">Welcome, {firstName}</p>
+          <p className="mt-0.5 text-xs text-[var(--color-afta-muted)]">{portalTitle}</p>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <p className="hidden text-xs text-[var(--color-afta-muted)] sm:block">{formatToday()}</p>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import BackButton from "../components/BackButton.jsx";
 import DiningWeekSlideView from "../components/digitalDashboard/DiningWeekSlideView.jsx";
 import DisplaySignageViewport from "../components/digitalDashboard/DisplaySignageViewport.jsx";
 import PublishedSheetSlideView from "../components/digitalDashboard/PublishedSheetSlideView.jsx";
@@ -327,7 +328,10 @@ export default function DigitalDisplayPlayerPage() {
   if (loading) {
     return (
       <DisplaySignageViewport>
-        <div className="grid h-full w-full place-items-center bg-black text-white">
+        <div className="relative grid h-full w-full place-items-center bg-black text-white">
+          <div className="absolute left-4 top-4 z-10">
+            <BackButton hideOnHome={false} label="Back" className="inline-flex items-center gap-1.5 rounded-lg bg-black/60 px-3 py-2 text-xs font-semibold text-white hover:bg-black/80" />
+          </div>
           <p className="text-lg">Loading display…</p>
         </div>
       </DisplaySignageViewport>
@@ -337,7 +341,10 @@ export default function DigitalDisplayPlayerPage() {
   if (error) {
     return (
       <DisplaySignageViewport>
-        <div className="grid h-full w-full place-items-center bg-black px-6 text-center text-white">
+        <div className="relative grid h-full w-full place-items-center bg-black px-6 text-center text-white">
+          <div className="absolute left-4 top-4 z-10">
+            <BackButton hideOnHome={false} label="Back" className="inline-flex items-center gap-1.5 rounded-lg bg-black/60 px-3 py-2 text-xs font-semibold text-white hover:bg-black/80" />
+          </div>
           <p className="text-lg text-red-300">{error}</p>
         </div>
       </DisplaySignageViewport>
@@ -347,6 +354,9 @@ export default function DigitalDisplayPlayerPage() {
   return (
     <DisplaySignageViewport>
       <div className="relative h-full w-full overflow-hidden">
+        <div className="absolute left-4 top-4 z-20">
+          <BackButton hideOnHome={false} label="Back" className="inline-flex items-center gap-1.5 rounded-lg bg-black/60 px-3 py-2 text-xs font-semibold text-white hover:bg-black/80" />
+        </div>
         {useLayout ? (
           <LayoutBoard layout={layout} />
         ) : (

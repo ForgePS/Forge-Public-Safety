@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import BackButton from "../components/BackButton.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { ROLE_HOME_PATHS, ROLE_LABELS, homePathForRole } from "../lib/roles.js";
 
@@ -20,6 +21,7 @@ export default function UnauthorizedPage() {
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--color-afta-bg)] px-4 py-10">
       <div className="max-w-lg rounded-[18px] border border-[var(--color-afta-border)] bg-[var(--color-afta-surface)] p-8">
+        <BackButton to={home} label="Back" hideOnHome={false} className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-afta-muted)] hover:text-[#c8102e]" />
         <h1 className="text-xl font-semibold text-[var(--color-afta-text)]">Access denied</h1>
         <p className="mt-3 text-sm leading-relaxed text-[var(--color-afta-subtle)]">
           Your account does not have permission to view that page.

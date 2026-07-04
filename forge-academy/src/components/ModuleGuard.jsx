@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from "react-router-dom";
+import BackButton from "./BackButton.jsx";
 import { useSystemSettingsOptional } from "../context/SystemSettingsContext.jsx";
 import { isPortalPathAllowed, MODULE_LABELS } from "../lib/moduleAccess.js";
 
@@ -24,6 +25,7 @@ export default function ModuleGuard({ portal, homePath }) {
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-8">
       <div className="app-panel max-w-lg p-8 text-center">
+        <BackButton hideOnHome={false} className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-afta-muted)] hover:text-[#c8102e]" />
         <h2 className="text-lg font-semibold text-[var(--color-afta-text)]">Module unavailable</h2>
         <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">
           {rule} is turned off in system settings. Contact a Creator or Super Admin if you need access.
@@ -80,6 +82,7 @@ export function VerifyModuleGuard({ children }) {
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--color-afta-bg)] p-6">
       <div className="app-panel max-w-lg p-8 text-center">
+        <BackButton hideOnHome={false} className="mb-4 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-afta-muted)] hover:text-[#c8102e]" />
         <h1 className="text-lg font-semibold text-[var(--color-afta-text)]">Verification unavailable</h1>
         <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">
           Public certificate verification is disabled in system settings.

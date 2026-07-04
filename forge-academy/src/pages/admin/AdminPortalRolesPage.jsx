@@ -150,15 +150,12 @@ export default function AdminPortalRolesPage() {
 
   if (!canManage) {
     return (
-      <div className="p-7">
-        <h2 className="text-lg font-semibold text-[var(--color-afta-text)]">Access denied</h2>
-        <p className="mt-2 text-sm text-[var(--color-afta-subtle)]">
-          Only Creator and Super Admin accounts can manage custom portal roles.
-        </p>
-        <Link to="/admin/users" className="app-btn-secondary mt-4 inline-block px-4 py-2 text-xs">
-          Back to portal users
-        </Link>
-      </div>
+      <PageHeader
+        title="Access denied"
+        subtitle="Only Creator and Super Admin accounts can manage custom portal roles."
+        backTo="/admin/users"
+        backLabel="Back to portal users"
+      />
     );
   }
 
