@@ -12,6 +12,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         working-directory: forge-academy
@@ -24,19 +27,13 @@ jobs:
           cache: npm
           cache-dependency-path: forge-academy/package-lock.json
 
-      - name: Require FIREBASE_TOKEN
+      - name: Require deploy credentials
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          WIF_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
         run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "::error::GitHub secret FIREBASE_TOKEN is not set."
-            echo ""
-            echo "Run locally (no JSON key needed):"
-            echo "  cd forge-academy && npx firebase-tools login:ci"
-            echo ""
-            echo "Paste the printed token as repo secret FIREBASE_TOKEN, then re-run this workflow."
-            echo ""
-            echo "Or deploy from your machine: firebase login && npm run deploy"
+          if [ -z "$FIREBASE_TOKEN" ] && [ -z "$WIF_PROVIDER" ]; then
+            echo "::error::No deploy credentials. Set FIREBASE_TOKEN and/or GCP Workload Identity vars (see forge-academy/docs/DEPLOY.md)."
             exit 1
           fi
 
@@ -50,14 +47,70 @@ jobs:
       - name: Build hosting bundle
         run: npm run build
 
-      - name: Deploy hosting, Firestore rules, and Cloud Functions
+      - name: Deploy hosting and Firestore rules
+        if: ${{ secrets.FIREBASE_TOKEN != '' }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
-          DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs)
-          echo "Deploy targets: $DEPLOY_ONLY"
           npx firebase-tools@13 deploy \
-            --only "$DEPLOY_ONLY" \
+            --only "$(node scripts/firebase-deploy-targets.mjs hosting)" \
             --project forge-academy-95f84 \
             --non-interactive \
             --token "$FIREBASE_TOKEN"
+
+      - name: Authenticate for Cloud Functions (Workload Identity)
+        if: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT_EMAIL }}
+
+      - name: Deploy Cloud Functions
+        id: functions
+        continue-on-error: true
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          WIF_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        run: |
+          DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs functions)
+          COUNT=$(echo "$DEPLOY_ONLY" | tr ',' '\n' | wc -l)
+          echo "Deploying $COUNT Cloud Functions"
+
+          if [ -n "$WIF_PROVIDER" ]; then
+            npx firebase-tools@13 deploy \
+              --only "$DEPLOY_ONLY" \
+              --project forge-academy-95f84 \
+              --non-interactive \
+              --debug
+          elif [ -n "$FIREBASE_TOKEN" ]; then
+            npx firebase-tools@13 deploy \
+              --only "$DEPLOY_ONLY" \
+              --project forge-academy-95f84 \
+              --non-interactive \
+              --token "$FIREBASE_TOKEN" \
+              --debug
+          else
+            echo "::error::Cloud Functions need Workload Identity or local deploy."
+            exit 1
+          fi
+
+      - name: Post deploy summary
+        if: always()
+        run: |
+          {
+            echo "## Forge Academy deploy"
+            echo ""
+            if [ "${{ steps.functions.outcome }}" = "success" ]; then
+              echo "- Cloud Functions: deployed"
+            else
+              echo "- Cloud Functions: **failed in CI** (common with FIREBASE_TOKEN only)"
+              echo "- Run locally: \`cd forge-academy && npx firebase-tools login && npm run deploy:functions\`"
+              echo "- See \`forge-academy/docs/DEPLOY.md\` for Workload Identity setup (no JSON keys)"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail if functions did not deploy (WIF configured)
+        if: steps.functions.outcome != 'success' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != ''
+        run: |
+          echo "::error::Cloud Functions deploy failed with Workload Identity configured."
+          exit 1

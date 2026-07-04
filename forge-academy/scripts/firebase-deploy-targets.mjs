@@ -11,5 +11,13 @@ if (!functionNames.length) {
   process.exit(1);
 }
 
-const targets = ["hosting", "firestore:rules", ...functionNames.map((name) => `functions:${name}`)];
-process.stdout.write(targets.join(","));
+const mode = process.argv[2] ?? "all";
+const functionTargets = functionNames.map((name) => `functions:${name}`);
+
+if (mode === "hosting") {
+  process.stdout.write("hosting,firestore:rules");
+} else if (mode === "functions") {
+  process.stdout.write(functionTargets.join(","));
+} else {
+  process.stdout.write(["hosting", "firestore:rules", ...functionTargets].join(","));
+}
