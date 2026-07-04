@@ -5,6 +5,7 @@
  *
  * Usage:
  *   gcloud auth application-default login
+ *   gcloud auth application-default set-quota-project forge-academy-95f84
  *   node scripts/import-afta-staff.mjs
  *   node scripts/import-afta-staff.mjs --dry-run
  *   node scripts/import-afta-staff.mjs --create-missing-only
@@ -28,6 +29,16 @@ const PROJECT_ID = "forge-academy-95f84";
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
 const createMissingOnly = args.has("--create-missing-only");
+
+function useApplicationDefaultCredentials() {
+  process.env.GOOGLE_CLOUD_PROJECT ??= PROJECT_ID;
+  process.env.GOOGLE_CLOUD_QUOTA_PROJECT ??= PROJECT_ID;
+
+  initializeApp({
+    credential: applicationDefault(),
+    projectId: PROJECT_ID,
+  });
+}
 
 function initAdmin() {
   if (getApps().length) return;
@@ -58,26 +69,27 @@ function initAdmin() {
     }
   }
 
-  initializeApp({
-    credential: applicationDefault(),
-    projectId: PROJECT_ID,
-  });
+  useApplicationDefaultCredentials();
 }
 
 function printAuthHelp(error) {
   const message = error instanceof Error ? error.message : String(error);
-  if (
-    !message.includes("access token") &&
-    !message.includes("metadata.google.internal") &&
-    !message.includes("ENOTFOUND") &&
-    !message.includes("Could not load the default credentials")
-  ) {
+  const needsQuotaProject =
+    message.includes("quota project") || message.includes("identitytoolkit.googleapis.com");
+  const needsCredentials =
+    message.includes("access token") ||
+    message.includes("metadata.google.internal") ||
+    message.includes("ENOTFOUND") ||
+    message.includes("Could not load the default credentials");
+
+  if (!needsQuotaProject && !needsCredentials) {
     return false;
   }
 
   console.error("\nFirebase Admin auth failed. Run these commands in PowerShell:\n");
   console.error("  Remove-Item Env:GOOGLE_APPLICATION_CREDENTIALS -ErrorAction SilentlyContinue");
   console.error("  gcloud auth application-default login");
+  console.error(`  gcloud auth application-default set-quota-project ${PROJECT_ID}`);
   console.error("  npm run staff:import -- --dry-run\n");
   console.error(
     "Use the same Google account that has Firebase access to forge-academy-95f84.\n",
