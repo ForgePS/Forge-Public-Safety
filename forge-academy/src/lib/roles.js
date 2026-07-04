@@ -84,6 +84,41 @@ export function canManageAllPortalRoles(role) {
 }
 
 /**
+ * @param {Role | null | undefined} role
+ */
+export function canManagePortalRoleDefinitions(role) {
+  return isFullAdmin(role);
+}
+
+/**
+ * @param {Role | null | undefined} role
+ */
+export function canManageAdminPortalAccessRoles(role) {
+  return canManageAllPortalRoles(role);
+}
+
+/**
+ * @param {Role | null | undefined} callerRole
+ * @param {import('./portalRoleDefinitions.js').PortalType | string} portalType
+ */
+export function canManagePortalAccessRoleType(callerRole, portalType) {
+  if (!callerRole) return false;
+  if (canManageAllPortalRoles(callerRole)) return true;
+  if (callerRole === ROLES.ACADEMY_ADMIN) return portalType !== "admin";
+  return false;
+}
+
+/**
+ * @param {Role | null | undefined} callerRole
+ * @param {import('./portalRoleDefinitions.js').PortalRoleDefinition | null | undefined} [definition]
+ */
+export function canEditPortalRoleDefinition(callerRole, definition) {
+  if (!canManagePortalRoleDefinitions(callerRole)) return false;
+  if (!definition) return true;
+  return canManagePortalAccessRoleType(callerRole, definition.portalType);
+}
+
+/**
  * @param {Role | null | undefined} callerRole
  * @param {Role | string} targetRole
  * @param {Record<string, import('./portalRoleDefinitions.js').PortalRoleDefinition>} [customById]

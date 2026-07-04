@@ -61,9 +61,25 @@ service cloud.firestore {
       return signedIn() && userRole() in ['creator', 'super_admin'];
     }
 
+    function isNonAdminPortalRoleDefinition(data) {
+      return data.portalType in ['student', 'instructor', 'department', 'certification'];
+    }
+
     match /portalRoleDefinitions/{roleId} {
       allow read: if isAdmin();
-      allow create, update, delete: if canManagePortalRoleDefinitions();
+      allow create: if canManagePortalRoleDefinitions()
+        || (signedIn()
+          && userRole() == 'academy_admin'
+          && isNonAdminPortalRoleDefinition(request.resource.data));
+      allow update: if canManagePortalRoleDefinitions()
+        || (signedIn()
+          && userRole() == 'academy_admin'
+          && isNonAdminPortalRoleDefinition(request.resource.data)
+          && isNonAdminPortalRoleDefinition(resource.data));
+      allow delete: if canManagePortalRoleDefinitions()
+        || (signedIn()
+          && userRole() == 'academy_admin'
+          && isNonAdminPortalRoleDefinition(resource.data));
     }
 
     match /users/{userId} {
