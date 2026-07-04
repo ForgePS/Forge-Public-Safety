@@ -27,6 +27,8 @@ import {
 } from "../../lib/certificateTemplates.js";
 import { listCourses } from "../../lib/courses.js";
 import { useSystemSettingsOptional } from "../../context/SystemSettingsContext.jsx";
+import ForgeBuilderPanel from "../../components/aiBuilder/ForgeBuilderPanel.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
 
 const SAMPLE_CERTIFICATE = {
   studentName: "JEREMY E POWELL",
@@ -71,6 +73,7 @@ export default function CertificateTemplateFormPage() {
   const [uploading, setUploading] = useState("");
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
+  const aiBuilderEnabled = useAiBuilderEnabled();
 
   const templateContext = useMemo(
     () => ({
@@ -380,6 +383,29 @@ export default function CertificateTemplateFormPage() {
               />
             </div>
           </FormSection>
+
+          {aiBuilderEnabled ? (
+            <div className="rounded-[14px] border border-violet-200 bg-violet-50/30 p-4">
+              <ForgeBuilderPanel
+                targetType="certificateTemplate"
+                targetId={templateId ?? ""}
+                currentState={{ name: form.name, descriptionText: form.descriptionText, fields: form.fields }}
+                context={{ layoutType: form.layoutType, courseId: form.courseId }}
+                onApply={(output) => {
+                  updateForm({
+                    name: String(output.name ?? form.name),
+                    descriptionText: String(output.descriptionText ?? form.descriptionText),
+                    fields: Array.isArray(output.fields)
+                      ? output.fields.map((field) => normalizeCertificateTemplateField(field))
+                      : form.fields,
+                    layoutType: output.layoutHint === "custom_image"
+                      ? CERTIFICATE_LAYOUT_TYPES.CUSTOM_IMAGE
+                      : form.layoutType,
+                  });
+                }}
+              />
+            </div>
+          ) : null}
 
           <FormSection title="Background & signature uploads">
             <p className="text-sm text-[var(--color-afta-subtle)]">

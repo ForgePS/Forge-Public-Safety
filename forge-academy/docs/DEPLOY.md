@@ -1,5 +1,20 @@
 # Forge Academy deploy
 
+## Blank page after deploy
+
+If https://forge-academy-95f84.web.app shows a gray screen with no UI, the hosting bundle was built without Firebase web config. The app needs `VITE_FIREBASE_*` at **build time** (Vite inlines them into the JS bundle).
+
+**Fix locally:**
+
+```bash
+cd forge-academy
+cp .env.example .env   # or set VITE_FIREBASE_* manually
+npm run build
+npm run deploy:hosting
+```
+
+CI sets these in `.github/workflows/deploy-forge-academy.yml`. The app also falls back to committed defaults for `forge-academy-95f84` so a bare `npm run build` works.
+
 ## What works in GitHub Actions
 
 | Target | `FIREBASE_TOKEN` (login:ci) | Workload Identity |
@@ -56,6 +71,26 @@ node -e "import('./index.js').then(() => console.log('ok'))"
 If that prints `ok` in under a few seconds, the longer discovery timeout should fix deploy.
 
 Hosting and rules can still ship from GitHub Actions; run `npm run deploy:functions` locally after merging AI Builder changes.
+
+## Windows build fails (Vite / Rolldown)
+
+If `npm run build` ends with `aggregateBindingErrorsIntoJsError` and `errors: [Getter/Setter]`, scroll **up** in the terminal — the real message is usually a few lines above (e.g. failed to resolve an import).
+
+Try in order:
+
+```powershell
+cd forge-academy
+Remove-Item -Recurse -Force node_modules, dist -ErrorAction SilentlyContinue
+npm ci
+node -v    # use Node 22 LTS
+npm run build
+```
+
+This repo pins **Vite 7** (Rollup) instead of Vite 8 (Rolldown) for reliable Windows builds. After `git pull`, run `npm ci` again so lockfile matches.
+
+Deploy scripts use cross-platform Node helpers (`scripts/deploy-hosting.mjs`) — safe in PowerShell; no bash `$()` syntax.
+
+If the project is on a Windows **Dev Drive**, move it to a normal NTFS path (e.g. `C:\Users\...\Projects`) — Rolldown can panic on Dev Drive volumes.
 
 ## GitHub Actions setup
 

@@ -10,6 +10,8 @@ import {
   SKILL_TEMPLATE_STATUSES,
   updateSkillTemplate,
 } from "../../lib/skillTemplates.js";
+import ForgeBuilderPanel from "../../components/aiBuilder/ForgeBuilderPanel.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
 
 const emptyTemplate = {
   name: "",
@@ -38,6 +40,7 @@ export default function SkillTemplateFormPage() {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const aiBuilderEnabled = useAiBuilderEnabled();
 
   useEffect(() => {
     listCourses().then(setCourses).catch(() => {});
@@ -204,6 +207,39 @@ export default function SkillTemplateFormPage() {
                   onChange={(event) => setForm((prev) => ({ ...prev, description: event.target.value }))}
                 />
               </FormSection>
+
+              {aiBuilderEnabled && !isNew ? (
+                <div className="mt-4">
+                  <ForgeBuilderPanel
+                    targetType="skillTemplate"
+                    targetId={templateId}
+                    currentState={{ name: form.name, description: form.description, skills }}
+                    context={{ courseId: form.courseId }}
+                    onApply={async (output) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        name: String(output.name ?? prev.name),
+                        description: String(output.description ?? prev.description),
+                      }));
+                      const generated = Array.isArray(output.skills) ? output.skills : [];
+                      for (const skill of generated) {
+                        await createSkill({
+                          templateId,
+                          name: String(skill.name ?? ""),
+                          description: String(skill.description ?? ""),
+                          sortOrder: Number(skill.sortOrder ?? skills.length),
+                          maxScore: Number(skill.maxScore ?? 100),
+                          passingScore: Number(skill.passingScore ?? 70),
+                        });
+                      }
+                      if (generated.length) {
+                        setSkills(await listSkillsByTemplate(templateId));
+                      }
+                    }}
+                  />
+                </div>
+              ) : null}
+
               <button
                 type="submit"
                 disabled={saving}
