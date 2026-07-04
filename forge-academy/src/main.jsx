@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
+import { PortalRolesProvider } from "./context/PortalRolesContext.jsx";
 import { PortalThemeProvider } from "./context/PortalThemeContext.jsx";
 import { SystemSettingsProvider } from "./context/SystemSettingsContext.jsx";
 import MaintenanceGate from "./components/SystemSettingsRoute.jsx";
@@ -13,11 +14,13 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <PortalThemeProvider>
         <AuthProvider>
-          <SystemSettingsProvider>
-            <MaintenanceGate>
-              <App />
-            </MaintenanceGate>
-          </SystemSettingsProvider>
+          <PortalRolesProvider>
+            <SystemSettingsProvider>
+              <MaintenanceGate>
+                <App />
+              </MaintenanceGate>
+            </SystemSettingsProvider>
+          </PortalRolesProvider>
         </AuthProvider>
       </PortalThemeProvider>
     </BrowserRouter>

@@ -1,6 +1,7 @@
 import { collection, doc, getDoc, getDocs, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "./firebase.js";
 import { ROLES } from "./roles.js";
+import { getPortalRoleDefinition, isSystemRoleId } from "./portalRoleDefinitions.js";
 
 /**
  * @typedef {Object} AppUserRecord
@@ -32,10 +33,15 @@ export async function fetchUserProfile(uid) {
 }
 
 /** @param {string} uid @param {Record<string, unknown>} data */
-function fetchUserProfileFromSnap(uid, data) {
+async function fetchUserProfileFromSnap(uid, data) {
   const role = data.role;
 
-  if (!Object.values(ROLES).includes(role)) {
+  if (!isSystemRoleId(role)) {
+    const custom = await getPortalRoleDefinition(String(role));
+    if (!custom || custom.status !== "active") {
+      return null;
+    }
+  } else if (!Object.values(ROLES).includes(role)) {
     return null;
   }
 
@@ -92,10 +98,10 @@ export async function tryBootstrapAdminProfile(firebaseUser) {
 /** @returns {Promise<AppUserRecord[]>} */
 export async function listAllPortalUsers() {
   const snap = await getDocs(collection(db, "users"));
-  return snap.docs
-    .map((item) => fetchUserProfileFromSnap(item.id, item.data()))
-    .filter(Boolean)
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+  const profiles = await Promise.all(
+    snap.docs.map((item) => fetchUserProfileFromSnap(item.id, item.data())),
+  );
+  return profiles.filter(Boolean).sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
 /** @returns {Promise<AppUserRecord[]>} */
