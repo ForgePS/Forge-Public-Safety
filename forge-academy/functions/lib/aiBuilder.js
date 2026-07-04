@@ -4,7 +4,12 @@ import { validateAiBuilderOutput } from "./aiBuilderSchemas.js";
 import { checkAiBuilderRateLimit, writeAiBuilderAuditLog } from "./aiBuilderRateLimit.js";
 import { generateAiBuilderOutput } from "./aiBuilderGenerate.js";
 
-const ALLOWED_TARGET_TYPES = new Set(["signageLayout", "questionBank", "testBlueprint"]);
+const ALLOWED_TARGET_TYPES = new Set([
+  "signageLayout", "signagePlaylist", "signageMedia", "signageDisplay",
+  "questionBank", "testBlueprint",
+  "gradingAssist", "gradingRubric", "skillTemplate", "certificateTemplate",
+  "moduleCheckoff", "moduleInventory", "moduleInspection", "moduleCustom",
+]);
 const ADMIN_ROLES = new Set(["creator", "super_admin", "academy_admin"]);
 
 /**

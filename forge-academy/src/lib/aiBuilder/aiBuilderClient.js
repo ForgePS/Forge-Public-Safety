@@ -1,6 +1,8 @@
 import { httpsCallable } from "firebase/functions";
 import { functions } from "../firebase.js";
 
+export { AI_BUILDER_TARGET_LABELS } from "./registry.js";
+
 /**
  * @param {File} file
  * @returns {Promise<{ name: string, mimeType: string, base64?: string, textContent?: string }>}
@@ -117,9 +119,3 @@ export function diffObjects(before, after, basePath = "") {
 
 export const AI_BUILDER_ACCEPT =
   "image/*,.pdf,.csv,.xlsx,.xls,.txt,.md,.json,application/pdf,text/csv";
-
-export const AI_BUILDER_TARGET_LABELS = {
-  signageLayout: "Signage layout",
-  questionBank: "Question bank",
-  testBlueprint: "Test blueprint",
-};

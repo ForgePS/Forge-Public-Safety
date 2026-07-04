@@ -42,6 +42,7 @@ import {
   isRssFeedsEnabled,
   isStockMediaEnabled,
 } from "../../lib/systemSettings.js";
+import ForgeBuilderPanel from "../aiBuilder/ForgeBuilderPanel.jsx";
 
 /**
  * @param {{
@@ -58,6 +59,7 @@ import {
  *   onSaveRssFeed?: (record: Record<string, unknown>) => Promise<void>,
  *   onSyncRssFeed?: (feedId: string) => Promise<unknown>,
  *   onChange: (patch: Partial<ReturnType<typeof defaultMediaForm>>) => void,
+ *   aiBuilderEnabled?: boolean,
  * }} props
  */
 export default function DigitalDashboardMediaModal({
@@ -74,6 +76,7 @@ export default function DigitalDashboardMediaModal({
   onSaveRssFeed,
   onSyncRssFeed,
   onChange,
+  aiBuilderEnabled = false,
 }) {
   const inputRef = useRef(null);
   const bulkInputRef = useRef(null);
@@ -710,6 +713,24 @@ export default function DigitalDashboardMediaModal({
                   placeholder="Internal notes for operators"
                 />
               </label>
+              {aiBuilderEnabled && canEdit ? (
+                <ForgeBuilderPanel
+                  targetType="signageMedia"
+                  targetId={form.id ?? ""}
+                  currentState={form}
+                  context={{ product: "academy", module: "digitalDashboard" }}
+                  onApply={(output) => {
+                    onChange({
+                      title: String(output.title ?? form.title),
+                      type: String(output.type ?? form.type),
+                      description: String(output.description ?? form.description),
+                      category: String(output.category ?? form.category),
+                      durationSec: Number(output.durationSec ?? form.durationSec),
+                      tags: Array.isArray(output.tags) ? output.tags : form.tags,
+                    });
+                  }}
+                />
+              ) : null}
               <label className="block">
                 <span className="app-label">Category</span>
                 <select

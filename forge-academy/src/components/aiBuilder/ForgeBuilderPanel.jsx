@@ -9,6 +9,7 @@ import {
 } from "../../lib/aiBuilder/aiBuilderClient.js";
 import { widgetTypeLabel } from "../../lib/digitalDashboard.js";
 import { QUESTION_TYPE_LABELS } from "../../lib/testQuestions.js";
+import ModuleFormRenderer from "./ModuleFormRenderer.jsx";
 
 /**
  * @param {{
@@ -333,6 +334,86 @@ function ForgeBuilderPreview({ targetType, output }) {
         ) : null}
       </div>
     );
+  }
+
+  if (targetType === "signagePlaylist") {
+    const pl = /** @type {Record<string, unknown>} */ (output);
+    return (
+      <div className="space-y-1 text-xs">
+        <p><strong>Playlist:</strong> {String(pl.name ?? "")}</p>
+        <p><strong>Items:</strong> {Array.isArray(pl.itemIds) ? pl.itemIds.length : 0} · <strong>Loop:</strong> {pl.loop !== false ? "Yes" : "No"}</p>
+        {Array.isArray(pl.suggestedMediaTitles) && pl.suggestedMediaTitles.length ? (
+          <ul className="list-inside list-disc text-[var(--color-afta-muted)]">
+            {pl.suggestedMediaTitles.map((t) => <li key={String(t)}>{String(t)}</li>)}
+          </ul>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (targetType === "signageMedia") {
+    const m = /** @type {Record<string, unknown>} */ (output);
+    return (
+      <div className="space-y-1 text-xs">
+        <p><strong>Title:</strong> {String(m.title ?? "")}</p>
+        <p><strong>Type:</strong> {String(m.type ?? "")} · <strong>Category:</strong> {String(m.category ?? "")}</p>
+        <p>{String(m.description ?? "").slice(0, 120)}</p>
+      </div>
+    );
+  }
+
+  if (targetType === "gradingAssist") {
+    const g = /** @type {Record<string, unknown>} */ (output);
+    return (
+      <div className="space-y-1 text-xs">
+        <p><strong>Suggested points:</strong> {String(g.pointsAwarded ?? "")}</p>
+        <p><strong>Notes:</strong> {String(g.graderNotes ?? "")}</p>
+        <p className="text-[var(--color-afta-muted)]">{String(g.rationale ?? "")}</p>
+      </div>
+    );
+  }
+
+  if (targetType === "gradingRubric") {
+    const r = /** @type {Record<string, unknown>} */ (output);
+    const criteria = Array.isArray(r.criteria) ? r.criteria : [];
+    return (
+      <div className="space-y-1 text-xs">
+        <p className="font-semibold">{String(r.name ?? "Rubric")} · {criteria.length} criteria</p>
+        {criteria.map((c) => {
+          const row = /** @type {Record<string, unknown>} */ (c);
+          return <p key={String(row.id)}>{String(row.label)} — {String(row.maxPoints)} pts</p>;
+        })}
+      </div>
+    );
+  }
+
+  if (targetType === "skillTemplate") {
+    const s = /** @type {Record<string, unknown>} */ (output);
+    const skills = Array.isArray(s.skills) ? s.skills : [];
+    return (
+      <div className="space-y-1 text-xs">
+        <p className="font-semibold">{String(s.name ?? "")} · {skills.length} skills</p>
+        <ul className="list-inside list-disc">{skills.slice(0, 8).map((sk, i) => <li key={i}>{String(/** @type {Record<string, unknown>} */ (sk).name)}</li>)}</ul>
+      </div>
+    );
+  }
+
+  if (targetType === "certificateTemplate") {
+    const c = /** @type {Record<string, unknown>} */ (output);
+    const fields = Array.isArray(c.fields) ? c.fields : [];
+    return (
+      <div className="space-y-1 text-xs">
+        <p className="font-semibold">{String(c.name ?? "")} · {fields.length} fields</p>
+        {fields.map((f) => {
+          const row = /** @type {Record<string, unknown>} */ (f);
+          return <p key={String(row.id)}>{String(row.label)} ({String(row.type)})</p>;
+        })}
+      </div>
+    );
+  }
+
+  if (targetType.startsWith("module")) {
+    return <ModuleFormRenderer definition={/** @type {Record<string, unknown>} */ (output)} readOnly />;
   }
 
   return (

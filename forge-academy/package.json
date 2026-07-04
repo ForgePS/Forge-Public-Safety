@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "npm run build && DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs) && npx firebase-tools deploy --only \"$DEPLOY_ONLY\"",
-    "deploy:hosting": "npm run build && DEPLOY_ONLY=$(node scripts/firebase-deploy-targets.mjs hosting) && npx firebase-tools deploy --only \"$DEPLOY_ONLY\"",
+    "deploy": "node scripts/deploy-all.mjs",
+    "deploy:hosting": "node scripts/deploy-hosting.mjs",
     "deploy:rules": "npx firebase-tools deploy --only firestore:rules,storage",
     "deploy:functions": "npm ci --prefix functions && node scripts/deploy-functions.mjs",
     "pilot:seed": "node scripts/seed-pilot.mjs",
@@ -18,6 +18,7 @@
     "certificates:prepare-base": "node scripts/prepare-afta-certificate-base.mjs"
   },
   "dependencies": {
+    "@forgeps/ai-builder": "file:../packages/forge-ai-builder",
     "firebase": "^11.10.0",
     "firebase-functions": "^4.9.0",
     "lucide-react": "^0.525.0",
@@ -28,10 +29,10 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.11",
-    "@vitejs/plugin-react": "^6.0.2",
+    "@vitejs/plugin-react": "^4.7.0",
     "firebase-admin": "^10.3.0",
     "sharp": "^0.35.1",
     "tailwindcss": "^4.1.11",
-    "vite": "^8.0.16"
+    "vite": "^7.3.6"
   }
 }
