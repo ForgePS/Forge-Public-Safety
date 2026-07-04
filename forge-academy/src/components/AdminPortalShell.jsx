@@ -5,6 +5,7 @@ import {
   BookOpen,
   Building2,
   Calendar,
+  ClipboardCheck,
   ClipboardList,
   FileQuestion,
   FileText,
@@ -45,6 +46,8 @@ const adminNavBase = [
   { group: "Completion", label: "Skill Templates", to: "/admin/skills/templates", icon: Sparkles, module: "skills" },
 
   { group: "Testing", label: "Testing Hub", to: "/admin/testing", icon: FileQuestion, module: "testing" },
+
+  { group: "Operations", label: "RMS Modules", to: "/admin/module-definitions", icon: ClipboardCheck, module: "reports" },
 
   { group: "Campus", label: "Housing", to: "/admin/housing", icon: Home, module: "housing" },
 

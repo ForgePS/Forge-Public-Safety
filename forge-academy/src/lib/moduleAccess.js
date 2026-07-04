@@ -29,6 +29,7 @@ const ADMIN_PATH_RULES = [
   { prefix: "/admin/departments", module: "departments" },
   { prefix: "/admin/reports", module: "reports" },
   { prefix: "/admin/digital-dashboard", module: "digitalDashboard" },
+  { prefix: "/admin/module-definitions", module: "reports" },
   { prefix: "/admin/instructors", module: "instructors" },
   { prefix: "/admin/pilot", flags: ["features.showPilotReleasePage"] },
 ];

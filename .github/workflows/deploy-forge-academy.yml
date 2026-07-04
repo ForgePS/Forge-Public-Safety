@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "forge-academy/**"
+      - "packages/forge-ai-builder/**"
       - ".github/workflows/deploy-forge-academy.yml"
   workflow_dispatch:
 

@@ -443,6 +443,17 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    match /moduleDefinitions/{definitionId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /moduleSubmissions/{submissionId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /testVersions/{versionId} {
       allow read: if isAdmin() || isInstructor();
       allow write: if false;

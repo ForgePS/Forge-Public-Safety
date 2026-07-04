@@ -34,6 +34,15 @@ const LAYOUT_TEMPLATES = {
   ],
 };
 
+const RMS_LAYOUT_TEMPLATE = [
+  { id: "alerts", widgetType: "alerts", x: 0, y: 0, w: 4, h: 3 },
+  { id: "units", widgetType: "units", x: 4, y: 0, w: 4, h: 3 },
+  { id: "incidents", widgetType: "incidents", x: 8, y: 0, w: 4, h: 3 },
+  { id: "main", widgetType: "announcements", x: 0, y: 3, w: 8, h: 5 },
+  { id: "clock", widgetType: "clock", x: 8, y: 3, w: 4, h: 2 },
+  { id: "kpi", widgetType: "kpi", x: 8, y: 5, w: 4, h: 3 },
+];
+
 function detectTemplateFromPrompt(prompt = "") {
   const lower = prompt.toLowerCase();
   if (lower.includes("classroom") || lower.includes("class")) return "classroom";
@@ -146,27 +155,72 @@ function parseBlueprintFromPrompt(prompt = "", currentState = {}, context = {}) 
 }
 
 function buildSystemPrompt(targetType, currentState, context) {
-  const widgetList = [
-    "weather", "clock", "announcements", "emergency", "student_stats", "testing_status",
-    "certification_status", "housing_status", "dining", "video", "pdf",
-  ].join(", ");
+  const academyWidgets = "weather, clock, announcements, emergency, student_stats, testing_status, dining, video, pdf";
+  const rmsWidgets = "alerts, units, incidents, kpi, announcements, clock, weather, media";
 
-  if (targetType === "signageLayout") {
-    return `You generate JSON for a digital signage layout on a 12x8 grid.
-Return ONLY valid JSON with keys: name (string), templateId (one of: lobby, classroom, testing_center, executive, housing, dining_hall, custom), zones (array).
-Each zone: id, widgetType (one of: ${widgetList}), x, y, w, h (integers). Zones must fit within 12 columns and 8 rows.
-Current layout: ${JSON.stringify(currentState?.zones ?? [])}`;
-  }
-  if (targetType === "questionBank") {
-    return `You generate JSON for a test question bank. Return ONLY valid JSON: { "questions": [...] }.
-Each question: questionText, questionType (multiple_choice|true_false|multiple_select|short_answer|scenario), answerOptions [{id,text,isCorrect}], explanation, difficulty (easy|medium|hard), points, flaggedForReview (true).
-Generate exam-quality questions for firefighter/academy training.`;
-  }
-  if (targetType === "testBlueprint") {
-    return `You generate JSON for a test blueprint: testName, totalQuestions, passingScore, timeLimitMinutes, randomizeQuestions, randomizeAnswers, allowRetakes, poolRules [{questionPoolId, numberOfQuestions}].
-Available pools: ${JSON.stringify(context?.pools ?? [])}`;
-  }
-  return "Return valid JSON only.";
+  const prompts = {
+    signageLayout: `JSON signage layout on 12x8 grid: name, templateId, zones[{id,widgetType,x,y,w,h}]. Widgets: ${context?.product === "rms" ? rmsWidgets : academyWidgets}.`,
+    signagePlaylist: `JSON playlist: name, description, itemIds[], loop, transition, priority, suggestedMediaTitles[]`,
+    signageMedia: `JSON media metadata: title, type (image|video|pdf|announcement|widget), description, category, durationSec, tags[]`,
+    signageDisplay: `JSON ops display: name, location, station, displayType, layoutId, playlistId, notes`,
+    questionBank: `JSON {questions:[{questionText, questionType, answerOptions, explanation, difficulty, points, flaggedForReview:true}]}`,
+    testBlueprint: `JSON test blueprint: testName, totalQuestions, passingScore, timeLimitMinutes, poolRules`,
+    gradingAssist: `JSON grading suggestion: pointsAwarded, graderNotes, rationale, confidence (0-1) for response: ${JSON.stringify(currentState?.responseText ?? "")}`,
+    gradingRubric: `JSON rubric: name, criteria[{id,label,maxPoints,description}]`,
+    skillTemplate: `JSON skills template: name, description, skills[{name,description,sortOrder,maxScore,passingScore}]`,
+    certificateTemplate: `JSON certificate: name, descriptionText, fields[{id,type,mergeKey,staticText,label,x,y,fontSize,align,color}]`,
+    moduleCheckoff: `JSON ModuleDefinition kind=checkoff with pass_fail fields for apparatus checks`,
+    moduleInventory: `JSON ModuleDefinition kind=inventory with number fields and reorderThreshold`,
+    moduleInspection: `JSON ModuleDefinition kind=inspection with photo and pass_fail fields`,
+    moduleCustom: `JSON ModuleDefinition kind=custom with sections[].items[] typed fields`,
+  };
+  return prompts[targetType] || "Return valid JSON only.";
+}
+
+function generateCheckoffModule(prompt) {
+  const items = ["Engine oil level", "Coolant level", "Tire condition", "Lights and signals", "Equipment secured", "Fuel level"];
+  return {
+    name: extractLayoutName(prompt) || "Daily apparatus check",
+    kind: "checkoff",
+    description: prompt.slice(0, 200),
+    sections: [{ id: "daily", title: "Daily check", items: items.map((label, i) => ({ key: `item_${i + 1}`, label, type: "pass_fail", required: true, failRequiresNote: true })) }],
+    rules: { frequency: "daily", requireSignature: true },
+  };
+}
+
+function generateInventoryModule(prompt) {
+  return {
+    name: extractLayoutName(prompt) || "Station supply inventory",
+    kind: "inventory",
+    description: prompt.slice(0, 200),
+    sections: [{
+      id: "supplies",
+      title: "Supplies",
+      items: [
+        { key: "sku", label: "SKU / Item", type: "text", required: true },
+        { key: "quantity", label: "Quantity on hand", type: "number", required: true },
+        { key: "par", label: "Par level", type: "number", reorderThreshold: 5 },
+      ],
+    }],
+    rules: { trackQuantity: true, lowStockAlert: true },
+  };
+}
+
+function generateInspectionModule(prompt) {
+  return {
+    name: extractLayoutName(prompt) || "Equipment inspection",
+    kind: "inspection",
+    sections: [{
+      id: "inspection",
+      title: "Inspection items",
+      items: [
+        { key: "condition", label: "Overall condition", type: "pass_fail", required: true },
+        { key: "photo", label: "Photo of defect", type: "photo" },
+        { key: "notes", label: "Inspector notes", type: "textarea" },
+      ],
+    }],
+    rules: { requireSignature: true },
+  };
 }
 
 async function callOpenAi({ apiKey, model, systemPrompt, userPrompt, attachments = [] }) {
@@ -214,6 +268,14 @@ async function callOpenAi({ apiKey, model, systemPrompt, userPrompt, attachments
 
 function fallbackGenerate(targetType, prompt, currentState, context, attachments) {
   if (targetType === "signageLayout") {
+    const isRms = context?.product === "rms" || prompt.toLowerCase().includes("station") || prompt.toLowerCase().includes("ops");
+    if (isRms) {
+      return {
+        name: extractLayoutName(prompt, currentState),
+        templateId: "custom",
+        zones: RMS_LAYOUT_TEMPLATE.map((z) => ({ ...z, id: `${z.id}-${Math.random().toString(36).slice(2, 5)}` })),
+      };
+    }
     const templateId = detectTemplateFromPrompt(prompt);
     const zones = LAYOUT_TEMPLATES[templateId] || LAYOUT_TEMPLATES.lobby;
     return {
@@ -223,12 +285,45 @@ function fallbackGenerate(targetType, prompt, currentState, context, attachments
     };
   }
 
+  if (targetType === "signagePlaylist") {
+    return {
+      name: extractLayoutName(prompt, currentState) || "AI Playlist",
+      description: prompt.slice(0, 160),
+      itemIds: currentState?.itemIds ?? [],
+      loop: true,
+      transition: "fade",
+      priority: 1,
+      suggestedMediaTitles: ["Campus announcements", "Weather ticker", "Training schedule"],
+    };
+  }
+
+  if (targetType === "signageMedia") {
+    return {
+      title: extractLayoutName(prompt, currentState) || "AI Media slide",
+      type: "announcement",
+      description: prompt.slice(0, 300),
+      category: prompt.toLowerCase().includes("training") ? "training" : "general",
+      durationSec: 15,
+      tags: ["ai-generated"],
+    };
+  }
+
+  if (targetType === "signageDisplay") {
+    return {
+      name: extractLayoutName(prompt, currentState) || "Station display",
+      location: context?.location ?? "Station 1",
+      station: context?.station ?? "Main",
+      displayType: "information",
+      layoutId: context?.layoutId ?? "",
+      playlistId: context?.playlistId ?? "",
+      notes: prompt.slice(0, 200),
+    };
+  }
+
   if (targetType === "questionBank") {
     let questions = [];
     for (const file of attachments) {
-      if (file.textContent?.includes(",")) {
-        questions = questions.concat(parseCsvQuestions(file.textContent));
-      }
+      if (file.textContent?.includes(",")) questions = questions.concat(parseCsvQuestions(file.textContent));
     }
     if (!questions.length) {
       const countMatch = prompt.match(/(\d+)\s*questions?/i);
@@ -238,9 +333,57 @@ function fallbackGenerate(targetType, prompt, currentState, context, attachments
     return { questions };
   }
 
-  if (targetType === "testBlueprint") {
-    return parseBlueprintFromPrompt(prompt, currentState, context);
+  if (targetType === "testBlueprint") return parseBlueprintFromPrompt(prompt, currentState, context);
+
+  if (targetType === "gradingAssist") {
+    const max = Number(currentState?.maxPoints ?? context?.maxPoints ?? 10);
+    return {
+      pointsAwarded: Math.round(max * 0.75),
+      graderNotes: "Review suggested score against rubric before saving.",
+      rationale: `Automated suggestion based on response length and prompt: ${prompt.slice(0, 100)}`,
+      confidence: 0.65,
+      maxPoints: max,
+    };
   }
+
+  if (targetType === "gradingRubric") {
+    return {
+      name: extractLayoutName(prompt) || "Short answer rubric",
+      criteria: [
+        { id: "accuracy", label: "Technical accuracy", maxPoints: 5, description: "Correct fire service concepts" },
+        { id: "completeness", label: "Completeness", maxPoints: 3, description: "Addresses all parts of the question" },
+        { id: "clarity", label: "Clarity", maxPoints: 2, description: "Clear, organized response" },
+      ],
+    };
+  }
+
+  if (targetType === "skillTemplate") {
+    const lines = prompt.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+    const skillNames = lines.length > 1 ? lines.slice(0, 12) : ["PPE donning", "Hose deployment", "Ladder carry", "Tool familiarization"];
+    return {
+      name: extractLayoutName(prompt) || "Skills evaluation sheet",
+      description: prompt.slice(0, 200),
+      skills: skillNames.map((name, i) => ({ name, description: "", sortOrder: i, maxScore: 100, passingScore: 70 })),
+    };
+  }
+
+  if (targetType === "certificateTemplate") {
+    return {
+      name: extractLayoutName(prompt) || "Certificate template",
+      descriptionText: "Has successfully completed the required training.",
+      fields: [
+        { id: "student", type: "merge", mergeKey: "studentName", label: "Student", x: 50, y: 40, fontSize: 28, align: "center", color: "#111111" },
+        { id: "course", type: "merge", mergeKey: "courseName", label: "Course", x: 50, y: 55, fontSize: 18, align: "center", color: "#111111" },
+        { id: "date", type: "merge", mergeKey: "completionDate", label: "Date", x: 50, y: 70, fontSize: 14, align: "center", color: "#333333" },
+      ],
+      layoutHint: "custom_image",
+    };
+  }
+
+  if (targetType === "moduleCheckoff") return generateCheckoffModule(prompt);
+  if (targetType === "moduleInventory") return generateInventoryModule(prompt);
+  if (targetType === "moduleInspection") return generateInspectionModule(prompt);
+  if (targetType === "moduleCustom") return generateInspectionModule(prompt);
 
   throw new Error(`Unsupported targetType: ${targetType}`);
 }
