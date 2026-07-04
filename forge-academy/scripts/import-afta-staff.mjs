@@ -4,16 +4,19 @@
  * Updates existing portal profiles matched by email; creates missing accounts.
  *
  * Usage:
- *   npx firebase-tools login   # or set GOOGLE_APPLICATION_CREDENTIALS
+ *   gcloud auth application-default login
  *   node scripts/import-afta-staff.mjs
  *   node scripts/import-afta-staff.mjs --dry-run
  *   node scripts/import-afta-staff.mjs --create-missing-only
+ *
+ * Auth: uses Application Default Credentials (gcloud ADC). If
+ * GOOGLE_APPLICATION_CREDENTIALS points to a missing or invalid file, it is ignored.
  */
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { initializeApp, cert, getApps } from "firebase-admin/app";
+import { initializeApp, applicationDefault, cert, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 
@@ -29,14 +32,57 @@ const createMissingOnly = args.has("--create-missing-only");
 function initAdmin() {
   if (getApps().length) return;
 
-  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim();
   if (credentialsPath) {
-    const serviceAccount = JSON.parse(readFileSync(credentialsPath, "utf8"));
-    initializeApp({ credential: cert(serviceAccount), projectId: PROJECT_ID });
-    return;
+    if (!existsSync(credentialsPath)) {
+      console.warn(
+        `GOOGLE_APPLICATION_CREDENTIALS is set but file not found (${credentialsPath}). Using gcloud ADC instead.`,
+      );
+    } else {
+      try {
+        const serviceAccount = JSON.parse(readFileSync(credentialsPath, "utf8"));
+        if (serviceAccount?.type === "service_account" && serviceAccount?.private_key) {
+          initializeApp({ credential: cert(serviceAccount), projectId: PROJECT_ID });
+          return;
+        }
+        console.warn(
+          `GOOGLE_APPLICATION_CREDENTIALS (${credentialsPath}) is not a service account key. Using gcloud ADC instead.`,
+        );
+      } catch (error) {
+        console.warn(
+          `Unable to read GOOGLE_APPLICATION_CREDENTIALS (${credentialsPath}): ${
+            error instanceof Error ? error.message : error
+          }. Using gcloud ADC instead.`,
+        );
+      }
+    }
   }
 
-  initializeApp({ projectId: PROJECT_ID });
+  initializeApp({
+    credential: applicationDefault(),
+    projectId: PROJECT_ID,
+  });
+}
+
+function printAuthHelp(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  if (
+    !message.includes("access token") &&
+    !message.includes("metadata.google.internal") &&
+    !message.includes("ENOTFOUND") &&
+    !message.includes("Could not load the default credentials")
+  ) {
+    return false;
+  }
+
+  console.error("\nFirebase Admin auth failed. Run these commands in PowerShell:\n");
+  console.error("  Remove-Item Env:GOOGLE_APPLICATION_CREDENTIALS -ErrorAction SilentlyContinue");
+  console.error("  gcloud auth application-default login");
+  console.error("  npm run staff:import -- --dry-run\n");
+  console.error(
+    "Use the same Google account that has Firebase access to forge-academy-95f84.\n",
+  );
+  return true;
 }
 
 function generateTempPassword(length = 14) {
@@ -239,6 +285,8 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
+  if (!printAuthHelp(error)) {
+    console.error(error instanceof Error ? error.message : error);
+  }
   process.exit(1);
 });
