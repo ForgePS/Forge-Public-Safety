@@ -29,7 +29,7 @@ const emptyPortalForm = {
   signInMessage: "",
 };
 
-export default function AdminPortalAccessPage() {
+export default function AdminPortalAccessPage({ embedded = false }) {
   const { user } = useAuth();
   const { settings, loading, error: loadError, saveSection } = useSystemSettings();
   const { portals: customPortals, reload: reloadCustomPortals } = usePortalDefinitions();
@@ -180,6 +180,13 @@ export default function AdminPortalAccessPage() {
   }
 
   if (!canManage) {
+    if (embedded) {
+      return (
+        <div className="app-panel p-5 text-sm text-[var(--color-afta-subtle)]">
+          Portal access settings require Academy Admin access or above.
+        </div>
+      );
+    }
     return (
       <PageHeader
         title="Access denied"
@@ -190,27 +197,51 @@ export default function AdminPortalAccessPage() {
     );
   }
 
-  return (
+  const content = (
     <>
-      <PageHeader
-        title="Portal Access"
-        subtitle="Turn portals on or off, add custom portals, and edit how each portal appears"
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={startCreatePortal} className="app-btn-primary px-4 py-2 text-xs">
-              Add portal
-            </button>
-            <Link to="/admin/roles" className="app-btn-secondary px-4 py-2 text-xs">
-              User roles
-            </Link>
-            <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
-              Portal users
-            </Link>
+      {!embedded ? (
+        <PageHeader
+          title="Portal Access"
+          subtitle="Turn portals on or off, add custom portals, and edit how each portal appears"
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={startCreatePortal} className="app-btn-primary px-4 py-2 text-xs">
+                Add portal
+              </button>
+              <Link to="/admin/settings/user-roles" className="app-btn-secondary px-4 py-2 text-xs">
+                User roles
+              </Link>
+              <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
+                Portal users
+              </Link>
+            </div>
+          }
+        />
+      ) : (
+        <div className="app-panel mb-5 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-afta-border)] pb-4">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-afta-text)]">Portal Access</h2>
+              <p className="mt-1 text-sm text-[var(--color-afta-subtle)]">
+                Turn portals on or off, add custom portals, and edit how each portal appears
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={startCreatePortal} className="app-btn-primary px-4 py-2 text-xs">
+                Add portal
+              </button>
+              <Link to="/admin/settings/user-roles" className="app-btn-secondary px-4 py-2 text-xs">
+                User roles
+              </Link>
+              <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
+                Portal users
+              </Link>
+            </div>
           </div>
-        }
-      />
+        </div>
+      )}
 
-      <div className="flex flex-1 flex-col gap-5 p-6 lg:flex-row lg:p-7">
+      <div className={`flex flex-1 flex-col gap-5 ${embedded ? "lg:flex-row" : "p-6 lg:flex-row lg:p-7"}`}>
         <aside className="app-panel w-full shrink-0 p-4 lg:w-72">
           <p className="px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-afta-muted)]">
             Portals
@@ -416,4 +447,6 @@ export default function AdminPortalAccessPage() {
       </div>
     </>
   );
+
+  return content;
 }

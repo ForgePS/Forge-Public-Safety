@@ -37,7 +37,7 @@ function portalAccessLabel(role, definedPortalsBySlug) {
   return portal ? `${portal.label} (/${role.portalType})` : `/${role.portalType}`;
 }
 
-export default function AdminPortalRolesPage() {
+export default function AdminPortalRolesPage({ embedded = false }) {
   const { user } = useAuth();
   const { reload: reloadAssignableRoles } = usePortalRoles();
   const { portals: definedPortals, bySlug: definedPortalsBySlug } = usePortalDefinitions();
@@ -203,6 +203,13 @@ export default function AdminPortalRolesPage() {
   }
 
   if (!canManage) {
+    if (embedded) {
+      return (
+        <div className="app-panel p-5 text-sm text-[var(--color-afta-subtle)]">
+          Academy admin access is required to manage user roles.
+        </div>
+      );
+    }
     return (
       <PageHeader
         title="Access denied"
@@ -213,34 +220,58 @@ export default function AdminPortalRolesPage() {
     );
   }
 
-  return (
+  const content = (
     <>
-      <PageHeader
-        title="User Roles"
-        subtitle="Create and edit custom roles, then assign them to portal users"
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Link to="/admin/portal-access" className="app-btn-secondary px-4 py-2 text-xs">
-              Portal access
-            </Link>
-            <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
-              Portal users
-            </Link>
-            <button type="button" onClick={startCreate} className="app-btn-primary px-4 py-2 text-xs">
-              New user role
-            </button>
+      {!embedded ? (
+        <PageHeader
+          title="User Roles"
+          subtitle="Create and edit custom roles, then assign them to portal users"
+          actions={
+            <div className="flex flex-wrap gap-2">
+              <Link to="/admin/settings/portal-access" className="app-btn-secondary px-4 py-2 text-xs">
+                Portal access
+              </Link>
+              <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
+                Portal users
+              </Link>
+              <button type="button" onClick={startCreate} className="app-btn-primary px-4 py-2 text-xs">
+                New user role
+              </button>
+            </div>
+          }
+        />
+      ) : (
+        <div className="app-panel mb-5 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--color-afta-border)] pb-4">
+            <div>
+              <h2 className="text-base font-semibold text-[var(--color-afta-text)]">User Roles</h2>
+              <p className="mt-1 text-sm text-[var(--color-afta-subtle)]">
+                Create and edit custom roles, then assign them to portal users
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/admin/settings/portal-access" className="app-btn-secondary px-4 py-2 text-xs">
+                Portal access
+              </Link>
+              <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
+                Portal users
+              </Link>
+              <button type="button" onClick={startCreate} className="app-btn-primary px-4 py-2 text-xs">
+                New user role
+              </button>
+            </div>
           </div>
-        }
-      />
+        </div>
+      )}
 
       {!canManageAdminRoles ? (
-        <div className="mx-6 mt-4 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 lg:mx-7">
+        <div className={`rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 ${embedded ? "mb-5" : "mx-6 mt-4 lg:mx-7"}`}>
           Academy admins can create student, instructor, department, and certification user roles.
           Creator or Super Admin access is required for admin portal roles.
         </div>
       ) : null}
 
-      <div className="flex flex-1 flex-col gap-5 p-6 lg:flex-row lg:p-7">
+      <div className={`flex flex-1 flex-col gap-5 ${embedded ? "lg:flex-row" : "p-6 lg:flex-row lg:p-7"}`}>
         <section className="app-panel min-w-0 flex-1 p-5">
           <h2 className="text-sm font-semibold text-[var(--color-afta-text)]">Built-in roles</h2>
           <p className="mt-1 text-sm text-[var(--color-afta-subtle)]">
@@ -373,4 +404,6 @@ export default function AdminPortalRolesPage() {
       </div>
     </>
   );
+
+  return content;
 }

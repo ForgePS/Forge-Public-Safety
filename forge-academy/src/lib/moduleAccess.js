@@ -7,6 +7,8 @@ import { getSettingValue, isModuleEnabled } from "./systemSettings.js";
 /** @type {{ prefix: string, exact?: boolean, module?: string, flags?: string[], always?: boolean }[]} */
 const ADMIN_PATH_RULES = [
   { prefix: "/admin/settings", always: true },
+  { prefix: "/admin/settings/portal-access", always: true },
+  { prefix: "/admin/settings/user-roles", always: true },
   { prefix: "/admin/portal-access", always: true },
   { prefix: "/admin/roles", always: true },
   { prefix: "/admin/creator", always: true },

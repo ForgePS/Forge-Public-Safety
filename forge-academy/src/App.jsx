@@ -90,10 +90,9 @@ import AdminStateCertificationPage from "./pages/admin/AdminStateCertificationPa
 import AdminChallengeTestingPage from "./pages/admin/AdminChallengeTestingPage.jsx";
 import AdminTestingAuditPage from "./pages/admin/AdminTestingAuditPage.jsx";
 import AdminLmsIntegrationPage from "./pages/admin/AdminLmsIntegrationPage.jsx";
-import AdminSystemSettingsPage from "./pages/admin/AdminSystemSettingsPage.jsx";
+import AdminSystemSettingsLayout from "./pages/admin/AdminSystemSettingsLayout.jsx";
+import AdminSystemSettingsRouter from "./pages/admin/AdminSystemSettingsRouter.jsx";
 import AdminCreatorConsolePage from "./pages/admin/AdminCreatorConsolePage.jsx";
-import AdminPortalRolesPage from "./pages/admin/AdminPortalRolesPage.jsx";
-import AdminPortalAccessPage from "./pages/admin/AdminPortalAccessPage.jsx";
 import AdminPortalShell from "./components/AdminPortalShell.jsx";
 import PortalAccessGuard from "./components/PortalAccessGuard.jsx";
 import DefinedPortalLayout from "./components/DefinedPortalLayout.jsx";
@@ -172,16 +171,19 @@ export default function App() {
           <Route path="/admin/users/new" element={<UserFormPage />} />
           <Route path="/admin/users/:userId" element={<UserFormPage />} />
           <Route path="/admin/creator" element={<AdminCreatorConsolePage />} />
-          <Route path="/admin/portal-access" element={<AdminPortalAccessPage />} />
-          <Route path="/admin/roles" element={<AdminPortalRolesPage />} />
+          <Route path="/admin/portal-access" element={<Navigate to="/admin/settings/portal-access" replace />} />
+          <Route path="/admin/roles" element={<Navigate to="/admin/settings/user-roles" replace />} />
           <Route
             path="/admin/settings"
             element={
               <SystemSettingsRoute>
-                <AdminSystemSettingsPage />
+                <AdminSystemSettingsLayout />
               </SystemSettingsRoute>
             }
-          />
+          >
+            <Route index element={<Navigate to="organization" replace />} />
+            <Route path=":sectionId" element={<AdminSystemSettingsRouter />} />
+          </Route>
           <Route path="/admin/courses" element={<CoursesListPage />} />
           <Route path="/admin/courses/new" element={<CourseFormPage />} />
           <Route path="/admin/courses/:courseId" element={<CourseFormPage />} />
