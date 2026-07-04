@@ -45,6 +45,8 @@ import {
 } from "../../lib/digitalDashboard.js";
 import LayoutDesignerCanvas from "./LayoutDesignerCanvas.jsx";
 import { SignageStickProvisioningGuide } from "./DigitalDashboardShared.jsx";
+import ForgeBuilderPanel from "../aiBuilder/ForgeBuilderPanel.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
 
 function ModalShell({ title, wide, onClose, children, footer }) {
   return (
@@ -192,6 +194,7 @@ export function DigitalDashboardGroupsSection({
 export function DigitalDashboardLayoutsSection({ layouts = [], canEdit, onSaveLayout, onDeleteLayout }) {
   const [modal, setModal] = useState(null);
   const [saving, setSaving] = useState(false);
+  const aiBuilderEnabled = useAiBuilderEnabled();
 
   function openTemplate(templateId) {
     const draft = createLayoutFromTemplate(templateId);
@@ -296,6 +299,20 @@ export function DigitalDashboardLayoutsSection({ layouts = [], canEdit, onSaveLa
         >
           <label className="block"><span className="app-label">Layout name</span><input className="app-input" value={modal.form.name} onChange={(event) => patchForm({ name: event.target.value })} /></label>
           <label className="block"><span className="app-label">Template</span><select className="app-input" value={modal.form.templateId} onChange={(event) => patchForm(createLayoutFromTemplate(event.target.value))}>{SCREEN_TEMPLATES.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          {aiBuilderEnabled && canEdit ? (
+            <ForgeBuilderPanel
+              targetType="signageLayout"
+              targetId={modal.form.id ?? ""}
+              currentState={modal.form}
+              onApply={(output) => {
+                patchForm({
+                  name: output.name ?? modal.form.name,
+                  templateId: output.templateId ?? modal.form.templateId,
+                  zones: output.zones ?? modal.form.zones,
+                });
+              }}
+            />
+          ) : null}
           <LayoutDesignerCanvas
             zones={modal.form.zones || []}
             canEdit={canEdit}

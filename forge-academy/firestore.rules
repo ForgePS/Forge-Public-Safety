@@ -434,6 +434,15 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /aiBuilderAuditLogs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /aiBuilderUsage/{userId} {
+      allow read, write: if false;
+    }
+
     match /testVersions/{versionId} {
       allow read: if isAdmin() || isInstructor();
       allow write: if false;
