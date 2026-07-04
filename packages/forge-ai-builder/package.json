@@ -1,0 +1,14 @@
+{
+  "name": "@forgeps/ai-builder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Forge AI Builder — adapter registry, schemas, and RMS module runtime",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./registry": "./src/registry.js",
+    "./schemas": "./src/schemas/index.js",
+    "./rms": "./src/rms/index.js"
+  }
+}

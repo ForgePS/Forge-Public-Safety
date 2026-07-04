@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "forge-academy/**"
+      - "packages/forge-ai-builder/**"
       - ".github/workflows/deploy-forge-academy.yml"
   workflow_dispatch:
 
@@ -23,7 +24,40 @@ jobs:
           cache: npm
           cache-dependency-path: forge-academy/package-lock.json
 
-      - name: Authenticate to Google Cloud
+      - name: Validate deploy credentials
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_CREDS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ] && [ -z "$FIREBASE_CREDS" ]; then
+            echo "::error::No Firebase deploy credentials configured."
+            echo ""
+            echo "Option A (recommended when service account keys are blocked):"
+            echo "  1. On your machine: cd forge-academy && npx firebase-tools login:ci"
+            echo "  2. Copy the token GitHub secret FIREBASE_TOKEN"
+            echo ""
+            echo "Option B (only if your org allows JSON keys):"
+            echo "  Add service account JSON as secret FIREBASE_SERVICE_ACCOUNT"
+            echo ""
+            echo "Option C: deploy locally with firebase login (no GitHub secret needed)"
+            echo "  cd forge-academy && npm run deploy"
+            exit 1
+          fi
+
+      - name: Configure Firebase credentials
+        id: creds
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_CREDS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$FIREBASE_TOKEN" ]; then
+            echo "method=token" >> "$GITHUB_OUTPUT"
+          elif [ -n "$FIREBASE_CREDS" ]; then
+            echo "method=service_account" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate to Google Cloud (service account only)
+        if: steps.creds.outputs.method == 'service_account'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -39,4 +73,12 @@ jobs:
         run: npm run build
 
       - name: Deploy hosting, Firestore rules, and Cloud Functions
-        run: npx firebase-tools@13 deploy --only hosting,firestore:rules,functions --project forge-academy-95f84 --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          DEPLOY_ARGS="--only hosting,firestore:rules,functions --project forge-academy-95f84 --non-interactive"
+          if [ -n "$FIREBASE_TOKEN" ]; then
+            npx firebase-tools@13 deploy $DEPLOY_ARGS --token "$FIREBASE_TOKEN"
+          else
+            npx firebase-tools@13 deploy $DEPLOY_ARGS
+          fi

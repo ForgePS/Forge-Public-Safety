@@ -32,6 +32,8 @@ import DigitalDashboardMediaModal from "./DigitalDashboardMediaModal.jsx";
 import DigitalDashboardMediaLibrary from "./DigitalDashboardMediaLibrary.jsx";
 import DeviceLibrarySection from "./DeviceLibrarySection.jsx";
 import VirtualPlayerSection from "./VirtualPlayerSection.jsx";
+import ForgeBuilderPanel from "../aiBuilder/ForgeBuilderPanel.jsx";
+import { useAiBuilderEnabled } from "../../lib/aiBuilder/useAiBuilderEnabled.js";
 import DigitalDashboardLibraryShell, { LibraryFilterPill, LibraryGroupTag, LibraryStatusBadge } from "./DigitalDashboardLibraryShell.jsx";
 import {
   DigitalDashboardAlertsSection,
@@ -253,6 +255,7 @@ export default function DigitalDashboardPanel({
   user = null,
 }) {
   const settingsContext = useSystemSettingsOptional();
+  const aiBuilderEnabled = useAiBuilderEnabled();
   const virtualPlayerEnabled = isVirtualPlayerEnabled(settingsContext?.settings);
   const mediaApprovalRequired = isMediaApprovalRequired(settingsContext?.settings);
   const [view, setView] = useState("overview");
@@ -921,6 +924,7 @@ export default function DigitalDashboardPanel({
           settings={settingsContext?.settings}
           mediaFolders={mediaFolders}
           rssFeeds={rssFeeds}
+          aiBuilderEnabled={aiBuilderEnabled}
           onClose={closeModal}
           onSave={(form) => saveMediaItem(form)}
           onSaveBatch={onSaveMediaBatch ? (records) => saveMediaBatch(records) : undefined}
@@ -949,6 +953,24 @@ export default function DigitalDashboardPanel({
             <label className="block"><span className="app-label">Priority</span><input type="number" min="1" className="app-input" value={modal.form.priority || 1} onChange={(event) => patchForm({ priority: event.target.value })} /></label>
           </div>
           <label className="flex items-center gap-2 pt-1 text-sm text-[var(--color-afta-text)]"><input type="checkbox" checked={modal.form.loop !== false} onChange={(event) => patchForm({ loop: event.target.checked })} />Loop continuously</label>
+
+          {aiBuilderEnabled && sectionCanEdit("playlists") ? (
+            <ForgeBuilderPanel
+              targetType="signagePlaylist"
+              targetId={modal.form.id ?? ""}
+              currentState={modal.form}
+              context={{ product: "academy", module: "digitalDashboard" }}
+              onApply={(output) => {
+                patchForm({
+                  name: output.name ?? modal.form.name,
+                  description: output.description ?? modal.form.description,
+                  loop: output.loop ?? modal.form.loop,
+                  transition: output.transition ?? modal.form.transition,
+                  priority: output.priority ?? modal.form.priority,
+                });
+              }}
+            />
+          ) : null}
 
           <fieldset className="rounded-[10px] border border-[var(--color-afta-border)] p-3">
             <legend className="px-1 text-xs font-semibold text-[var(--color-afta-muted)]">Quick add</legend>

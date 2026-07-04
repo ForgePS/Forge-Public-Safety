@@ -101,6 +101,9 @@ import { SystemSettingsRoute } from "./components/SystemSettingsRoute.jsx";
 import AdminClassTestsPage from "./pages/admin/AdminClassTestsPage.jsx";
 import AdminReportsPage from "./pages/admin/AdminReportsPage.jsx";
 import AdminDigitalDashboardPage from "./pages/admin/AdminDigitalDashboardPage.jsx";
+import AdminModuleDefinitionsPage from "./pages/admin/AdminModuleDefinitionsPage.jsx";
+import AdminModuleDefinitionFormPage from "./pages/admin/AdminModuleDefinitionFormPage.jsx";
+import AdminModuleSubmissionPage from "./pages/admin/AdminModuleSubmissionPage.jsx";
 import DigitalDisplayPlayerPage from "./pages/DigitalDisplayPlayerPage.jsx";
 import AdminPilotReleasePage from "./pages/admin/AdminPilotReleasePage.jsx";
 import AdminHousingClassesPage from "./pages/admin/AdminHousingClassesPage.jsx";
@@ -228,6 +231,10 @@ export default function App() {
           <Route path="/admin/question-banks" element={<AdminQuestionBanksPage />} />
           <Route path="/admin/reports" element={<AdminReportsPage />} />
           <Route path="/admin/digital-dashboard" element={<AdminDigitalDashboardPage />} />
+          <Route path="/admin/module-definitions" element={<AdminModuleDefinitionsPage />} />
+          <Route path="/admin/module-definitions/new" element={<AdminModuleDefinitionFormPage />} />
+          <Route path="/admin/module-definitions/:moduleId/submit" element={<AdminModuleSubmissionPage />} />
+          <Route path="/admin/module-definitions/:moduleId" element={<AdminModuleDefinitionFormPage />} />
           <Route path="/admin/housing" element={<AdminHousingClassesPage />} />
           <Route path="/admin/housing/rooms" element={<AdminRoomsListPage />} />
           <Route path="/admin/housing/rooms/new" element={<AdminRoomFormPage />} />
