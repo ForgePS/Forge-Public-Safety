@@ -6,6 +6,7 @@ import { FormField, FormSection, FormSelect } from "../../components/StudentForm
 import { useAuth } from "../../context/AuthContext.jsx";
 import { usePortalRoles } from "../../context/PortalRolesContext.jsx";
 import { listActiveDepartments } from "../../lib/departments.js";
+import DepartmentMultiSelect from "../../components/DepartmentMultiSelect.jsx";
 import { listInstructors, instructorDisplayName } from "../../lib/instructors.js";
 import {
   createPortalUser,
@@ -32,6 +33,7 @@ const emptyForm = {
   displayName: "",
   role: ROLES.STUDENT,
   departmentId: "",
+  departmentIds: [],
   studentId: "",
   instructorId: "",
   createInstructorProfile: true,
@@ -143,6 +145,7 @@ export default function UserFormPage() {
           displayName: portalUser.displayName,
           role: portalUser.role,
           departmentId: portalUser.departmentId ?? "",
+          departmentIds: portalUser.departmentIds ?? [],
           studentId: portalUser.studentId ?? "",
           instructorId: "",
           createInstructorProfile: false,
@@ -202,6 +205,7 @@ export default function UserFormPage() {
       displayName: form.displayName,
       role: form.role,
       departmentId: form.departmentId,
+      departmentIds: form.departmentIds,
       studentId: form.studentId,
       instructorId: form.instructorId,
       disabled: form.disabled,
@@ -271,6 +275,7 @@ export default function UserFormPage() {
           profileUrl: form.profileUrl,
           organizationUnit: form.organizationUnit,
           staffSlug: form.staffSlug,
+          departmentIds: form.departmentIds,
         });
 
         if (pendingPhotoBlob) {
@@ -507,6 +512,22 @@ export default function UserFormPage() {
             Optional directory details for academy staff. Populated automatically when importing from
             the AFTA website.
           </p>
+          <div>
+            <p className="mb-2 text-sm font-medium text-[var(--color-afta-text)]">Department affiliation</p>
+            <p className="mb-3 text-xs text-[var(--color-afta-muted)]">
+              Select one or more fire departments this person is associated with.
+            </p>
+            <DepartmentMultiSelect
+              departments={departments}
+              value={form.departmentIds}
+              onChange={(departmentIds) =>
+                setForm((current) => ({
+                  ...current,
+                  departmentIds,
+                }))
+              }
+            />
+          </div>
           <FormField
             label="Job title"
             name="jobTitle"

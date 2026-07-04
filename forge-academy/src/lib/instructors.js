@@ -31,6 +31,7 @@ export const INSTRUCTOR_STATUS_LABELS = {
  * @property {string} phone
  * @property {string} employeeId
  * @property {string[]} specialties
+ * @property {string[]} departmentIds
  * @property {string} bio
  * @property {string} status
  * @property {string} notes
@@ -55,6 +56,7 @@ export function mapInstructor(id, data) {
     email: data.email?.trim().toLowerCase() ?? "",
     phone: data.phone ?? "",
     employeeId: data.employeeId ?? "",
+    departmentIds: Array.isArray(data.departmentIds) ? data.departmentIds.filter(Boolean) : [],
     specialties: Array.isArray(data.specialties) ? data.specialties.filter(Boolean) : [],
     bio: data.bio ?? "",
     status: data.status ?? INSTRUCTOR_STATUSES.ACTIVE,
@@ -173,6 +175,9 @@ function sanitizeInstructorPayload(input) {
     email: input.email?.trim().toLowerCase() ?? "",
     phone: normalizePhone(input.phone ?? ""),
     employeeId: input.employeeId?.trim() ?? "",
+    departmentIds: Array.isArray(input.departmentIds)
+      ? input.departmentIds.map((item) => String(item ?? "").trim()).filter(Boolean)
+      : [],
     specialties,
     bio: input.bio?.trim() ?? "",
     status: input.status || INSTRUCTOR_STATUSES.ACTIVE,

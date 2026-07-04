@@ -56,6 +56,7 @@ export async function savePortalUserRole(callerRole, targetUser, newRole, custom
     displayName: targetUser.displayName,
     role: newRole,
     departmentId: targetUser.departmentId ?? "",
+    departmentIds: targetUser.departmentIds ?? [],
     studentId: targetUser.studentId ?? "",
     disabled: Boolean(targetUser.disabled),
     jobTitle: targetUser.jobTitle ?? "",

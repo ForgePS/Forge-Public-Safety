@@ -153,11 +153,32 @@ async function docExists(collection, id) {
   return snap.exists;
 }
 
+function normalizeDepartmentIdsInput(departmentIds, departmentId) {
+  const ids = Array.isArray(departmentIds)
+    ? departmentIds.map((item) => normalizeText(item)).filter(Boolean)
+    : [];
+  const primary = normalizeText(departmentId);
+  if (primary && !ids.includes(primary)) {
+    return [primary, ...ids];
+  }
+  if (ids.length > 0) return ids;
+  return primary ? [primary] : [];
+}
+
+async function assertDepartmentsExist(departmentIds) {
+  for (const departmentId of departmentIds) {
+    if (!(await docExists("departments", departmentId))) {
+      throw new HttpsError("invalid-argument", `Department ${departmentId} was not found.`);
+    }
+  }
+}
+
 function buildProfilePayload({
   email,
   displayName,
   role,
   departmentId,
+  departmentIds,
   studentId,
   disabled,
   permissions,
@@ -169,11 +190,13 @@ function buildProfilePayload({
   organizationUnit,
   staffSlug,
 }) {
+  const normalizedDepartmentIds = normalizeDepartmentIdsInput(departmentIds, departmentId);
   const payload = {
     email,
     displayName,
     role,
-    departmentId: departmentId || "",
+    departmentId: departmentId || normalizedDepartmentIds[0] || "",
+    departmentIds: normalizedDepartmentIds,
     studentId: studentId || "",
     disabled: Boolean(disabled),
     updatedAt: FieldValue.serverTimestamp(),
@@ -206,6 +229,7 @@ export async function createPortalUserAccount(callerUid, input) {
   const displayName = normalizeText(input.displayName);
   const role = normalizeText(input.role);
   const departmentId = normalizeText(input.departmentId);
+  const departmentIds = input.departmentIds;
   const studentId = normalizeText(input.studentId);
   const instructorId = normalizeText(input.instructorId);
   const createInstructorProfile = Boolean(input.createInstructorProfile);
@@ -231,6 +255,7 @@ export async function createPortalUserAccount(callerUid, input) {
   if (departmentId && !(await docExists("departments", departmentId))) {
     throw new HttpsError("invalid-argument", "Selected department was not found.");
   }
+  await assertDepartmentsExist(normalizeDepartmentIdsInput(departmentIds, departmentId));
   if (studentId && !(await docExists("students", studentId))) {
     throw new HttpsError("invalid-argument", "Selected student record was not found.");
   }
@@ -263,6 +288,7 @@ export async function createPortalUserAccount(callerUid, input) {
         displayName,
         role,
         departmentId,
+        departmentIds,
         studentId,
         disabled: false,
         permissions,
@@ -321,6 +347,7 @@ export async function updatePortalUserAccount(callerUid, input) {
   const displayName = normalizeText(input.displayName);
   const role = normalizeText(input.role);
   const departmentId = normalizeText(input.departmentId);
+  const departmentIds = input.departmentIds;
   const studentId = normalizeText(input.studentId);
   const instructorId = normalizeText(input.instructorId);
   const disabled = input.disabled;
@@ -332,6 +359,11 @@ export async function updatePortalUserAccount(callerUid, input) {
   const roleDefinition = await assertCanAssignPortalRole(callerRole, role);
 
   validateRoleLinksForPortalType(roleDefinition.portalType, { departmentId, studentId });
+
+  if (departmentId && !(await docExists("departments", departmentId))) {
+    throw new HttpsError("invalid-argument", "Selected department was not found.");
+  }
+  await assertDepartmentsExist(normalizeDepartmentIdsInput(departmentIds, departmentId));
 
   const db = getFirestore();
   const userRef = db.doc(`users/${uid}`);
@@ -346,6 +378,7 @@ export async function updatePortalUserAccount(callerUid, input) {
     displayName,
     role,
     departmentId,
+    departmentIds,
     studentId,
     disabled,
     permissions: permissionsProvided && input.permissions && typeof input.permissions === "object" ? input.permissions : undefined,

@@ -11,8 +11,10 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { StatCard, default as PageHeader } from "../../components/PageHeader.jsx";
+import StatCard, { default as PageHeader } from "../../components/PageHeader.jsx";
 import PortalAnnouncementsPanel from "../../components/PortalAnnouncementsPanel.jsx";
+import { usePortalRoles } from "../../context/PortalRolesContext.jsx";
+import { countActiveAcademyStaff } from "../../lib/academyStaff.js";
 import { PORTAL_AUDIENCES } from "../../lib/portalAnnouncements.js";
 import {
   REGISTRATION_STATUS_LABELS,
@@ -26,7 +28,6 @@ import { getAdminAnalyticsReport } from "../../lib/reports.js";
 import { getHousingDashboardMetrics } from "../../lib/housingReports.js";
 import { getTestingDashboardMetrics } from "../../lib/testGrading.js";
 import { listClassSessions } from "../../lib/classes.js";
-import { INSTRUCTOR_STATUSES, listInstructors } from "../../lib/instructors.js";
 
 const QUICK_ACTIONS = [
   { label: "Add Student", to: "/admin/students/new", icon: UserPlus },
@@ -115,11 +116,12 @@ function DonutChart({ segments, totalLabel }) {
 }
 
 export default function AdminDashboardPage() {
+  const { customById } = usePortalRoles();
   const [report, setReport] = useState(null);
   const [summary, setSummary] = useState(null);
   const [registrations, setRegistrations] = useState([]);
   const [upcomingClasses, setUpcomingClasses] = useState([]);
-  const [activeInstructors, setActiveInstructors] = useState(0);
+  const [activeStaff, setActiveStaff] = useState(0);
   const [housingMetrics, setHousingMetrics] = useState(null);
   const [testingMetrics, setTestingMetrics] = useState(null);
   const [queue, setQueue] = useState([]);
@@ -142,7 +144,7 @@ export default function AdminDashboardPage() {
           testing,
           registrationRows,
           classes,
-          instructors,
+          staffCount,
         ] = await Promise.all([
           getAdminAnalyticsReport(),
           getRegistrationSummary(),
@@ -152,7 +154,7 @@ export default function AdminDashboardPage() {
           getTestingDashboardMetrics().catch(() => null),
           listRegistrations(),
           listClassSessions(),
-          listInstructors(),
+          countActiveAcademyStaff(customById),
         ]);
         if (!active) return;
 
@@ -163,9 +165,7 @@ export default function AdminDashboardPage() {
         setTestingMetrics(testing);
         setQueue(pending.slice(0, 5));
         setAttendanceIncomplete(incompleteAttendance);
-        setActiveInstructors(
-          instructors.filter((item) => item.status === INSTRUCTOR_STATUSES.ACTIVE).length,
-        );
+        setActiveStaff(staffCount);
         setUpcomingClasses(
           classes
             .filter((session) => session.startDate >= today)
@@ -183,7 +183,7 @@ export default function AdminDashboardPage() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [customById]);
 
   const registrationBreakdown = useMemo(
     () => buildRegistrationBreakdown(registrations),
@@ -241,11 +241,11 @@ export default function AdminDashboardPage() {
             icon={Calendar}
           />
           <StatCard
-            label="Active Instructors"
-            value={loading ? "…" : activeInstructors}
-            sub="Available to teach"
+            label="Staff"
+            value={loading ? "…" : activeStaff}
+            sub="Academy personnel and instructors"
             linkTo="/admin/instructors"
-            linkLabel="View instructors →"
+            linkLabel="View staff →"
             icon={GraduationCap}
           />
           <StatCard
