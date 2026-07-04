@@ -59,6 +59,56 @@ export function isFullAdmin(role) {
 /** Roles that can access the academy admin portal. */
 export const ADMIN_PORTAL_ROLES = [ROLES.ACADEMY_ADMIN, ROLES.SUPER_ADMIN, ROLES.CREATOR];
 
+/** Roles that can assign any portal role (including creator and super admin). */
+export const PORTAL_ROLE_MANAGERS = [ROLES.SUPER_ADMIN, ROLES.CREATOR];
+
+/**
+ * @param {Role | null | undefined} role
+ */
+export function isCreator(role) {
+  return role === ROLES.CREATOR;
+}
+
+/**
+ * @param {Role | null | undefined} role
+ */
+export function isSuperAdmin(role) {
+  return role === ROLES.SUPER_ADMIN;
+}
+
+/**
+ * @param {Role | null | undefined} role
+ */
+export function canManageAllPortalRoles(role) {
+  return Boolean(role && PORTAL_ROLE_MANAGERS.includes(role));
+}
+
+/**
+ * @param {Role | null | undefined} callerRole
+ * @param {Role} targetRole
+ */
+export function canAssignPortalRole(callerRole, targetRole) {
+  if (!callerRole) return false;
+  if (canManageAllPortalRoles(callerRole)) return true;
+  if (callerRole === ROLES.ACADEMY_ADMIN) {
+    return targetRole !== ROLES.CREATOR && targetRole !== ROLES.SUPER_ADMIN;
+  }
+  return false;
+}
+
+/**
+ * @param {Role | null | undefined} callerRole
+ * @param {Role | null | undefined} targetUserRole
+ */
+export function canManagePortalUserWithRole(callerRole, targetUserRole) {
+  if (!callerRole || !targetUserRole) return false;
+  if (canManageAllPortalRoles(callerRole)) return true;
+  if (callerRole === ROLES.ACADEMY_ADMIN) {
+    return targetUserRole !== ROLES.CREATOR && targetUserRole !== ROLES.SUPER_ADMIN;
+  }
+  return false;
+}
+
 /**
  * @param {Role | null | undefined} role
  * @param {Role | Role[]} allowed

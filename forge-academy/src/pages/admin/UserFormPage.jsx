@@ -12,7 +12,7 @@ import {
   resetPortalUserPassword,
   updatePortalUser,
 } from "../../lib/portalUsers.js";
-import { ALL_ROLES, ROLE_LABELS, ROLES, isSystemSettingsAdmin } from "../../lib/roles.js";
+import { ALL_ROLES, ROLE_LABELS, ROLES, canAssignPortalRole, isSystemSettingsAdmin } from "../../lib/roles.js";
 import { listStudents } from "../../lib/students.js";
 import { fetchUserProfile } from "../../lib/users.js";
 import DigitalDashboardPermissionsEditor from "../../components/digitalDashboard/DigitalDashboardPermissionsEditor.jsx";
@@ -78,13 +78,7 @@ export default function UserFormPage() {
 
   const roleOptions = useMemo(
     () =>
-      ALL_ROLES.filter((role) => {
-        if (role === ROLES.CREATOR) return currentUser?.role === ROLES.CREATOR;
-        if (role === ROLES.SUPER_ADMIN) {
-          return currentUser?.role === ROLES.SUPER_ADMIN || currentUser?.role === ROLES.CREATOR;
-        }
-        return true;
-      }).map((role) => ({
+      ALL_ROLES.filter((role) => canAssignPortalRole(currentUser?.role, role)).map((role) => ({
         value: role,
         label: ROLE_LABELS[role],
       })),

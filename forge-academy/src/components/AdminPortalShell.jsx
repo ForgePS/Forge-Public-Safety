@@ -16,6 +16,7 @@ import {
   Rocket,
   ScrollText,
   Settings,
+  Shield,
   Sparkles,
   UserCog,
   Users,
@@ -24,7 +25,7 @@ import DashboardLayout from "./DashboardLayout.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSystemSettingsOptional } from "../context/SystemSettingsContext.jsx";
 import { filterNavItemsBySettings } from "../lib/moduleAccess.js";
-import { isSystemSettingsAdmin } from "../lib/roles.js";
+import { canManageAllPortalRoles, isSystemSettingsAdmin } from "../lib/roles.js";
 
 const adminNavBase = [
   { group: "Overview", label: "Dashboard", to: "/admin", end: true, icon: LayoutDashboard },
@@ -51,6 +52,7 @@ const adminNavBase = [
   { group: "Reports", label: "Reports & Analytics", to: "/admin/reports", icon: BarChart3, module: "reports" },
   { group: "Reports", label: "Digital Dashboard", to: "/admin/digital-dashboard", icon: MonitorPlay, module: "digitalDashboard" },
 
+  { group: "System", label: "Creator Console", to: "/admin/creator", icon: Shield, platformManagerOnly: true },
   { group: "System", label: "System Settings", to: "/admin/settings", icon: Settings, settingsOnly: true },
   { group: "System", label: "Pilot Release", to: "/admin/pilot", icon: Rocket, pilotOnly: true },
 ];
@@ -62,6 +64,7 @@ export default function AdminPortalShell() {
 
   const navItems = useMemo(() => {
     const base = adminNavBase.filter((item) => {
+      if (item.platformManagerOnly && !canManageAllPortalRoles(user?.role)) return false;
       if (item.settingsOnly && !isSystemSettingsAdmin(user?.role)) return false;
       return true;
     });

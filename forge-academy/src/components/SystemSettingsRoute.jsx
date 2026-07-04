@@ -58,7 +58,7 @@ export function SystemSettingsRoute({ children }) {
       <div className="p-7">
         <h2 className="text-lg font-semibold text-[var(--color-afta-text)]">Access denied</h2>
         <p className="mt-2 text-sm text-[var(--color-afta-subtle)]">
-          System settings are restricted to Creator and Super Admin accounts.
+          System settings are restricted to Creator, Super Admin, and Academy Admin accounts.
         </p>
         <Link to="/admin" className="app-btn-secondary mt-4 inline-block px-4 py-2 text-xs">
           Back to dashboard

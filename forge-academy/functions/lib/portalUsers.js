@@ -38,8 +38,12 @@ export async function assertAdminCaller(uid) {
 async function assertCanManageTarget(callerRole, targetUid) {
   if (!targetUid) return;
   const targetRole = await getCallerRole(targetUid);
-  if (targetRole === "creator" && callerRole !== "creator") {
-    throw new HttpsError("permission-denied", "Only a creator can manage creator accounts.");
+  if (
+    targetRole === "creator" &&
+    callerRole !== "creator" &&
+    callerRole !== "super_admin"
+  ) {
+    throw new HttpsError("permission-denied", "Only a creator or super admin can manage creator accounts.");
   }
   if (
     targetRole === "super_admin" &&
@@ -54,8 +58,8 @@ async function assertCanManageTarget(callerRole, targetUid) {
 }
 
 function assertCanAssignRole(callerRole, role) {
-  if (role === "creator" && callerRole !== "creator") {
-    throw new HttpsError("permission-denied", "Only a creator can assign the creator role.");
+  if (role === "creator" && callerRole !== "creator" && callerRole !== "super_admin") {
+    throw new HttpsError("permission-denied", "Only a creator or super admin can assign the creator role.");
   }
   if (role === "super_admin" && callerRole !== "super_admin" && callerRole !== "creator") {
     throw new HttpsError("permission-denied", "Only a super admin or creator can assign the super admin role.");
