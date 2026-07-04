@@ -11,7 +11,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { StatCard } from "../../components/PageHeader.jsx";
+import { StatCard, default as PageHeader } from "../../components/PageHeader.jsx";
 import PortalAnnouncementsPanel from "../../components/PortalAnnouncementsPanel.jsx";
 import { PORTAL_AUDIENCES } from "../../lib/portalAnnouncements.js";
 import {
@@ -217,7 +217,12 @@ export default function AdminDashboardPage() {
     : 0;
 
   return (
-    <div className="flex flex-1 flex-col gap-5 p-6 lg:p-7">
+    <>
+      <PageHeader
+        title="Academy Dashboard"
+        subtitle="Overview of students, classes, registrations, and campus operations"
+      />
+      <div className="flex flex-1 flex-col gap-5 p-6 lg:p-7">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard
             label="Active Students"
@@ -591,6 +596,7 @@ export default function AdminDashboardPage() {
             </div>
           </section>
         ) : null}
-    </div>
+      </div>
+    </>
   );
 }

@@ -61,15 +61,12 @@ export default function AdminCreatorConsolePage() {
 
   if (!platformManager) {
     return (
-      <div className="p-7">
-        <h2 className="text-lg font-semibold text-[var(--color-afta-text)]">Access denied</h2>
-        <p className="mt-2 text-sm text-[var(--color-afta-subtle)]">
-          The Creator Console is for Creator and Super Admin accounts only.
-        </p>
-        <Link to="/admin" className="app-btn-secondary mt-4 inline-block px-4 py-2 text-xs">
-          Back to dashboard
-        </Link>
-      </div>
+      <PageHeader
+        title="Access denied"
+        subtitle="The Creator Console is for Creator and Super Admin accounts only."
+        backTo="/admin"
+        backLabel="Back to dashboard"
+      />
     );
   }
 

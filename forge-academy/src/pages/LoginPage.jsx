@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { Navigate, useLocation } from "react-router-dom";
+import BackButton from "../components/BackButton.jsx";
 import { ForgeOrgBadge, ForgeWordmark } from "../components/auth/ForgeLoginBrand.jsx";
 import { ForgeLoginThemeToggle } from "../components/auth/ForgeLoginThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -49,6 +50,9 @@ export default function LoginPage() {
       data-forge-login-theme={theme}
     >
       <div className="w-full max-w-[420px]">
+        <div className="mb-4">
+          <BackButton hideOnHome={false} className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-afta-muted)] hover:text-[#c8102e]" />
+        </div>
         <ForgeLoginThemeToggle isDark={isDark} onToggle={toggleTheme} />
         <ForgeWordmark />
 

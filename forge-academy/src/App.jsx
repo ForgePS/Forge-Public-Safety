@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute, { RoleRedirect } from "./components/ProtectedRoute.jsx";
+import PageHeader from "./components/PageHeader.jsx";
 import { ROLES } from "./lib/roles.js";
 import LoginPage from "./pages/LoginPage.jsx";
 import UnauthorizedPage from "./pages/UnauthorizedPage.jsx";
@@ -124,10 +125,12 @@ import CertificationAuditPage from "./pages/certification/CertificationAuditPage
 
 function PlaceholderPage({ title }) {
   return (
-    <div className="p-7">
-      <h2 className="text-lg font-semibold text-[var(--color-afta-text)]">{title}</h2>
-      <p className="mt-2 text-sm text-[var(--color-afta-subtle)]">Coming in a future sprint.</p>
-    </div>
+    <>
+      <PageHeader title={title} subtitle="Coming in a future sprint." />
+      <div className="p-7">
+        <p className="text-sm text-[var(--color-afta-subtle)]">This module is not available yet.</p>
+      </div>
+    </>
   );
 }
 
