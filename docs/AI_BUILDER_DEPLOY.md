@@ -21,9 +21,29 @@ Consumed by:
 | Callable exports | `forgeAiBuildCallable`, `logAiBuilderApplyCallable` |
 | UI panel | `forge-academy/src/components/aiBuilder/` |
 | CI deploy | `.github/workflows/deploy-forge-academy.yml` |
-| Secret | `FIREBASE_SERVICE_ACCOUNT` |
+| GitHub secret | **`FIREBASE_TOKEN`** (from `firebase login:ci`) — no JSON key required |
 
 Deploy triggers on push to `main` when `forge-academy/**` changes.
+
+### CI deploy without a service account key
+
+Many orgs block **Generate new private key** in Google Cloud. Use a CI token instead:
+
+```bash
+cd forge-academy
+npx firebase-tools login:ci
+```
+
+1. Complete the browser sign-in (same Google account that can deploy to `forge-academy-95f84`)
+2. Copy the long token printed in the terminal
+3. GitHub → **Settings** → **Secrets and variables** → **Actions** → **`FIREBASE_TOKEN`** → paste the token
+4. Re-run **Deploy Forge Academy**
+
+No service account JSON. No `google-github-actions/auth` when using `FIREBASE_TOKEN`.
+
+**Local deploy** (no GitHub secret): `firebase login` once, then `npm run deploy`. When asked to delete orphan cloud functions, answer **N**.
+
+Optional: if your org *does* allow JSON keys, `FIREBASE_SERVICE_ACCOUNT` still works as a fallback.
 
 ## RMS (separate repo)
 
@@ -46,21 +66,3 @@ Optional cross-product widgets (e.g. Academy classes on RMS TVs) use HTTP APIs d
 ## Feature flag
 
 Both products respect `systemSettings/default.features.aiBuilderEnabled` (default: enabled for admins).
-
-## GitHub Actions secret setup (Academy)
-
-The **Deploy Forge Academy** workflow requires `FIREBASE_SERVICE_ACCOUNT`. If this secret is missing or empty, `google-github-actions/auth` fails with:
-
-> must specify exactly one of "workload_identity_provider" or "credentials_json"
-
-### Steps
-
-1. Open [Firebase Console](https://console.firebase.google.com/) → project **forge-academy-95f84**
-2. **Project settings** → **Service accounts** → **Generate new private key** (JSON)
-3. In GitHub: **Forge-Public-Safety** repo → **Settings** → **Secrets and variables** → **Actions**
-4. Create or update secret **`FIREBASE_SERVICE_ACCOUNT`** — paste the **entire** JSON file contents
-5. Re-run **Deploy Forge Academy** under **Actions** → **workflow_dispatch**, or merge to `main`
-
-The service account needs **Firebase Admin** / deploy permissions for hosting, Firestore rules, and Cloud Functions on `forge-academy-95f84`.
-
-> **Note:** The marketing site workflow (`.github/workflows/deploy.yml`) uses the same secret name for project `rms-dashboard-7562e`. If you deploy both products from one repo, use one service account with access to both projects, or split secrets (e.g. `FIREBASE_SERVICE_ACCOUNT_ACADEMY`) and update the workflow accordingly.
