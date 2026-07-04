@@ -25,6 +25,36 @@ Or full deploy:
 npm run deploy
 ```
 
+### "Timeout after 10000" / "Cannot determine backend specification"
+
+Common on Windows when Firebase analyzes your functions code. The CLI only waits 10 seconds by default.
+
+`npm run deploy:functions` now sets **`FUNCTIONS_DISCOVERY_TIMEOUT=120`** automatically.
+
+Manual override in PowerShell:
+
+```powershell
+cd forge-academy
+npm ci --prefix functions
+$env:FUNCTIONS_DISCOVERY_TIMEOUT = "120"
+npm run deploy:functions
+```
+
+If it still times out:
+
+- Use **Node 22** (`node -v` should match `functions/package.json` engines)
+- Temporarily exclude `functions\node_modules` from Windows Defender
+- Or deploy from **WSL** / Git Bash
+
+Quick load test:
+
+```powershell
+cd functions
+node -e "import('./index.js').then(() => console.log('ok'))"
+```
+
+If that prints `ok` in under a few seconds, the longer discovery timeout should fix deploy.
+
 Hosting and rules can still ship from GitHub Actions; run `npm run deploy:functions` locally after merging AI Builder changes.
 
 ## GitHub Actions setup
