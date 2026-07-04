@@ -493,14 +493,14 @@ async function upsertStaffMember(auth, instructors, staff) {
 
 function printAuthHelp(error) {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(`\n${message}\n`);
-  console.error("Setup (PowerShell):\n");
-  console.error("  gcloud auth login");
-  console.error(`  gcloud config set project ${PROJECT_ID}`);
-  console.error("  npm run staff:import -- --dry-run\n");
-  console.error(
-    "Your Google account needs Firebase Auth Admin access on forge-academy-95f84.\n",
-  );
+  console.error(`\nImport failed:\n${message}\n`);
+
+  if (message.includes("Run `gcloud auth login`") || message.includes("401") || message.includes("403")) {
+    console.error("Setup (PowerShell):\n");
+    console.error("  gcloud auth login");
+    console.error(`  gcloud config set project ${PROJECT_ID}`);
+    console.error("  npm run staff:import -- --dry-run\n");
+  }
 }
 
 async function main() {
