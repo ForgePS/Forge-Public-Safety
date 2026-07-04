@@ -9,6 +9,7 @@ import {
   ROLE_LABELS,
   ROLES,
   canAssignPortalRole,
+  canManagePortalRoleDefinitions,
   canManagePortalUserWithRole,
 } from "../../lib/roles.js";
 import { canManagePortalUsers, savePortalUserRole } from "../../lib/portalUserAdmin.js";
@@ -95,6 +96,7 @@ export default function UsersListPage() {
   );
 
   const canEditRoles = canManagePortalUsers(currentUser?.role) && assignableRoles.length > 0;
+  const canManageRoles = canManagePortalRoleDefinitions(currentUser?.role);
 
   async function handleRoleChange(portalUser, newRole) {
     if (portalUser.role === newRole) return;
@@ -129,13 +131,20 @@ export default function UsersListPage() {
         title="Portal Users"
         subtitle="Create login accounts for students, instructors, departments, and staff"
         actions={
-          <Link
-            to="/admin/users/new"
-            className="inline-flex items-center gap-2 rounded-[10px] bg-[#c8102e] px-4 py-2 text-xs font-bold text-white"
-          >
-            <Plus className="h-4 w-4" />
-            Add Portal User
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            {canManageRoles ? (
+              <Link to="/admin/roles" className="app-btn-secondary inline-flex items-center gap-2 px-4 py-2 text-xs">
+                Portal access roles
+              </Link>
+            ) : null}
+            <Link
+              to="/admin/users/new"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-[#c8102e] px-4 py-2 text-xs font-bold text-white"
+            >
+              <Plus className="h-4 w-4" />
+              Add Portal User
+            </Link>
+          </div>
         }
       />
 

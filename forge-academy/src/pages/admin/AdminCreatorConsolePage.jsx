@@ -26,8 +26,8 @@ const QUICK_LINKS = [
     action: "Create user",
   },
   {
-    title: "Portal Roles",
-    description: "Create custom roles and choose which portal each role can access.",
+    title: "Portal Access Roles",
+    description: "Create custom portal access roles and assign them to portal users.",
     to: "/admin/roles",
     icon: Tags,
     action: "Manage roles",

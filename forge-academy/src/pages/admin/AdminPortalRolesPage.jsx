@@ -13,13 +13,20 @@ import {
   savePortalRoleDefinition,
   validateCustomRoleId,
 } from "../../lib/portalRoleDefinitions.js";
-import { ALL_ROLES, ROLE_LABELS, canManageAllPortalRoles } from "../../lib/roles.js";
+import {
+  ALL_ROLES,
+  ROLE_LABELS,
+  canEditPortalRoleDefinition,
+  canManageAdminPortalAccessRoles,
+  canManagePortalAccessRoleType,
+  canManagePortalRoleDefinitions,
+} from "../../lib/roles.js";
 
 const emptyForm = {
   roleId: "",
   label: "",
   description: "",
-  portalType: "admin",
+  portalType: "student",
 };
 
 export default function AdminPortalRolesPage() {
@@ -33,7 +40,24 @@ export default function AdminPortalRolesPage() {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  const canManage = canManageAllPortalRoles(user?.role);
+  const canManage = canManagePortalRoleDefinitions(user?.role);
+  const canManageAdminRoles = canManageAdminPortalAccessRoles(user?.role);
+
+  const portalTypeOptions = useMemo(
+    () =>
+      canManageAdminRoles
+        ? PORTAL_TYPE_OPTIONS
+        : PORTAL_TYPE_OPTIONS.filter((option) => option.value !== "admin"),
+    [canManageAdminRoles],
+  );
+
+  const editingRole = useMemo(
+    () => roles.find((role) => role.id === editingId) ?? null,
+    [roles, editingId],
+  );
+
+  const canSaveCurrentForm = canManagePortalAccessRoleType(user?.role, form.portalType)
+    && (!editingRole || canEditPortalRoleDefinition(user?.role, editingRole));
 
   async function loadRoles() {
     setLoading(true);
@@ -42,7 +66,7 @@ export default function AdminPortalRolesPage() {
       const rows = await listPortalRoleDefinitions();
       setRoles(rows);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to load custom roles.");
+      setError(err instanceof Error ? err.message : "Unable to load portal access roles.");
     } finally {
       setLoading(false);
     }
@@ -59,12 +83,19 @@ export default function AdminPortalRolesPage() {
 
   function startCreate() {
     setEditingId("");
-    setForm(emptyForm);
+    setForm({
+      ...emptyForm,
+      portalType: portalTypeOptions[0]?.value ?? "student",
+    });
     setSuccess(null);
     setError(null);
   }
 
   function startEdit(role) {
+    if (!canEditPortalRoleDefinition(user?.role, role)) {
+      setError("You do not have permission to edit that portal access role.");
+      return;
+    }
     setEditingId(role.id);
     setForm({
       roleId: role.id,
@@ -83,12 +114,15 @@ export default function AdminPortalRolesPage() {
 
   async function handleSave(event) {
     event.preventDefault();
-    if (!user?.uid) return;
+    if (!user?.uid || !canSaveCurrentForm) return;
     setSaving(true);
     setError(null);
     setSuccess(null);
     try {
       const roleId = editingId || validateCustomRoleId(form.roleId);
+      if (!canManagePortalAccessRoleType(user.role, form.portalType)) {
+        throw new Error("You do not have permission to create admin portal access roles.");
+      }
       await savePortalRoleDefinition(
         roleId,
         {
@@ -101,48 +135,56 @@ export default function AdminPortalRolesPage() {
       );
       await loadRoles();
       await reloadAssignableRoles();
-      setSuccess(editingId ? "Role updated." : "Role created.");
+      setSuccess(editingId ? "Portal access role updated." : "Portal access role created.");
       if (!editingId) {
         setEditingId(roleId);
         setForm((current) => ({ ...current, roleId }));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to save role.");
+      setError(err instanceof Error ? err.message : "Unable to save portal access role.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleArchive(roleId) {
-    if (!window.confirm(`Archive role "${roleId}"? Users keep the role but it won't appear for new assignments.`)) {
+  async function handleArchive(role) {
+    if (!canEditPortalRoleDefinition(user?.role, role)) {
+      setError("You do not have permission to archive that portal access role.");
+      return;
+    }
+    if (!window.confirm(`Archive role "${role.id}"? Users keep the role but it won't appear for new assignments.`)) {
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await archivePortalRoleDefinition(roleId);
+      await archivePortalRoleDefinition(role.id);
       await loadRoles();
       await reloadAssignableRoles();
-      setSuccess(`Archived ${roleId}.`);
+      setSuccess(`Archived ${role.id}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to archive role.");
+      setError(err instanceof Error ? err.message : "Unable to archive portal access role.");
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDelete(roleId) {
-    if (!window.confirm(`Delete role "${roleId}" permanently?`)) return;
+  async function handleDelete(role) {
+    if (!canEditPortalRoleDefinition(user?.role, role)) {
+      setError("You do not have permission to delete that portal access role.");
+      return;
+    }
+    if (!window.confirm(`Delete role "${role.id}" permanently?`)) return;
     setSaving(true);
     setError(null);
     try {
-      await deletePortalRoleDefinition(roleId);
+      await deletePortalRoleDefinition(role.id);
       await loadRoles();
       await reloadAssignableRoles();
-      if (editingId === roleId) startCreate();
-      setSuccess(`Deleted ${roleId}.`);
+      if (editingId === role.id) startCreate();
+      setSuccess(`Deleted ${role.id}.`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to delete role.");
+      setError(err instanceof Error ? err.message : "Unable to delete portal access role.");
     } finally {
       setSaving(false);
     }
@@ -152,7 +194,7 @@ export default function AdminPortalRolesPage() {
     return (
       <PageHeader
         title="Access denied"
-        subtitle="Only Creator and Super Admin accounts can manage custom portal roles."
+        subtitle="Academy admin access is required to manage portal access roles."
         backTo="/admin/users"
         backLabel="Back to portal users"
       />
@@ -162,25 +204,32 @@ export default function AdminPortalRolesPage() {
   return (
     <>
       <PageHeader
-        title="Portal Roles"
-        subtitle="Create custom roles and assign them to portal users"
+        title="Portal Access Roles"
+        subtitle="Create and edit custom roles, then assign them to portal users"
         actions={
           <div className="flex flex-wrap gap-2">
             <Link to="/admin/users" className="app-btn-secondary px-4 py-2 text-xs">
               Portal users
             </Link>
             <button type="button" onClick={startCreate} className="app-btn-primary px-4 py-2 text-xs">
-              New custom role
+              New portal access role
             </button>
           </div>
         }
       />
 
+      {!canManageAdminRoles ? (
+        <div className="mx-6 mt-4 rounded-[10px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 lg:mx-7">
+          Academy admins can create student, instructor, department, and certification portal access roles.
+          Creator or Super Admin access is required for admin portal roles.
+        </div>
+      ) : null}
+
       <div className="flex flex-1 flex-col gap-5 p-6 lg:flex-row lg:p-7">
         <section className="app-panel min-w-0 flex-1 p-5">
           <h2 className="text-sm font-semibold text-[var(--color-afta-text)]">Built-in roles</h2>
           <p className="mt-1 text-sm text-[var(--color-afta-subtle)]">
-            System roles are always available and cannot be deleted.
+            System roles are always available and cannot be edited here.
           </p>
           <ul className="mt-4 space-y-2">
             {systemRoles.map((role) => (
@@ -194,48 +243,58 @@ export default function AdminPortalRolesPage() {
             ))}
           </ul>
 
-          <h2 className="mt-8 text-sm font-semibold text-[var(--color-afta-text)]">Custom roles</h2>
+          <h2 className="mt-8 text-sm font-semibold text-[var(--color-afta-text)]">Custom portal access roles</h2>
           {loading ? (
             <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">Loading…</p>
           ) : roles.length === 0 ? (
-            <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">No custom roles yet.</p>
+            <p className="mt-3 text-sm text-[var(--color-afta-subtle)]">No custom portal access roles yet.</p>
           ) : (
             <div className="mt-3 overflow-x-auto">
               <table className="min-w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-[var(--color-afta-border)] text-[10px] uppercase tracking-wide text-[var(--color-afta-muted)]">
                     <th className="px-3 py-2">Role</th>
-                    <th className="px-3 py-2">Portal</th>
+                    <th className="px-3 py-2">Portal access</th>
                     <th className="px-3 py-2">Status</th>
                     <th className="px-3 py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {roles.map((role) => (
-                    <tr key={role.id} className="border-b border-[var(--color-afta-border)]">
-                      <td className="px-3 py-2">
-                        <p className="font-medium">{role.label}</p>
-                        <p className="text-xs text-[var(--color-afta-muted)]">{role.id}</p>
-                      </td>
-                      <td className="px-3 py-2">{role.portalType}</td>
-                      <td className="px-3 py-2">{role.status}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex flex-wrap gap-2">
-                          <button type="button" className="text-xs font-semibold text-[#c8102e]" onClick={() => startEdit(role)}>
-                            Edit
-                          </button>
-                          {role.status === "active" ? (
-                            <button type="button" className="text-xs text-[var(--color-afta-subtle)]" onClick={() => handleArchive(role.id)}>
-                              Archive
-                            </button>
-                          ) : null}
-                          <button type="button" className="text-xs text-red-700" onClick={() => handleDelete(role.id)}>
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {roles.map((role) => {
+                    const editable = canEditPortalRoleDefinition(user?.role, role);
+                    return (
+                      <tr key={role.id} className="border-b border-[var(--color-afta-border)]">
+                        <td className="px-3 py-2">
+                          <p className="font-medium">{role.label}</p>
+                          <p className="text-xs text-[var(--color-afta-muted)]">{role.id}</p>
+                        </td>
+                        <td className="px-3 py-2">
+                          {PORTAL_TYPE_OPTIONS.find((option) => option.value === role.portalType)?.label
+                            ?? role.portalType}
+                        </td>
+                        <td className="px-3 py-2">{role.status}</td>
+                        <td className="px-3 py-2">
+                          {editable ? (
+                            <div className="flex flex-wrap gap-2">
+                              <button type="button" className="text-xs font-semibold text-[#c8102e]" onClick={() => startEdit(role)}>
+                                Edit
+                              </button>
+                              {role.status === "active" ? (
+                                <button type="button" className="text-xs text-[var(--color-afta-subtle)]" onClick={() => handleArchive(role)}>
+                                  Archive
+                                </button>
+                              ) : null}
+                              <button type="button" className="text-xs text-red-700" onClick={() => handleDelete(role)}>
+                                Delete
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-xs text-[var(--color-afta-muted)]">Creator / Super Admin only</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -244,7 +303,7 @@ export default function AdminPortalRolesPage() {
 
         <section className="app-panel w-full shrink-0 p-5 lg:w-[24rem]">
           <h2 className="text-sm font-semibold text-[var(--color-afta-text)]">
-            {editingId ? "Edit custom role" : "Create custom role"}
+            {editingId ? "Edit portal access role" : "Create portal access role"}
           </h2>
           {error ? <p className="app-error mt-3">{error}</p> : null}
           {success ? (
@@ -274,13 +333,14 @@ export default function AdminPortalRolesPage() {
               name="portalType"
               value={form.portalType}
               onChange={handleChange}
-              options={PORTAL_TYPE_OPTIONS}
+              options={portalTypeOptions}
+              disabled={Boolean(editingId && editingRole?.portalType === "admin" && !canManageAdminRoles)}
             />
             <p className="text-xs text-[var(--color-afta-muted)]">
-              Admin portal roles can use the admin UI. Student/department roles still need linked records on the user profile.
+              Portal access controls which area users land in after sign-in. Student and department roles still need linked records on the user profile.
             </p>
             <div className="flex flex-wrap gap-2">
-              <button type="submit" disabled={saving} className="app-btn-primary px-4 py-2 text-xs">
+              <button type="submit" disabled={saving || !canSaveCurrentForm} className="app-btn-primary px-4 py-2 text-xs disabled:opacity-60">
                 {saving ? "Saving…" : editingId ? "Save role" : "Create role"}
               </button>
               {editingId ? (

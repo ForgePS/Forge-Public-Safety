@@ -26,7 +26,7 @@ import DashboardLayout from "./DashboardLayout.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSystemSettingsOptional } from "../context/SystemSettingsContext.jsx";
 import { filterNavItemsBySettings } from "../lib/moduleAccess.js";
-import { canManageAllPortalRoles, isSystemSettingsAdmin } from "../lib/roles.js";
+import { canManageAllPortalRoles, isFullAdmin, isSystemSettingsAdmin } from "../lib/roles.js";
 
 const adminNavBase = [
   { group: "Overview", label: "Dashboard", to: "/admin", end: true, icon: LayoutDashboard },
@@ -36,6 +36,7 @@ const adminNavBase = [
   { group: "People", label: "Departments", to: "/admin/departments", icon: Building2, module: "departments" },
   { group: "People", label: "Instructors", to: "/admin/instructors", icon: GraduationCap, module: "instructors" },
   { group: "People", label: "Portal Users", to: "/admin/users", icon: UserCog },
+  { group: "People", label: "Portal Access Roles", to: "/admin/roles", icon: Tags, adminOnly: true },
 
   { group: "Training", label: "Courses", to: "/admin/courses", icon: BookOpen, module: "classes" },
   { group: "Training", label: "Classes & Schedule", to: "/admin/scheduling", icon: Calendar, module: "classes" },
@@ -54,7 +55,6 @@ const adminNavBase = [
   { group: "Reports", label: "Digital Dashboard", to: "/admin/digital-dashboard", icon: MonitorPlay, module: "digitalDashboard" },
 
   { group: "System", label: "Creator Console", to: "/admin/creator", icon: Shield, platformManagerOnly: true },
-  { group: "System", label: "Portal Roles", to: "/admin/roles", icon: Tags, platformManagerOnly: true },
   { group: "System", label: "System Settings", to: "/admin/settings", icon: Settings, settingsOnly: true },
   { group: "System", label: "Pilot Release", to: "/admin/pilot", icon: Rocket, pilotOnly: true },
 ];
@@ -67,6 +67,7 @@ export default function AdminPortalShell() {
   const navItems = useMemo(() => {
     const base = adminNavBase.filter((item) => {
       if (item.platformManagerOnly && !canManageAllPortalRoles(user?.role)) return false;
+      if (item.adminOnly && !isFullAdmin(user?.role)) return false;
       if (item.settingsOnly && !isSystemSettingsAdmin(user?.role)) return false;
       return true;
     });
