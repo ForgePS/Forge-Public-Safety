@@ -68,9 +68,19 @@ function SettingsField({ field, value, onChange }) {
 
 const DEFAULT_SECTION_ID = SYSTEM_SETTINGS_SECTIONS[0].id;
 
+const SECTION_ALIASES = {
+  certificate: "certificates",
+  certificateTemplate: "certificates",
+  certificateTemplates: "certificates",
+};
+
 function resolveSectionId(sectionParam) {
-  if (sectionParam && SYSTEM_SETTINGS_SECTIONS.some((section) => section.id === sectionParam)) {
-    return sectionParam;
+  const normalizedSection = SECTION_ALIASES[sectionParam ?? ""] ?? sectionParam;
+  if (
+    normalizedSection &&
+    SYSTEM_SETTINGS_SECTIONS.some((section) => section.id === normalizedSection)
+  ) {
+    return normalizedSection;
   }
   return DEFAULT_SECTION_ID;
 }
@@ -79,10 +89,8 @@ export default function AdminSystemSettingsPage() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading, error: loadError, saveSection } = useSystemSettings();
-  const activeSectionId = useMemo(
-    () => resolveSectionId(searchParams.get("section")),
-    [searchParams],
-  );
+  const sectionParam = searchParams.get("section");
+  const activeSectionId = resolveSectionId(sectionParam);
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);

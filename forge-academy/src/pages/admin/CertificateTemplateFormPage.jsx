@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Upload } from "lucide-react";
 import CertificateDisplay from "../../components/CertificateDisplay.jsx";
 import PageHeader from "../../components/PageHeader.jsx";
@@ -56,10 +56,35 @@ function emptyForm() {
   };
 }
 
+const DEFAULT_TEMPLATE_SECTION_ID = "details";
+
+const CERTIFICATE_TEMPLATE_SECTIONS = [
+  { id: "details", title: "Template details", description: "Name, layout, issuer overrides, and AI assist." },
+  { id: "uploads", title: "Background & signature", description: "Upload certificate artwork and signature images." },
+  {
+    id: "fields",
+    title: "Editable fields",
+    description: "Position merge fields on uploaded certificate backgrounds.",
+    customImageOnly: true,
+  },
+];
+
+function resolveTemplateSectionId(sectionParam, layoutType) {
+  const isCustomImage = layoutType === CERTIFICATE_LAYOUT_TYPES.CUSTOM_IMAGE;
+  const availableSections = CERTIFICATE_TEMPLATE_SECTIONS.filter(
+    (section) => !section.customImageOnly || isCustomImage,
+  );
+  if (sectionParam && availableSections.some((section) => section.id === sectionParam)) {
+    return sectionParam;
+  }
+  return DEFAULT_TEMPLATE_SECTION_ID;
+}
+
 export default function CertificateTemplateFormPage() {
   const { templateId } = useParams();
   const isNew = !templateId;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const settingsContext = useSystemSettingsOptional();
   const backgroundInputRef = useRef(null);
   const signatureInputRef = useRef(null);
@@ -74,6 +99,43 @@ export default function CertificateTemplateFormPage() {
   const [error, setError] = useState(null);
   const [message, setMessage] = useState(null);
   const aiBuilderEnabled = useAiBuilderEnabled();
+
+  const sectionParam = searchParams.get("section");
+  const activeSectionId = resolveTemplateSectionId(sectionParam, form.layoutType);
+  const activeSection =
+    CERTIFICATE_TEMPLATE_SECTIONS.find((section) => section.id === activeSectionId) ??
+    CERTIFICATE_TEMPLATE_SECTIONS[0];
+  const visibleSections = useMemo(
+    () =>
+      CERTIFICATE_TEMPLATE_SECTIONS.filter(
+        (section) =>
+          !section.customImageOnly || form.layoutType === CERTIFICATE_LAYOUT_TYPES.CUSTOM_IMAGE,
+      ),
+    [form.layoutType],
+  );
+
+  const selectSection = useCallback(
+    (sectionId) => {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          if (sectionId === DEFAULT_TEMPLATE_SECTION_ID) {
+            next.delete("section");
+          } else {
+            next.set("section", sectionId);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  useEffect(() => {
+    if (!sectionParam || sectionParam === activeSectionId) return;
+    selectSection(activeSectionId);
+  }, [activeSectionId, sectionParam, selectSection]);
 
   const templateContext = useMemo(
     () => ({
@@ -177,7 +239,7 @@ export default function CertificateTemplateFormPage() {
     try {
       if (isNew) {
         const id = await createCertificateTemplate(payload);
-        navigate(`/admin/certificates/templates/${id}`);
+        navigate(`/admin/certificates/templates/${id}${sectionParam ? `?section=${sectionParam}` : ""}`);
         setMessage("Template created.");
       } else {
         await updateCertificateTemplate(templateId, payload);
@@ -221,7 +283,7 @@ export default function CertificateTemplateFormPage() {
           ...form,
           name: form.name.trim() || "Untitled certificate template",
         });
-        navigate(`/admin/certificates/templates/${activeTemplateId}`, { replace: true });
+        navigate(`/admin/certificates/templates/${activeTemplateId}?section=uploads`, { replace: true });
       }
 
       const previousPath =
@@ -284,6 +346,28 @@ export default function CertificateTemplateFormPage() {
       />
 
       <div className="flex flex-1 flex-col gap-6 p-6 lg:flex-row lg:p-7">
+        <aside className="app-panel w-full shrink-0 p-3 lg:w-64">
+          <p className="px-2 pb-2 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-afta-muted)]">
+            Editor sections
+          </p>
+          <nav className="flex flex-col gap-0.5">
+            {visibleSections.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => selectSection(section.id)}
+                className={`rounded-[10px] px-3 py-2 text-left text-sm transition ${
+                  section.id === activeSectionId
+                    ? "bg-[#c8102e]/10 font-semibold text-[#c8102e]"
+                    : "text-[var(--color-afta-text)] hover:bg-[var(--color-afta-bg)]"
+                }`}
+              >
+                {section.title}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
         <form onSubmit={handleSave} className="flex min-w-0 flex-1 flex-col gap-5">
           {error ? (
             <p className="rounded-[10px] border border-[#c8102e]/30 bg-[#c8102e]/10 px-4 py-3 text-sm text-red-700">
@@ -296,6 +380,12 @@ export default function CertificateTemplateFormPage() {
             </p>
           ) : null}
 
+          <div className="border-b border-[var(--color-afta-border)] pb-4">
+            <h2 className="text-base font-semibold text-[var(--color-afta-text)]">{activeSection.title}</h2>
+            <p className="mt-1 text-sm text-[var(--color-afta-subtle)]">{activeSection.description}</p>
+          </div>
+
+          {activeSectionId === "details" ? (
           <FormSection title="Template details">
             <div className="grid gap-4 md:grid-cols-2">
               <FormField
@@ -382,9 +472,17 @@ export default function CertificateTemplateFormPage() {
                 placeholder="Leave blank to use system settings"
               />
             </div>
+            <p className="text-xs text-[var(--color-afta-subtle)]">
+              Default issuer values live in{" "}
+              <Link to="/admin/settings?section=certificates" className="text-[#c8102e] hover:underline">
+                System Settings → Certificates
+              </Link>
+              .
+            </p>
           </FormSection>
+          ) : null}
 
-          {aiBuilderEnabled ? (
+          {activeSectionId === "details" && aiBuilderEnabled ? (
             <div className="rounded-[14px] border border-violet-200 bg-violet-50/30 p-4">
               <ForgeBuilderPanel
                 defaultOpen
@@ -408,6 +506,7 @@ export default function CertificateTemplateFormPage() {
             </div>
           ) : null}
 
+          {activeSectionId === "uploads" ? (
           <FormSection title="Background & signature uploads">
             <p className="text-sm text-[var(--color-afta-subtle)]">
               Upload a certificate background image (JPEG, PNG, or WebP). Position editable fields below to
@@ -456,8 +555,10 @@ export default function CertificateTemplateFormPage() {
               />
             </div>
           </FormSection>
+          ) : null}
 
-          {form.layoutType === CERTIFICATE_LAYOUT_TYPES.CUSTOM_IMAGE ? (
+          {activeSectionId === "fields" &&
+          form.layoutType === CERTIFICATE_LAYOUT_TYPES.CUSTOM_IMAGE ? (
             <FormSection title="Editable fields">
               <p className="text-sm text-[var(--color-afta-subtle)]">
                 Position fields as percentages on the certificate. Student name, course, serial number, and
