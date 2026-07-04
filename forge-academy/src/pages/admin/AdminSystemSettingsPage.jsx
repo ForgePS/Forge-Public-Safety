@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader.jsx";
 import { FormField, FormSelect } from "../../components/StudentFormFields.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -66,10 +66,23 @@ function SettingsField({ field, value, onChange }) {
   );
 }
 
+const DEFAULT_SECTION_ID = SYSTEM_SETTINGS_SECTIONS[0].id;
+
+function resolveSectionId(sectionParam) {
+  if (sectionParam && SYSTEM_SETTINGS_SECTIONS.some((section) => section.id === sectionParam)) {
+    return sectionParam;
+  }
+  return DEFAULT_SECTION_ID;
+}
+
 export default function AdminSystemSettingsPage() {
   const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { settings, loading, error: loadError, saveSection } = useSystemSettings();
-  const [activeSectionId, setActiveSectionId] = useState(SYSTEM_SETTINGS_SECTIONS[0].id);
+  const activeSectionId = useMemo(
+    () => resolveSectionId(searchParams.get("section")),
+    [searchParams],
+  );
   const [draft, setDraft] = useState({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -86,6 +99,24 @@ export default function AdminSystemSettingsPage() {
     setSuccess(null);
     setError(null);
   }, [activeSection, settings]);
+
+  const selectSection = useCallback(
+    (sectionId) => {
+      setSearchParams(
+        (current) => {
+          const next = new URLSearchParams(current);
+          if (sectionId === DEFAULT_SECTION_ID) {
+            next.delete("section");
+          } else {
+            next.set("section", sectionId);
+          }
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
 
   function handleFieldChange(key, value) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -129,7 +160,7 @@ export default function AdminSystemSettingsPage() {
               <button
                 key={section.id}
                 type="button"
-                onClick={() => setActiveSectionId(section.id)}
+                onClick={() => selectSection(section.id)}
                 className={`rounded-[10px] px-3 py-2 text-left text-sm transition ${
                   section.id === activeSectionId
                     ? "bg-[#c8102e]/10 font-semibold text-[#c8102e]"
