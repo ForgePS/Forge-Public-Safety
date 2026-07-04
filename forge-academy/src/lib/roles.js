@@ -36,7 +36,7 @@ export const ROLE_HOME_PATHS = {
 export const ALL_ROLES = Object.values(ROLES);
 
 /** Roles that can edit global system settings. */
-export const SYSTEM_SETTINGS_ROLES = [ROLES.CREATOR, ROLES.SUPER_ADMIN];
+export const SYSTEM_SETTINGS_ROLES = [ROLES.CREATOR, ROLES.SUPER_ADMIN, ROLES.ACADEMY_ADMIN];
 
 /**
  * @param {Role | null | undefined} role

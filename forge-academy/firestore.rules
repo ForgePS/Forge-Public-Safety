@@ -19,7 +19,7 @@ service cloud.firestore {
     }
 
     function isSystemSettingsAdmin() {
-      return signedIn() && userRole() in ['creator', 'super_admin'];
+      return signedIn() && userRole() in ['creator', 'super_admin', 'academy_admin'];
     }
 
     function isDepartmentOfficer() {
