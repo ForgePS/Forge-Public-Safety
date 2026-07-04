@@ -24,6 +24,18 @@ jobs:
           cache: npm
           cache-dependency-path: forge-academy/package-lock.json
 
+      - name: Validate Firebase service account secret
+        env:
+          FIREBASE_CREDS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_CREDS" ]; then
+            echo "::error::GitHub secret FIREBASE_SERVICE_ACCOUNT is missing or empty."
+            echo "Create a service account key for Firebase project forge-academy-95f84 and add the full JSON at:"
+            echo "  Repository → Settings → Secrets and variables → Actions → New repository secret"
+            echo "See docs/AI_BUILDER_DEPLOY.md for step-by-step setup."
+            exit 1
+          fi
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:

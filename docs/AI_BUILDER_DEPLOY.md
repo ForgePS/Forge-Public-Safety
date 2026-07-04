@@ -46,3 +46,21 @@ Optional cross-product widgets (e.g. Academy classes on RMS TVs) use HTTP APIs d
 ## Feature flag
 
 Both products respect `systemSettings/default.features.aiBuilderEnabled` (default: enabled for admins).
+
+## GitHub Actions secret setup (Academy)
+
+The **Deploy Forge Academy** workflow requires `FIREBASE_SERVICE_ACCOUNT`. If this secret is missing or empty, `google-github-actions/auth` fails with:
+
+> must specify exactly one of "workload_identity_provider" or "credentials_json"
+
+### Steps
+
+1. Open [Firebase Console](https://console.firebase.google.com/) → project **forge-academy-95f84**
+2. **Project settings** → **Service accounts** → **Generate new private key** (JSON)
+3. In GitHub: **Forge-Public-Safety** repo → **Settings** → **Secrets and variables** → **Actions**
+4. Create or update secret **`FIREBASE_SERVICE_ACCOUNT`** — paste the **entire** JSON file contents
+5. Re-run **Deploy Forge Academy** under **Actions** → **workflow_dispatch**, or merge to `main`
+
+The service account needs **Firebase Admin** / deploy permissions for hosting, Firestore rules, and Cloud Functions on `forge-academy-95f84`.
+
+> **Note:** The marketing site workflow (`.github/workflows/deploy.yml`) uses the same secret name for project `rms-dashboard-7562e`. If you deploy both products from one repo, use one service account with access to both projects, or split secrets (e.g. `FIREBASE_SERVICE_ACCOUNT_ACADEMY`) and update the workflow accordingly.
