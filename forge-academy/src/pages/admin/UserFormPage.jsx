@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader.jsx";
+import PortalUserProfilePhoto from "../../components/PortalUserProfilePhoto.jsx";
 import { FormField, FormSection, FormSelect } from "../../components/StudentFormFields.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { usePortalRoles } from "../../context/PortalRolesContext.jsx";
@@ -13,6 +14,7 @@ import {
   resetPortalUserPassword,
 } from "../../lib/portalUsers.js";
 import { savePortalUserProfile } from "../../lib/portalUserAdmin.js";
+import { uploadPortalUserProfilePhoto } from "../../lib/portalUserPhotos.js";
 import { ROLE_LABELS, ROLES, canAssignPortalRole, isAdminPortalRole, isSystemSettingsAdmin } from "../../lib/roles.js";
 import { listStudents } from "../../lib/students.js";
 import { fetchUserProfile } from "../../lib/users.js";
@@ -68,6 +70,7 @@ export default function UserFormPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [pendingPhotoBlob, setPendingPhotoBlob] = useState(null);
   const [useCustomDigitalDashboardPermissions, setUseCustomDigitalDashboardPermissions] = useState(false);
   const [digitalDashboardPermissions, setDigitalDashboardPermissions] = useState(() =>
     createEmptyDigitalDashboardPermissions(),
@@ -188,6 +191,55 @@ export default function UserFormPage() {
     setForm((current) => ({ ...current, password: generateTempPassword() }));
   }
 
+  function buildProfilePayload(photoUrl = form.photoUrl) {
+    const permissionsPayload = showDigitalDashboardPermissions
+      ? useCustomDigitalDashboardPermissions
+        ? { digitalDashboard: serializeDigitalDashboardPermissions(digitalDashboardPermissions) }
+        : null
+      : undefined;
+
+    return {
+      displayName: form.displayName,
+      role: form.role,
+      departmentId: form.departmentId,
+      studentId: form.studentId,
+      instructorId: form.instructorId,
+      disabled: form.disabled,
+      permissions: permissionsPayload,
+      jobTitle: form.jobTitle,
+      phone: form.phone,
+      phoneExtension: form.phoneExtension,
+      photoUrl,
+      profileUrl: form.profileUrl,
+      organizationUnit: form.organizationUnit,
+      staffSlug: form.staffSlug,
+    };
+  }
+
+  async function persistPortalUserPhoto(uid, photoUrl) {
+    await savePortalUserProfile(
+      currentUser?.role,
+      { uid, ...buildProfilePayload(photoUrl) },
+      customById,
+    );
+  }
+
+  async function handlePhotoChange(url) {
+    setForm((current) => ({ ...current, photoUrl: url }));
+    if (!isNew && userId) {
+      setSaving(true);
+      setError(null);
+      try {
+        await persistPortalUserPhoto(userId, url);
+        setSuccess(url ? "Profile photo saved." : "Profile photo removed.");
+      } catch (err) {
+        setError(getPortalUserErrorMessage(err));
+      } finally {
+        setSaving(false);
+      }
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
@@ -220,26 +272,19 @@ export default function UserFormPage() {
           organizationUnit: form.organizationUnit,
           staffSlug: form.staffSlug,
         });
+
+        if (pendingPhotoBlob) {
+          const photoUrl = await uploadPortalUserProfilePhoto(result.uid, pendingPhotoBlob);
+          await persistPortalUserPhoto(result.uid, photoUrl);
+        }
+
         navigate(`/admin/users/${result.uid}`);
         return;
       }
 
       await savePortalUserProfile(currentUser?.role, {
         uid: userId,
-        displayName: form.displayName,
-        role: form.role,
-        departmentId: form.departmentId,
-        studentId: form.studentId,
-        instructorId: form.instructorId,
-        disabled: form.disabled,
-        permissions: permissionsPayload,
-        jobTitle: form.jobTitle,
-        phone: form.phone,
-        phoneExtension: form.phoneExtension,
-        photoUrl: form.photoUrl,
-        profileUrl: form.profileUrl,
-        organizationUnit: form.organizationUnit,
-        staffSlug: form.staffSlug,
+        ...buildProfilePayload(),
       }, customById);
       setSuccess("Portal user updated.");
     } catch (err) {
@@ -475,21 +520,25 @@ export default function UserFormPage() {
             value={form.phoneExtension}
             onChange={handleChange}
           />
+          <div>
+            <p className="mb-2 text-sm font-semibold text-[var(--color-afta-text)]">Profile photo</p>
+            <PortalUserProfilePhoto
+              userId={isNew ? "" : userId}
+              photoUrl={form.photoUrl}
+              displayName={form.displayName}
+              disabled={saving}
+              onPhotoChange={handlePhotoChange}
+              onPendingPhoto={setPendingPhotoBlob}
+            />
+          </div>
           <FormField
-            label="Photo URL"
+            label="Photo URL (optional)"
             name="photoUrl"
             type="url"
             value={form.photoUrl}
             onChange={handleChange}
-            hint="Public image URL for staff directory display."
+            hint="Use upload above, or paste an external image URL (e.g. from AFTA import)."
           />
-          {form.photoUrl ? (
-            <img
-              src={form.photoUrl}
-              alt=""
-              className="h-20 w-20 rounded-full border border-[var(--color-afta-border)] object-cover"
-            />
-          ) : null}
           <FormField
             label="SAU Tech profile URL"
             name="profileUrl"
