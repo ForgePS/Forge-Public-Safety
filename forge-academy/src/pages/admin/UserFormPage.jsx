@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import PageHeader from "../../components/PageHeader.jsx";
+import PortalUserProfilePhoto from "../../components/PortalUserProfilePhoto.jsx";
 import { FormField, FormSection, FormSelect } from "../../components/StudentFormFields.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { listActiveDepartments } from "../../lib/departments.js";
@@ -15,6 +16,7 @@ import {
 import { ALL_ROLES, ROLE_LABELS, ROLES, isSystemSettingsAdmin } from "../../lib/roles.js";
 import { listStudents } from "../../lib/students.js";
 import { fetchUserProfile } from "../../lib/users.js";
+import { uploadPortalUserProfilePhoto } from "../../lib/portalUserPhotos.js";
 import DigitalDashboardPermissionsEditor from "../../components/digitalDashboard/DigitalDashboardPermissionsEditor.jsx";
 import {
   createEmptyDigitalDashboardPermissions,
@@ -70,6 +72,7 @@ export default function UserFormPage() {
   const [digitalDashboardPermissions, setDigitalDashboardPermissions] = useState(() =>
     createEmptyDigitalDashboardPermissions(),
   );
+  const [pendingPhotoBlob, setPendingPhotoBlob] = useState(null);
 
   const canManageDigitalDashboardPermissions = isSystemSettingsAdmin(currentUser?.role);
   const showDigitalDashboardPermissions =
@@ -184,6 +187,46 @@ export default function UserFormPage() {
     setForm((current) => ({ ...current, password: generateTempPassword() }));
   }
 
+  async function persistPortalUserPhoto(uid, photoUrl) {
+    await updatePortalUser({
+      uid,
+      displayName: form.displayName,
+      role: form.role,
+      departmentId: form.departmentId,
+      studentId: form.studentId,
+      instructorId: form.instructorId,
+      disabled: form.disabled,
+      permissions: showDigitalDashboardPermissions
+        ? useCustomDigitalDashboardPermissions
+          ? { digitalDashboard: serializeDigitalDashboardPermissions(digitalDashboardPermissions) }
+          : null
+        : undefined,
+      jobTitle: form.jobTitle,
+      phone: form.phone,
+      phoneExtension: form.phoneExtension,
+      photoUrl,
+      profileUrl: form.profileUrl,
+      organizationUnit: form.organizationUnit,
+      staffSlug: form.staffSlug,
+    });
+  }
+
+  async function handlePhotoChange(url) {
+    setForm((current) => ({ ...current, photoUrl: url }));
+    if (!isNew && userId) {
+      setSaving(true);
+      setError(null);
+      try {
+        await persistPortalUserPhoto(userId, url);
+        setSuccess(url ? "Profile photo saved." : "Profile photo removed.");
+      } catch (err) {
+        setError(getPortalUserErrorMessage(err));
+      } finally {
+        setSaving(false);
+      }
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
@@ -216,6 +259,12 @@ export default function UserFormPage() {
           organizationUnit: form.organizationUnit,
           staffSlug: form.staffSlug,
         });
+
+        if (pendingPhotoBlob) {
+          const photoUrl = await uploadPortalUserProfilePhoto(result.uid, pendingPhotoBlob);
+          await persistPortalUserPhoto(result.uid, photoUrl);
+        }
+
         navigate(`/admin/users/${result.uid}`);
         return;
       }
@@ -458,21 +507,25 @@ export default function UserFormPage() {
             value={form.phoneExtension}
             onChange={handleChange}
           />
+          <div>
+            <p className="mb-2 text-sm font-semibold text-[var(--color-afta-text)]">Profile photo</p>
+            <PortalUserProfilePhoto
+              userId={isNew ? "" : userId}
+              photoUrl={form.photoUrl}
+              displayName={form.displayName}
+              disabled={saving}
+              onPhotoChange={handlePhotoChange}
+              onPendingPhoto={setPendingPhotoBlob}
+            />
+          </div>
           <FormField
-            label="Photo URL"
+            label="Photo URL (optional)"
             name="photoUrl"
             type="url"
             value={form.photoUrl}
             onChange={handleChange}
-            hint="Public image URL for staff directory display."
+            hint="Use upload above, or paste an external image URL (e.g. from AFTA import)."
           />
-          {form.photoUrl ? (
-            <img
-              src={form.photoUrl}
-              alt=""
-              className="h-20 w-20 rounded-full border border-[var(--color-afta-border)] object-cover"
-            />
-          ) : null}
           <FormField
             label="SAU Tech profile URL"
             name="profileUrl"

@@ -31,6 +31,12 @@ service firebase.storage {
       allow delete: if isAdmin() || ownsStudent(studentId);
     }
 
+    match /portal-user-profiles/{userId}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() && isProfileImage();
+      allow delete: if isAdmin();
+    }
+
     function isDashboardMedia() {
       return request.resource.size < 100 * 1024 * 1024
         && (
