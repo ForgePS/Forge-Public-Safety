@@ -72,6 +72,26 @@ If that prints `ok` in under a few seconds, the longer discovery timeout should 
 
 Hosting and rules can still ship from GitHub Actions; run `npm run deploy:functions` locally after merging AI Builder changes.
 
+## Windows build fails (Vite / Rolldown)
+
+If `npm run build` ends with `aggregateBindingErrorsIntoJsError` and `errors: [Getter/Setter]`, scroll **up** in the terminal — the real message is usually a few lines above (e.g. failed to resolve an import).
+
+Try in order:
+
+```powershell
+cd forge-academy
+Remove-Item -Recurse -Force node_modules, dist -ErrorAction SilentlyContinue
+npm ci
+node -v    # use Node 22 LTS
+npm run build
+```
+
+This repo pins **Vite 7** (Rollup) instead of Vite 8 (Rolldown) for reliable Windows builds. After `git pull`, run `npm ci` again so lockfile matches.
+
+Deploy scripts use cross-platform Node helpers (`scripts/deploy-hosting.mjs`) — safe in PowerShell; no bash `$()` syntax.
+
+If the project is on a Windows **Dev Drive**, move it to a normal NTFS path (e.g. `C:\Users\...\Projects`) — Rolldown can panic on Dev Drive volumes.
+
 ## GitHub Actions setup
 
 ### Hosting + rules (CI)
