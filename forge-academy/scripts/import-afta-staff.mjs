@@ -148,8 +148,7 @@ async function updateAuthUser(auth, uid, { email, displayName }) {
     return;
   }
 
-  await identityRequest(auth.token, `/accounts/${uid}?updateMask=displayName,email`, {
-    method: "PATCH",
+  await identityRequest(auth.token, "/accounts:update", {
     body: {
       localId: uid,
       email,
