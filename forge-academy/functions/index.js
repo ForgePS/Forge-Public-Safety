@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentUpdated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { setGlobalOptions } from "firebase-functions/v2";
@@ -47,6 +47,11 @@ import { fetchPublishedGoogleSheet } from "./lib/googleSheetsFetch.js";
 import { getDigitalDisplayPayload } from "./lib/digitalDashboardPlayer.js";
 import { syncDigitalDashboardRssFeed } from "./lib/digitalDashboardRss.js";
 import { forgeAiBuild, logAiBuilderApply } from "./lib/aiBuilder.js";
+import {
+  backfillAllUserDirectoryEntries,
+  syncUserDirectoryFromProfile,
+} from "./lib/messagingUserDirectory.js";
+import { assertAdminCaller } from "./lib/portalUsers.js";
 
 initializeApp();
 setGlobalOptions({
@@ -287,4 +292,18 @@ export const fetchPublishedGoogleSheetCallable = onCall(async (request) => {
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", error instanceof Error ? error.message : "Request failed.");
   }
+});
+
+export const syncMessagingUserDirectory = onDocumentWritten("users/{userId}", async (event) => {
+  const after = event.data?.after;
+  if (!after?.exists) {
+    await getFirestore().doc(`userDirectory/${event.params.userId}`).delete().catch(() => {});
+    return;
+  }
+  await syncUserDirectoryFromProfile(event.params.userId, after.data());
+});
+
+export const backfillMessagingUserDirectory = wrapCallable(async (uid) => {
+  await assertAdminCaller(uid);
+  return await backfillAllUserDirectoryEntries();
 });

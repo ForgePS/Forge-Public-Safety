@@ -22,7 +22,8 @@ import {
 import { formatConversationPreview, formatMessageTime } from "../../lib/messaging/format.js";
 import { createMessageRef, sendMessage, subscribeToMessages } from "../../lib/messaging/messages.js";
 import { markConversationRead } from "../../lib/messaging/conversations.js";
-import { searchMessagingDirectory } from "../../lib/messaging/userDirectory.js";
+import { searchMessagingDirectory, backfillMessagingDirectoryFromPortalUsers } from "../../lib/messaging/userDirectory.js";
+import { isFullAdmin } from "../../lib/roles.js";
 
 function Avatar({ name, photoUrl, size = "md" }) {
   const initials = name
@@ -250,10 +251,15 @@ function NewConversationPanel() {
   useEffect(() => {
     if (!user?.uid) return;
     setLoading(true);
-    searchMessagingDirectory(search, user.uid)
-      .then(setContacts)
-      .finally(() => setLoading(false));
-  }, [search, user?.uid]);
+    const load = async () => {
+      if (isFullAdmin(user.role)) {
+        await backfillMessagingDirectoryFromPortalUsers().catch(() => {});
+      }
+      const rows = await searchMessagingDirectory(search, user.uid);
+      setContacts(rows);
+    };
+    load().finally(() => setLoading(false));
+  }, [search, user?.uid, user?.role]);
 
   async function handleStart() {
     if (!user || !messaging) return;
