@@ -28,14 +28,14 @@ const QUICK_LINKS = [
   {
     title: "Portal Access",
     description: "Turn entire portals on or off and edit how each portal appears to users.",
-    to: "/admin/portal-access",
+    to: "/admin/settings/portal-access",
     icon: Globe,
     action: "Manage portals",
   },
   {
     title: "User Roles",
     description: "Create custom user roles and assign them to portal users.",
-    to: "/admin/roles",
+    to: "/admin/settings/user-roles",
     icon: Tags,
     action: "Manage roles",
   },

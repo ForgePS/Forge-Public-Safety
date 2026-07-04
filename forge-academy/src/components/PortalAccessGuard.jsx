@@ -33,7 +33,7 @@ export default function PortalAccessGuard({ portal, homePath }) {
           {config.signInMessage || "This portal has been turned off in Portal Access settings."}
         </p>
         {canManage ? (
-          <Link to="/admin/portal-access" className="app-btn-primary mt-6 inline-block px-4 py-2 text-xs">
+          <Link to="/admin/settings/portal-access" className="app-btn-primary mt-6 inline-block px-4 py-2 text-xs">
             Manage portal access
           </Link>
         ) : (
