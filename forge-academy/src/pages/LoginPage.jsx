@@ -6,6 +6,7 @@ import { ForgeOrgBadge, ForgeWordmark } from "../components/auth/ForgeLoginBrand
 import { ForgeLoginThemeToggle } from "../components/auth/ForgeLoginThemeToggle.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { usePortalRolesOptional } from "../context/PortalRolesContext.jsx";
+import { usePortalDefinitionsOptional } from "../context/PortalDefinitionsContext.jsx";
 import { useSystemSettingsOptional } from "../context/SystemSettingsContext.jsx";
 import { useForgeLoginTheme } from "../hooks/useForgeLoginTheme.js";
 import { resolveLoginRedirectPath } from "../lib/portalAccess.js";
@@ -15,9 +16,11 @@ const ACADEMY_HOSTING_URL = "forge-academy-95f84.web.app";
 export default function LoginPage() {
   const { user, signIn, signingIn, error } = useAuth();
   const portalRoles = usePortalRolesOptional();
+  const portalDefs = usePortalDefinitionsOptional();
   const settingsContext = useSystemSettingsOptional();
   const customById = portalRoles?.customById ?? {};
   const settings = settingsContext?.settings;
+  const customPortalsBySlug = portalDefs?.bySlug ?? {};
   const location = useLocation();
   const { theme, isDark, toggleTheme } = useForgeLoginTheme();
   const [email, setEmail] = useState("");
@@ -35,7 +38,13 @@ export default function LoginPage() {
   }
 
   if (user) {
-    const redirect = resolveLoginRedirectPath(user, customById, settings, location.state?.from);
+    const redirect = resolveLoginRedirectPath(
+      user,
+      customById,
+      settings,
+      location.state?.from,
+      customPortalsBySlug,
+    );
     return <Navigate to={redirect} replace />;
   }
 

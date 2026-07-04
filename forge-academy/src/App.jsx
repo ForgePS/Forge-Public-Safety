@@ -96,6 +96,9 @@ import AdminPortalRolesPage from "./pages/admin/AdminPortalRolesPage.jsx";
 import AdminPortalAccessPage from "./pages/admin/AdminPortalAccessPage.jsx";
 import AdminPortalShell from "./components/AdminPortalShell.jsx";
 import PortalAccessGuard from "./components/PortalAccessGuard.jsx";
+import CustomPortalLayout from "./components/CustomPortalLayout.jsx";
+import CustomPortalShell from "./components/CustomPortalShell.jsx";
+import CustomPortalDashboardPage from "./pages/custom/CustomPortalDashboardPage.jsx";
 import ModuleGuard, { VerifyModuleGuard } from "./components/ModuleGuard.jsx";
 import StudentPortalShell, {
   CertificationPortalShell,
@@ -339,6 +342,13 @@ export default function App() {
           </Route>
         </Route>
       </Route>
+      </Route>
+
+      <Route path="/p/:portalSlug" element={<CustomPortalLayout />}>
+        <Route element={<CustomPortalShell />}>
+          <Route index element={<CustomPortalDashboardPage />} />
+          <Route path="*" element={<PlaceholderPage title="Custom portal module" />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
