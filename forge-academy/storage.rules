@@ -64,9 +64,18 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    function conversationSnapshot(conversationId) {
+      return firestore.get(/databases/(default)/documents/conversations/$(conversationId));
+    }
+
     function isConversationParticipant(conversationId) {
+      let data = conversationSnapshot(conversationId).data;
       return signedIn()
-        && request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participantUids;
+        && data != null
+        && (
+          request.auth.uid in data.participants
+          || (data.participantUids != null && request.auth.uid in data.participantUids)
+        );
     }
 
     function isMessageAttachment() {
