@@ -616,18 +616,30 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    function conversationSnapshot(conversationId) {
+      return get(/databases/$(database)/documents/conversations/$(conversationId));
+    }
+
     function conversationData(conversationId) {
-      return get(/databases/$(database)/documents/conversations/$(conversationId)).data;
+      return conversationSnapshot(conversationId).data;
+    }
+
+    function isParticipantInConversationData(data) {
+      return data != null
+        && (
+          request.auth.uid in data.participants
+          || (data.participantUids != null && request.auth.uid in data.participantUids)
+        );
     }
 
     function isConversationParticipant(conversationId) {
-      return signedIn() && request.auth.uid in conversationData(conversationId).participantUids;
+      return signedIn() && isParticipantInConversationData(conversationData(conversationId));
     }
 
     match /conversations/{conversationId} {
-      allow read: if isConversationParticipant(conversationId);
-      allow create: if signedIn() && request.auth.uid in request.resource.data.participantUids;
-      allow update: if isConversationParticipant(conversationId);
+      allow read: if signedIn() && isParticipantInConversationData(resource.data);
+      allow create: if signedIn() && isParticipantInConversationData(request.resource.data);
+      allow update: if signedIn() && isParticipantInConversationData(resource.data);
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
