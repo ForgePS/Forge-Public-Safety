@@ -95,10 +95,6 @@ export async function getConversation(conversationId) {
 export async function getOrCreateDirectConversation(currentUser, otherUser) {
   const conversationId = buildDirectConversationId([currentUser.uid, otherUser.uid]);
   const ref = doc(db, "conversations", conversationId);
-  const existing = await getDoc(ref);
-  if (existing.exists()) {
-    return mapConversation(existing.id, existing.data());
-  }
 
   const participants = {
     [currentUser.uid]: {
@@ -126,7 +122,12 @@ export async function getOrCreateDirectConversation(currentUser, otherUser) {
     createdBy: currentUser.uid,
   };
 
-  await setDoc(ref, payload, { merge: true });
+  const existing = await getDoc(ref);
+  if (existing.exists()) {
+    return mapConversation(existing.id, existing.data());
+  }
+
+  await setDoc(ref, payload);
   return mapConversation(conversationId, payload);
 }
 

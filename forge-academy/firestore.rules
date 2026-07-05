@@ -637,7 +637,10 @@ service cloud.firestore {
     }
 
     match /conversations/{conversationId} {
-      allow read: if signedIn() && isParticipantInConversationData(resource.data);
+      allow read: if signedIn() && (
+        resource == null
+        || isParticipantInConversationData(resource.data)
+      );
       allow create: if signedIn() && isParticipantInConversationData(request.resource.data);
       allow update: if signedIn() && isParticipantInConversationData(resource.data);
       allow delete: if isAdmin();

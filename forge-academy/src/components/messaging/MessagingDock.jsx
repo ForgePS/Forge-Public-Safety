@@ -252,11 +252,16 @@ function NewConversationPanel() {
     if (!user?.uid) return;
     setLoading(true);
     const load = async () => {
-      if (isFullAdmin(user.role)) {
-        await backfillMessagingDirectoryFromPortalUsers().catch(() => {});
+      try {
+        if (isFullAdmin(user.role)) {
+          await backfillMessagingDirectoryFromPortalUsers().catch(() => {});
+        }
+        const rows = await searchMessagingDirectory(search, user.uid);
+        setContacts(rows);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unable to load contacts.");
+        setContacts([]);
       }
-      const rows = await searchMessagingDirectory(search, user.uid);
-      setContacts(rows);
     };
     load().finally(() => setLoading(false));
   }, [search, user?.uid, user?.role]);
