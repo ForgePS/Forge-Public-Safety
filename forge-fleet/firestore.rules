@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isFleetAdmin() {
+      return isAuthenticated();
+    }
+
+    match /departments/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /stations/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /apparatus/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /equipment/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /maintenanceModules/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /maintenanceSchedules/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /workOrders/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /maintenanceRecords/{docId} {
+      allow read, write: if isFleetAdmin();
+    }
+
+    match /maintenanceAuditLog/{docId} {
+      allow read: if isFleetAdmin();
+      allow create: if isFleetAdmin();
+      allow update, delete: if false;
+    }
+  }
+}
