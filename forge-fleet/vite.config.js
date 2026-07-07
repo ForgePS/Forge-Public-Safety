@@ -13,4 +13,9 @@ export default defineConfig({
       "@forgeps/ai-builder": path.resolve(rootDir, "../packages/forge-ai-builder/src"),
     },
   },
+  server: {
+    host: "0.0.0.0",
+    port: 5173,
+    allowedHosts: true,
+  },
 });
