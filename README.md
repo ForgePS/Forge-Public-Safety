@@ -38,25 +38,22 @@ npm run build
 
 ## Deploy to Firebase Hosting
 
-This project is configured for Firebase project `rms-dashboard-7562e`.
+This project is configured for Firebase project **`forge-website-b276c`**.
 
 ```powershell
 npm run build
-firebase deploy --only hosting:marketing
+firebase deploy --only hosting
 ```
 
-Until DNS is switched, preview the site at **https://forgepublicsafety-com.web.app** and the CMS at **https://forgepublicsafety-com.web.app/admin**.
+Live preview: **https://forge-website-b276c.web.app**  
+CMS admin: **https://forge-website-b276c.web.app/admin**
 
 ### Point forgepublicsafety.com to Firebase
 
-The marketing site is deployed to Firebase site **`forgepublicsafety-com`** (not the RMS app).
-
-1. Firebase Console → **Hosting** → site **forgepublicsafety-com** → **Add custom domain** → `forgepublicsafety.com`
+1. Firebase Console → **Hosting** → **Add custom domain** → `forgepublicsafety.com`
 2. In GoDaddy: disconnect the domain from **Airo Builder** first
 3. Add the DNS records Firebase shows (usually A records + TXT for verification)
 4. Wait for SSL (can take up to 24 hours)
-
-Until DNS switches, use **https://forgepublicsafety-com.web.app** and **https://forgepublicsafety-com.web.app/admin**.
 
 ## Demo form
 
@@ -91,7 +88,9 @@ See **`CMS-AUDIT-REPORT.md`** for the full customization audit.
 
 1. Create a Firebase project and enable Firestore, Auth, and Storage
 2. Copy `.env.example` to `.env.local` and fill in Firebase config
-3. Deploy: `firebase deploy --only hosting:marketing,firestore:rules,functions`
+3. Add GitHub Actions secret **`FIREBASE_SERVICE_ACCOUNT`** (full service account JSON from Firebase Console → Project settings → Service accounts → Generate new private key). See `DECAP-CMS-SETUP.md` section 5.
+4. Alternatively, add **`FIREBASE_TOKEN`** from `npx firebase-tools login:ci` as a fallback
+5. Deploy: `firebase deploy --only hosting,firestore:rules,functions`
 
 ### Legacy Decap CMS
 

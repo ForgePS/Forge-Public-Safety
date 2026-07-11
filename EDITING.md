@@ -4,7 +4,7 @@
 
 Use **Decap CMS** at **`/admin`** on your live site.
 
-1. Open **https://forgepublicsafety-com.web.app/admin** (or `/admin` on your domain after DNS cutover)
+1. Open **https://forge-website-b276c.web.app/admin** (or `/admin` on your domain after DNS cutover)
 2. Log in with GitHub
 3. Pick a page from the sidebar, edit, click **Publish**
 4. The site redeploys automatically (via GitHub Actions)
@@ -36,7 +36,7 @@ Double-click **`preview.bat`** or run `npm run dev` → http://localhost:5173
 
 ### Publish manually
 
-Double-click **`publish.bat`** or run `npm run build` then `firebase deploy --only hosting:marketing`
+Double-click **`publish.bat`** or run `npm run build` then `firebase deploy --only hosting`
 
 ---
 
