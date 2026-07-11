@@ -92,7 +92,7 @@ See **`CMS-AUDIT-REPORT.md`** for the full customization audit.
 1. Create a Firebase project and enable Firestore, Auth, and Storage
 2. Copy `.env.example` to `.env.local` and fill in Firebase config
 3. Add GitHub Actions secret **`FIREBASE_SERVICE_ACCOUNT`** (full service account JSON from Firebase Console → Project settings → Service accounts → Generate new private key). See `DECAP-CMS-SETUP.md` section 5.
-4. Alternatively, add **`FIREBASE_TOKEN`** from `firebase login:ci` as a fallback
+4. Alternatively, add **`FIREBASE_TOKEN`** from `npx firebase-tools login:ci` as a fallback
 5. Deploy: `firebase deploy --only hosting:marketing,firestore:rules,functions`
 
 ### Legacy Decap CMS

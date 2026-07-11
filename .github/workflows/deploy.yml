@@ -26,7 +26,7 @@ jobs:
             echo ""
             echo "Add one of these repository secrets (Settings → Secrets and variables → Actions):"
             echo "  • FIREBASE_SERVICE_ACCOUNT — recommended; paste full service account JSON from Firebase Console"
-            echo "  • FIREBASE_TOKEN — fallback; run 'firebase login:ci' locally and paste the token"
+            echo "  • FIREBASE_TOKEN — fallback; run 'npx firebase-tools login:ci' locally and paste the token"
             echo ""
             echo "See DECAP-CMS-SETUP.md section 5 for service account setup."
             exit 1
