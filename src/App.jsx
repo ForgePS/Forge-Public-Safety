@@ -1,30 +1,28 @@
-import { Navigate, Route, Routes } from "react-router-dom";
-import Layout from "./components/Layout.jsx";
-import HomePage from "./pages/HomePage.jsx";
-import ProductsPage from "./pages/ProductsPage.jsx";
-import SolutionsPage from "./pages/SolutionsPage.jsx";
-import ContactPage from "./pages/ContactPage.jsx";
-import CompanyPage from "./pages/CompanyPage.jsx";
-import ResourcesPage from "./pages/ResourcesPage.jsx";
-import NotFoundPage from "./pages/NotFoundPage.jsx";
-import { PrivacyPage, SecurityPage, TermsPage } from "./pages/LegalPages.jsx";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { CmsProvider } from "./cms/context/CmsContext.jsx";
+import DynamicPage from "./cms/pages/DynamicPage.jsx";
+
+const AdminApp = lazy(() => import("./admin/AdminApp.jsx"));
+
+function AdminLoader() {
+  return (
+    <div className="min-h-screen bg-[#0B1220] flex items-center justify-center text-[#64748B]">
+      Loading admin...
+    </div>
+  );
+}
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<HomePage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="solutions" element={<SolutionsPage />} />
-        <Route path="resources" element={<ResourcesPage />} />
-        <Route path="company" element={<CompanyPage />} />
-        <Route path="contact" element={<ContactPage />} />
-        <Route path="privacy" element={<PrivacyPage />} />
-        <Route path="terms" element={<TermsPage />} />
-        <Route path="security" element={<SecurityPage />} />
-        <Route path="pricing" element={<Navigate to="/contact" replace />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Route>
-    </Routes>
+    <BrowserRouter>
+      <CmsProvider>
+        <Routes>
+          <Route path="/admin/*" element={<Suspense fallback={<AdminLoader />}><AdminApp /></Suspense>} />
+          <Route path="/" element={<DynamicPage slug="home" />} />
+          <Route path="/:slug" element={<DynamicPage />} />
+        </Routes>
+      </CmsProvider>
+    </BrowserRouter>
   );
 }
