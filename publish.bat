@@ -13,7 +13,7 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-call firebase deploy --only hosting:marketing
+call firebase deploy --only hosting
 echo.
 echo Done. Check Firebase Hosting for your live URL.
 pause

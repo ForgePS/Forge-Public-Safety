@@ -2,7 +2,7 @@ backend:
   name: github
   repo: YOUR_GITHUB_USERNAME/forgepublicsafety-website
   branch: main
-  base_url: https://us-central1-rms-dashboard-7562e.cloudfunctions.net/cmsOAuth
+  base_url: https://us-central1-forge-website-b276c.cloudfunctions.net/cmsOAuth
   auth_endpoint: auth
 
 local_backend: false

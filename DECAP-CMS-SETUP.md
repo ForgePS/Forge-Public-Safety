@@ -4,7 +4,7 @@ Decap CMS gives you a visual editor at **`/admin`** on your live site — no AI,
 
 After setup, your workflow is:
 
-1. Open **https://forgepublicsafety-com.web.app/admin** (or **https://forgepublicsafety.com/admin** after DNS cutover)
+1. Open **https://forge-website-b276c.web.app/admin** (or **https://forgepublicsafety.com/admin** after DNS cutover)
 2. Log in with GitHub
 3. Edit pages in the sidebar → **Publish** (saves to GitHub)
 4. GitHub Actions automatically rebuilds and deploys the site (about 2 minutes)
@@ -84,11 +84,11 @@ firebase deploy --only functions:website-cms
 
 After deploy, Firebase prints the function URL, e.g.:
 
-`https://us-central1-rms-dashboard-7562e.cloudfunctions.net/cmsOAuth`
+`https://us-central1-forge-website-b276c.cloudfunctions.net/cmsOAuth`
 
 1. Put that URL in **`public/admin/config.yml`** as `base_url` (no trailing slash)
 2. Set the GitHub OAuth **callback URL** to:  
-   `https://us-central1-rms-dashboard-7562e.cloudfunctions.net/cmsOAuth/callback`
+   `https://us-central1-forge-website-b276c.cloudfunctions.net/cmsOAuth/callback`
 3. Commit, push, and redeploy hosting so `/admin` picks up the config change
 
 ### 5. Enable GitHub Actions auto-deploy
@@ -102,7 +102,7 @@ After deploy, Firebase prints the function URL, e.g.:
 
 ```powershell
 npm run build
-firebase deploy --only hosting:marketing
+firebase deploy --only hosting
 ```
 
 Or push to `main` after GitHub Actions is configured.
