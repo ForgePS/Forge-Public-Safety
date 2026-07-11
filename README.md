@@ -62,9 +62,40 @@ Until DNS switches, use **https://forgepublicsafety-com.web.app** and **https://
 
 The contact form opens a `mailto:demo@forgepublicsafety.com` message. Replace with Formspree, Firebase Functions, or another form backend when ready.
 
-## Content editor (Decap CMS)
+## Content Management (Forge CMS)
 
-Browser-based editing at **`/admin`**. See **`DECAP-CMS-SETUP.md`** for one-time GitHub + OAuth setup, then **`EDITING.md`** for day-to-day use.
+The marketing site is powered by **Forge CMS** — a full visual website management platform.
+
+### Admin Panel
+
+Access the CMS at **`/admin`**. Local development login: any email with password `admin`.
+
+The admin panel provides complete control over:
+
+- **Visual Page Builder** — drag-and-drop sections, 30+ block types, undo/redo, desktop/tablet/mobile preview
+- **Global Branding** — logos, colors, fonts, container widths
+- **Navigation & Footer Builders** — menus, dropdowns, columns, legal links
+- **Media Library** — images, documents, alt text management
+- **Forms Builder** — custom fields, validation, submission export
+- **Collections** — repeatable content (products, team, FAQs, blog posts)
+- **SEO Management** — per-page meta, redirects, robots.txt, sitemap
+- **Popups & Banners** — scheduled notices, modals, announcement bars
+- **Email Templates** — editable system emails with variable placeholders
+- **Roles & Permissions** — 9 configurable roles with granular access
+- **Version History** — automatic change tracking with restore capability
+- **Settings** — business info, analytics, maintenance mode, cookie banner
+
+See **`CMS-AUDIT-REPORT.md`** for the full customization audit.
+
+### Production Setup
+
+1. Create a Firebase project and enable Firestore, Auth, and Storage
+2. Copy `.env.example` to `.env.local` and fill in Firebase config
+3. Deploy: `firebase deploy --only hosting:marketing,firestore:rules,functions`
+
+### Legacy Decap CMS
+
+The previous Decap CMS at `/admin` has been replaced by Forge CMS. Decap files remain in `public/admin/` for reference but are no longer used.
 
 ## Assets
 

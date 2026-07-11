@@ -1,0 +1,116 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/cms_users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/cms_users/$(request.auth.uid)).data.role in ['super_admin', 'admin', 'website_manager'];
+    }
+
+    function isEditor() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/cms_users/$(request.auth.uid));
+    }
+
+    // Public read for published content
+    match /cms_pages/{pageId} {
+      allow read: if resource.data.status == 'published' || resource.data.status == 'scheduled' || isEditor();
+      allow write: if isAdmin();
+    }
+
+    match /cms_branding/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_navigation/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_footers/{footerId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_media/{mediaId} {
+      allow read: if true;
+      allow write: if isEditor();
+    }
+
+    match /cms_forms/{formId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_form_submissions/{submissionId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /cms_collections/{collectionId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_settings/{docId} {
+      allow read: if isEditor();
+      allow write: if isAdmin();
+    }
+
+    match /cms_email_templates/{templateId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /cms_popups/{popupId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_integrations/{integrationId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /cms_roles/{roleId} {
+      allow read: if isEditor();
+      allow write: if isAdmin();
+    }
+
+    match /cms_users/{userId} {
+      allow read: if isEditor();
+      allow write: if isAdmin();
+    }
+
+    match /cms_versions/{versionId} {
+      allow read: if isEditor();
+      allow create: if isEditor();
+    }
+
+    match /cms_redirects/{redirectId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_seo_global/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /cms_saved_sections/{sectionId} {
+      allow read: if isEditor();
+      allow write: if isAdmin();
+    }
+
+    match /cms_search/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
