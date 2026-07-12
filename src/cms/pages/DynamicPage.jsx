@@ -1,18 +1,20 @@
-import { useParams, Navigate } from "react-router-dom";
+import { Link, useParams, Navigate } from "react-router-dom";
 import { useCms, useBrandingStyles } from "../context/CmsContext.jsx";
 import { PageRenderer } from "../renderer/BlockRenderer.jsx";
 import SeoHead from "../components/SeoHead.jsx";
 import DynamicHeader from "../components/DynamicHeader.jsx";
 import DynamicFooter from "../components/DynamicFooter.jsx";
 import PopupsManager from "../components/PopupsManager.jsx";
+import { isPreviewHost } from "../core/programs.js";
 
 export default function DynamicPage({ slug: propSlug }) {
   const params = useParams();
-  const { getPublishedPage, branding, forms, collections, loading, redirects, settings } = useCms();
+  const { getPageForDisplay, branding, forms, collections, loading, redirects, settings, pages, program } = useCms();
   const brandingStyles = useBrandingStyles();
 
   const slug = propSlug || params.slug || "home";
-  const page = getPublishedPage(slug);
+  const page = getPageForDisplay(slug);
+  const isDraftPreview = page && page.status !== "published" && isPreviewHost(window.location.hostname);
 
   const redirect = redirects?.find((r) => r.enabled && r.from === `/${slug}`);
   if (redirect) return <Navigate to={redirect.to} replace />;
@@ -40,9 +42,24 @@ export default function DynamicPage({ slug: propSlug }) {
     return (
       <div className="min-h-screen bg-black" style={brandingStyles}>
         <DynamicHeader />
-        <main className="py-32 text-center">
+        <main className="py-32 px-6 text-center max-w-xl mx-auto">
           <h1 className="text-6xl font-black text-white mb-4">404</h1>
-          <p className="text-[#94A3B8]">Page not found.</p>
+          <p className="text-[#94A3B8] mb-6">
+            {pages.length === 0
+              ? "No website content is loaded yet for this program."
+              : "This page was not found or is not published yet."}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link to="/admin" className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-bold bg-[#F97316] text-white hover:bg-[#ea580c]">
+              Open Admin to publish content
+            </Link>
+            <Link to="/admin/pages" className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-bold border border-[#1E293B] text-white hover:bg-white/5">
+              Manage pages
+            </Link>
+          </div>
+          {program && (
+            <p className="text-xs text-[#64748B] mt-6">Program: {program.name}</p>
+          )}
         </main>
         <DynamicFooter />
       </div>
@@ -52,6 +69,11 @@ export default function DynamicPage({ slug: propSlug }) {
   return (
     <div className="min-h-screen bg-black text-white" style={brandingStyles}>
       <SeoHead page={page} />
+      {isDraftPreview && (
+        <div className="bg-yellow-500/15 border-b border-yellow-500/30 text-yellow-200 text-center text-sm py-2 px-4">
+          Draft preview — this page is not published yet. <Link to="/admin/pages" className="underline font-bold">Publish in admin</Link>
+        </div>
+      )}
       <DynamicHeader />
       <main>
         <PageRenderer page={page} branding={branding} forms={forms} collections={collections} />

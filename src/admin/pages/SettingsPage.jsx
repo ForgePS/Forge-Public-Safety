@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
-import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
+import { seedLocalStore } from "../../cms/store/seed.js";
+import { clearLocalStore } from "../../cms/store/localStore.js";
+import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
 export default function SettingsPage() {
   const { store, refresh } = useCms();
@@ -18,6 +20,14 @@ export default function SettingsPage() {
     await refresh();
     setSaving(false);
     setToast("Settings saved");
+  };
+
+  const restoreDefaultContent = async () => {
+    if (!confirm("Restore default website content for this program? Your current pages and settings will be replaced.")) return;
+    clearLocalStore();
+    seedLocalStore();
+    await refresh();
+    setToast("Default content restored — refresh the public site");
   };
 
   if (!settings) return <div className="p-8 text-[#64748B]">Loading...</div>;
@@ -63,6 +73,13 @@ export default function SettingsPage() {
               <AdminInput label="Timezone" value={settings.locale?.timezone} onChange={(v) => setSettings({ ...settings, locale: { ...settings.locale, timezone: v } })} />
               <AdminInput label="Date Format" value={settings.locale?.dateFormat} onChange={(v) => setSettings({ ...settings, locale: { ...settings.locale, dateFormat: v } })} />
             </div>
+          </AdminCard>
+          <AdminCard title="Website not showing?">
+            <p className="text-sm text-[#94A3B8] mb-4">
+              If the public site is blank or shows 404, restore the default marketing content. Local dev runs at{" "}
+              <strong className="text-white">http://localhost:5173</strong> (not port 80).
+            </p>
+            <AdminButton variant="secondary" onClick={restoreDefaultContent}>Restore default content</AdminButton>
           </AdminCard>
         </div>
       </div>

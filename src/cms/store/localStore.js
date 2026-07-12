@@ -105,7 +105,7 @@ export function addLocalVersion(entry) {
 
 export function isLocalStoreSeeded() {
   const store = readStore();
-  return Boolean(store?.programs?.length || store?.pages?.length);
+  return Boolean(store?.pages?.length);
 }
 
 export function clearLocalStore() {

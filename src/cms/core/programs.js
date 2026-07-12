@@ -89,12 +89,18 @@ export function createProgram(overrides = {}) {
 }
 
 export function resolveProgramFromHost(hostname, programs = DEFAULT_PROGRAMS) {
-  const host = (hostname || "").replace(/^www\./, "").toLowerCase();
+  let host = (hostname || "").replace(/^www\./, "").toLowerCase();
+  if (host === "127.0.0.1") host = "localhost";
   const match = programs.find((p) =>
     (p.domains || []).some((d) => d.replace(/^www\./, "").toLowerCase() === host) ||
     (p.previewDomains || []).some((d) => d.replace(/^www\./, "").toLowerCase() === host)
   );
   return match || programs.find((p) => p.id === DEFAULT_PROGRAM_ID) || programs[0];
+}
+
+export function isPreviewHost(hostname) {
+  const host = (hostname || "").replace(/^www\./, "").toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host.endsWith(".web.app");
 }
 
 export function programSingletonId(programId) {
