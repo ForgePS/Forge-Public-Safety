@@ -34,6 +34,9 @@
     {
       "source": "functions",
       "codebase": "website-cms",
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" install --omit=dev"
+      ],
       "ignore": [
         "node_modules",
         ".git",

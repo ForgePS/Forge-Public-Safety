@@ -8,6 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "cms:server": "decap-server",
+    "functions:install": "npm ci --prefix functions",
+    "deploy:hosting": "npm run build && firebase deploy --only hosting,firestore,storage",
+    "deploy": "npm run build && npm run functions:install && firebase deploy",
     "staff:scrape": "node forge-academy/scripts/scrape-afta-staff.mjs",
     "staff:import": "node forge-academy/scripts/import-afta-staff.mjs"
   },
