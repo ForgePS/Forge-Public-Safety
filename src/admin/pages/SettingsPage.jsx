@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { seedLocalStore } from "../../cms/store/seed.js";
 import { clearLocalStore } from "../../cms/store/localStore.js";
+import { clearSeedCache } from "../../cms/store/contentFallback.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
 export default function SettingsPage() {

@@ -5,7 +5,7 @@ import { PROGRAM_TYPES } from "../../cms/core/programs.js";
 import AdminPageHeader from "../components/AdminPageHeader.jsx";
 
 export default function DashboardPage() {
-  const { pages, forms, settings, programs, program, programId, setProgramId, loading } = useCms();
+  const { pages, forms, settings, programs, program, programId, setProgramId, loading, switchingProgram } = useCms();
 
   if (loading) return <div className="p-8 text-[#64748B]">Loading dashboard...</div>;
 
@@ -34,6 +34,7 @@ export default function DashboardPage() {
               program={p}
               active={p.id === programId}
               onSelect={() => setProgramId(p.id)}
+              disabled={switchingProgram}
             />
           ))}
         </div>
@@ -110,12 +111,13 @@ export default function DashboardPage() {
   );
 }
 
-function ProgramCard({ program, active, onSelect }) {
+function ProgramCard({ program, active, onSelect, disabled }) {
   return (
     <button
       type="button"
       onClick={onSelect}
-      className={`rounded-xl border p-4 text-left transition-colors hover:border-[#334155] ${
+      disabled={disabled}
+      className={`rounded-xl border p-4 text-left transition-colors hover:border-[#334155] disabled:opacity-60 disabled:cursor-wait ${
         active ? "border-[#F97316]/50 bg-[#F97316]/5" : "border-[#1E293B] bg-[#111827]"
       }`}
     >

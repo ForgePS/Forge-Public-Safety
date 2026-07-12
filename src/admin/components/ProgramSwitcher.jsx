@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown, Globe, Check, ExternalLink } from "lucide-react";
+import { ChevronDown, Globe, Check, ExternalLink, Loader2 } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 
 export default function ProgramSwitcher() {
-  const { programs, programId, program, setProgramId, isAdminMode } = useCms();
+  const { programs, programId, program, setProgramId, isAdminMode, switchingProgram } = useCms();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -17,25 +17,38 @@ export default function ProgramSwitcher() {
 
   if (!isAdminMode) return null;
 
+  const handleSelect = (id) => {
+    if (id === programId || switchingProgram) return;
+    setProgramId(id);
+    setOpen(false);
+  };
+
   return (
     <div className="relative" ref={ref}>
       <button
         type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-[#111827] border border-[#1E293B] hover:border-[#334155] transition-colors text-left"
+        onClick={() => !switchingProgram && setOpen(!open)}
+        disabled={switchingProgram}
+        className="flex items-center gap-2 w-full px-3 py-2.5 rounded-xl bg-[#111827] border border-[#1E293B] hover:border-[#334155] transition-colors text-left disabled:opacity-70"
       >
-        <span
-          className="w-2.5 h-2.5 rounded-full shrink-0"
-          style={{ backgroundColor: program?.color || "#64748B" }}
-        />
+        {switchingProgram ? (
+          <Loader2 size={14} className="animate-spin text-[#F97316] shrink-0" />
+        ) : (
+          <span
+            className="w-2.5 h-2.5 rounded-full shrink-0"
+            style={{ backgroundColor: program?.color || "#64748B" }}
+          />
+        )}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-white truncate">{program?.name || "Select program"}</p>
+          <p className="text-sm font-bold text-white truncate">
+            {switchingProgram ? "Switching..." : (program?.name || "Select program")}
+          </p>
           <p className="text-[10px] text-[#64748B] truncate">{program?.shortName || "Control center"}</p>
         </div>
         <ChevronDown size={16} className={`text-[#64748B] shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
-      {open && (
+      {open && !switchingProgram && (
         <div className="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-[#1E293B] bg-[#111827] shadow-xl overflow-hidden">
           <div className="px-3 py-2 border-b border-[#1E293B]">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-[#64748B]">Switch program</p>
@@ -45,7 +58,7 @@ export default function ProgramSwitcher() {
               <button
                 key={p.id}
                 type="button"
-                onClick={() => { setProgramId(p.id); setOpen(false); }}
+                onClick={() => handleSelect(p.id)}
                 className={`flex items-center gap-3 w-full px-3 py-2.5 text-left hover:bg-white/5 transition-colors ${
                   p.id === programId ? "bg-[#F97316]/10" : ""
                 }`}
