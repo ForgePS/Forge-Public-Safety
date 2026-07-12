@@ -1,38 +1,40 @@
-import { onRequest } from "firebase-functions/v2/https";
-import { initializeApp, getApps } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+const { onRequest } = require("firebase-functions/v2/https");
+const admin = require("firebase-admin");
 
-if (!getApps().length) initializeApp();
-const db = getFirestore();
+function getDb() {
+  if (!admin.apps.length) {
+    admin.initializeApp();
+  }
+  return admin.firestore();
+}
 
-export const submitForm = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+exports.submitForm = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
   if (req.method !== "POST") {
     res.status(405).send("Method not allowed");
     return;
   }
   try {
-    const { formId, data } = req.body;
+    const { formId, data } = req.body || {};
     if (!formId || !data) {
       res.status(400).json({ error: "Missing formId or data" });
       return;
     }
-    const submission = {
+    const ref = await getDb().collection("cms_form_submissions").add({
       formId,
       data,
       status: "new",
       createdAt: new Date().toISOString(),
-      ip: req.ip,
-    };
-    const ref = await db.collection("cms_form_submissions").add(submission);
+    });
     res.json({ success: true, id: ref.id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-export const cmsApi = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
-  const path = req.path.replace(/^\/cmsApi\/?/, "");
+exports.cmsApi = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
+  const path = (req.path || "").replace(/^\/cmsApi\/?/, "");
   try {
+    const db = getDb();
     if (path === "pages" && req.method === "GET") {
       const snap = await db.collection("cms_pages").where("status", "==", "published").get();
       res.json(snap.docs.map((d) => ({ id: d.id, ...d.data() })));

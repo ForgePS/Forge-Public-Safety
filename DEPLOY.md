@@ -3,74 +3,79 @@
 Project: **forge-website-b276c**  
 Live URL: https://forge-website-b276c.web.app
 
-## Quick deploy (recommended)
+## Deploy your website (use this)
 
-From the project root:
+The CMS website does **not** need Cloud Functions to work. Always use:
 
-```bash
-npm install
-npm run deploy:hosting
-```
-
-This builds the site and deploys **hosting + Firestore rules + Storage rules** — everything needed for the website and CMS to work. It skips Cloud Functions so deploy is fast and reliable.
-
-## Full deploy (includes Cloud Functions)
-
-```bash
+```powershell
 npm install
 npm run deploy
 ```
 
-This also deploys form submission functions. The first time, Firebase installs function dependencies automatically.
+This deploys **hosting + Firestore rules + Storage rules** only. Your site will go live.
 
-## If `firebase deploy` failed with "Couldn't find firebase-functions"
+---
 
-Run this once, then deploy again:
+## Do NOT run bare `firebase deploy`
 
-```bash
-cd functions
-npm install
-cd ..
-npm run build
-firebase deploy
-```
+Running `firebase deploy` with no flags tries to deploy Cloud Functions and may fail with:
 
-Or use the npm script:
+- `Couldn't find firebase-functions package`
+- `User code failed to load... Timeout after 10000`
 
-```bash
-npm run functions:install
-npm run deploy
-```
+**Use `npm run deploy` instead** — it skips functions on purpose.
 
-## Step-by-step (Windows PowerShell)
+---
+
+## Windows PowerShell (step by step)
 
 ```powershell
 cd C:\Users\jerem\Projects\forge-cms-site
 git pull
 npm install
-npm run deploy:hosting
+npm run deploy
 ```
 
-## After deploy
+Wait for `Deploy complete!` then open:
 
-1. Open https://forge-website-b276c.web.app — your public website
-2. Open https://forge-website-b276c.web.app/admin — CMS admin (password: `admin` in local dev; configure Firebase Auth for production)
-3. In admin: **Settings → Restore default content** if the site looks empty
-4. **Pages → Home** → set status to **Published** → Save
+- **Website:** https://forge-website-b276c.web.app
+- **Admin:** https://forge-website-b276c.web.app/admin
+
+---
+
+## After first deploy
+
+1. Log in at `/admin`
+2. If the site is empty: **Settings → Restore default content**
+3. **Pages → Home** → Status: **Published** → **Save**
+
+---
+
+## Optional: deploy Cloud Functions later
+
+Only needed for server-side form API endpoints (the CMS works without them):
+
+```powershell
+npm run deploy:functions
+```
+
+---
 
 ## Local development
 
-```bash
+```powershell
 npm run dev
 ```
 
-Open **http://localhost:5173** (not port 80).
+Open **http://localhost:5173** (port 5173, not 80).
+
+---
 
 ## Troubleshooting
 
 | Problem | Fix |
 |---------|-----|
-| Functions deploy error | Use `npm run deploy:hosting` instead |
-| Blank website | Admin → Settings → Restore default content |
-| Old TinaCMS admin | Pull latest code, rebuild, redeploy |
-| `firebase: command not found` | Use `npx firebase-tools deploy` |
+| Functions timeout on deploy | Use `npm run deploy` (not `firebase deploy`) |
+| Blank website after deploy | Admin → Settings → Restore default content |
+| Still see old TinaCMS | Pull latest code, `npm run deploy` again |
+| `firebase` not found | Use `npx firebase-tools deploy --only hosting,firestore,storage` |

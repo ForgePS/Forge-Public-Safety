@@ -1,7 +1,6 @@
 {
   "name": "forge-website-functions",
   "private": true,
-  "type": "module",
   "engines": {
     "node": "20"
   },
