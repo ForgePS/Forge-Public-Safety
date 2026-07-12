@@ -721,9 +721,11 @@ export function buildProgramBundle(program, content = null) {
 
 export function normalizeLegacyContentJson(json) {
   if (!json || typeof json !== "object") return null;
-  if (json.global?.site) {
+
+  const global = json.global || (json.site ? { site: json.site, navigation: json.navigation } : null);
+  if (global?.site) {
     return {
-      global: json.global,
+      global,
       home: json.home ? { home: json.home.home || json.home } : undefined,
       productsPage: json["products-page"] || json.productsPage,
       productModules: json["product-modules"] || json.productModules,
@@ -736,4 +738,57 @@ export function normalizeLegacyContentJson(json) {
     };
   }
   return null;
+}
+
+const CONTENT_FILE_MAP = {
+  "global.json": "global",
+  "home.json": "home",
+  "products-page.json": "productsPage",
+  "product-modules.json": "productModules",
+  "addon-modules.json": "addonModules",
+  "solutions.json": "solutions",
+  "company.json": "company",
+  "contact.json": "contact",
+  "resources.json": "resources",
+  "footer.json": "footer",
+};
+
+export function parseJsonText(text) {
+  const cleaned = String(text).replace(/^\uFEFF/, "").trim();
+  if (!cleaned) throw new Error("The file is empty.");
+  return JSON.parse(cleaned);
+}
+
+export function mergeUploadedContentFiles(fileDataList) {
+  const merged = {};
+  let hasCmsExport = false;
+
+  for (const { name, data } of fileDataList) {
+    const lower = name.toLowerCase();
+
+    if (Array.isArray(data?.pages) && data.pages.length) {
+      Object.assign(merged, data);
+      hasCmsExport = true;
+      continue;
+    }
+
+    const mappedKey = CONTENT_FILE_MAP[lower];
+    if (mappedKey) {
+      merged[mappedKey] = data;
+      continue;
+    }
+
+    if (data?.global?.site || data?.site) {
+      Object.assign(merged, data);
+      continue;
+    }
+
+    if (lower.endsWith(".json")) {
+      const stem = lower.replace(/\.json$/, "");
+      merged[stem] = data;
+    }
+  }
+
+  if (hasCmsExport) return merged;
+  return merged;
 }

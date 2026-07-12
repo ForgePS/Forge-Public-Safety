@@ -7,6 +7,8 @@ import {
   buildProgramBundle,
   buildMarketingBundleFromContent,
   normalizeLegacyContentJson,
+  mergeUploadedContentFiles,
+  parseJsonText,
 } from "./contentBuilders.js";
 
 const PROGRAM_CONTENT_KEYS = [
@@ -93,7 +95,10 @@ export function buildContentFromJson(programId, json) {
   const program = findProgram(programId);
   const normalized = normalizeLegacyContentJson(json);
   if (!normalized?.global?.site) {
-    throw new Error("Unrecognized JSON format. Expected content folder files (global, home, footer, etc.) or a CMS export.");
+    if (json.home || json.contact || json.footer) {
+      throw new Error("Missing global.json. Select global.json together with your other content files, or upload one merged JSON file that includes a global.site section.");
+    }
+    throw new Error("Unrecognized JSON format. Upload global.json + home.json (and other content/*.json files), or a merged export with global.site and page content.");
   }
   return buildMarketingBundleFromContent(program, normalized);
 }
@@ -192,9 +197,32 @@ export function getImportOptionsForProgram(programId) {
 }
 
 export async function importProgramFromFile(programId, file, replace = true) {
-  const text = await file.text();
-  const json = JSON.parse(text);
-  return importProgramContent(programId, { source: "json", json, replace });
+  return importProgramFromFiles(programId, [file], replace);
+}
+
+export async function importProgramFromFiles(programId, files, replace = true) {
+  if (!files?.length) throw new Error("No files selected.");
+
+  const fileDataList = [];
+  for (const file of files) {
+    const name = file.name || "upload.json";
+    const lower = name.toLowerCase();
+    if (!lower.endsWith(".json")) {
+      throw new Error(`"${name}" is not a JSON file. Please select .json files only.`);
+    }
+    try {
+      const data = parseJsonText(await file.text());
+      fileDataList.push({ name, data });
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        throw new Error(`"${name}" is not valid JSON. Check the file for syntax errors.`);
+      }
+      throw err;
+    }
+  }
+
+  const merged = mergeUploadedContentFiles(fileDataList);
+  return importProgramContent(programId, { source: "json", json: merged, replace });
 }
 
 export async function importBundledProgram(programId, replace = true) {
