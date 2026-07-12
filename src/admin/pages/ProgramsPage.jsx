@@ -65,7 +65,8 @@ export default function ProgramsPage() {
     }
   };
 
-  const handleImported = async () => {
+  const handleImported = async (result) => {
+    if (result?.programId) setProgramId(result.programId);
     await refresh();
   };
 

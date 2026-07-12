@@ -1,6 +1,6 @@
 import { DEFAULT_PROGRAMS, belongsToProgram, programSingletonId } from "../core/programs.js";
 import { getLocalStore, setLocalStore } from "./localStore.js";
-import { save, remove, isUsingFirebase } from "./index.js";
+import * as cmsStore from "./index.js";
 import { clearSeedCache } from "./contentFallback.js";
 import { getProgramContentSource, hasBundledContent } from "./programContentSources.js";
 import {
@@ -33,16 +33,19 @@ function findProgram(programId) {
   return DEFAULT_PROGRAMS.find((p) => p.id === programId) || { id: programId, name: programId };
 }
 
+function filterItemsForProgram(items, programId) {
+  if (!Array.isArray(items) || !items.length) return [];
+  const tagged = items.some((item) => item?.programId);
+  if (!tagged) return items;
+  return items.filter((item) => belongsToProgram(item, programId));
+}
+
 function stripProgramContent(store, programId) {
   const next = { ...store };
   PROGRAM_CONTENT_KEYS.forEach((key) => {
     const items = store[key];
     if (!Array.isArray(items)) return;
-    if (SINGLETON_KEYS.has(key)) {
-      next[key] = items.filter((item) => !belongsToProgram(item, programId));
-    } else {
-      next[key] = items.filter((item) => !belongsToProgram(item, programId));
-    }
+    next[key] = items.filter((item) => !belongsToProgram(item, programId));
   });
   return next;
 }
@@ -63,23 +66,32 @@ async function saveBundleToFirebase(programId, bundle, userId) {
     const items = bundle[key];
     if (!items?.length) continue;
     for (const item of items) {
-      await save(key, item, userId, programId);
+      await cmsStore.save(key, item, userId, programId);
     }
   }
 }
 
 async function removeProgramFromFirebase(programId) {
   for (const key of PROGRAM_CONTENT_KEYS) {
-    const { getAll } = await import("./index.js");
-    const items = await getAll(key, programId);
+    const items = await cmsStore.getAll(key, programId);
     for (const item of items || []) {
-      if (item?.id) await remove(key, item.id);
+      if (item?.id) await cmsStore.remove(key, item.id);
     }
     if (SINGLETON_KEYS.has(key)) {
       const singletonId = programSingletonId(programId);
-      await remove(key, singletonId).catch(() => {});
+      await cmsStore.remove(key, singletonId).catch(() => {});
     }
   }
+}
+
+async function verifyProgramImport(programId) {
+  const pages = await cmsStore.getAll("pages", programId);
+  if (!pages?.length) {
+    throw new Error(
+      "Import finished but no pages were saved for this program. Export your site from Admin first (Export backup), then import that file — content/*.json files only rebuild the default 9-page template from copy."
+    );
+  }
+  return pages.length;
 }
 
 export function buildBundledProgramContent(programId) {
@@ -96,29 +108,44 @@ export function buildContentFromJson(programId, json) {
   const normalized = normalizeLegacyContentJson(json);
   if (!normalized?.global?.site) {
     if (json.home || json.contact || json.footer) {
-      throw new Error("Missing global.json. Select global.json together with your other content files, or upload one merged JSON file that includes a global.site section.");
+      throw new Error("Missing global.json. Include global.json with your other content files.");
     }
-    throw new Error("Unrecognized JSON format. Upload global.json + home.json (and other content/*.json files), or a merged export with global.site and page content.");
+    throw new Error("Unrecognized JSON format. Use Export backup from this admin panel, or include global.json + home.json content files.");
   }
   return buildMarketingBundleFromContent(program, normalized);
 }
 
 export function buildContentFromCmsExport(programId, json) {
   const bundle = {};
+  const allPages = Array.isArray(json.pages) ? json.pages : [];
+
   PROGRAM_CONTENT_KEYS.forEach((key) => {
     const items = json[key];
     if (!Array.isArray(items)) return;
-    bundle[key] = items.map((item) => ({ ...item, programId }));
+    const filtered = filterItemsForProgram(items, programId);
+    if (filtered.length) {
+      bundle[key] = filtered.map((item) => ({ ...item, programId }));
+    }
   });
+
   if (!bundle.pages?.length) {
-    throw new Error("CMS export must include a pages array.");
+    if (allPages.length && !allPages.some((page) => page?.programId)) {
+      bundle.pages = allPages.map((page) => ({ ...page, programId }));
+    } else if (allPages.length) {
+      throw new Error(
+        `This backup has ${allPages.length} pages, but none belong to program "${programId}". Switch to the correct program before importing, or export from the program you want to restore.`
+      );
+    } else {
+      throw new Error("CMS backup must include a pages array with at least one page.");
+    }
   }
+
   return bundle;
 }
 
 function detectJsonFormat(json) {
   if (Array.isArray(json.pages) && json.pages.length) return "cms-export";
-  if (json.global?.site || json.home || json["products-page"]) return "legacy-content";
+  if (json.global?.site || json.site || json.home || json["products-page"]) return "legacy-content";
   return "unknown";
 }
 
@@ -132,6 +159,8 @@ export async function importProgramContent(programId, options = {}) {
   } = options;
 
   let bundle;
+  let importMode = source;
+
   if (source === "bundled") {
     if (!hasBundledContent(programId) && !sourceProgramId) {
       throw new Error("No bundled content available for this program.");
@@ -146,14 +175,20 @@ export async function importProgramContent(programId, options = {}) {
   } else if (source === "json") {
     if (!json) throw new Error("JSON data is required for json import.");
     const format = detectJsonFormat(json);
-    bundle = format === "cms-export"
-      ? buildContentFromCmsExport(programId, json)
-      : buildContentFromJson(programId, json);
+    if (format === "cms-export") {
+      bundle = buildContentFromCmsExport(programId, json);
+      importMode = "cms-backup";
+    } else if (format === "legacy-content") {
+      bundle = buildContentFromJson(programId, json);
+      importMode = "content-rebuild";
+    } else {
+      throw new Error("Unrecognized JSON format. Export a backup from Admin, or upload global.json + home.json content files.");
+    }
   } else {
     throw new Error(`Unknown import source: ${source}`);
   }
 
-  if (isUsingFirebase()) {
+  if (cmsStore.isUsingFirebase()) {
     if (replace) await removeProgramFromFirebase(programId);
     await saveBundleToFirebase(programId, bundle, userId);
   } else {
@@ -163,12 +198,44 @@ export async function importProgramContent(programId, options = {}) {
   }
 
   clearSeedCache();
+  const pagesImported = await verifyProgramImport(programId);
+
   return {
     programId,
-    pagesImported: bundle.pages?.length || 0,
+    pagesImported,
     replace,
     source,
+    importMode,
+    rebuiltFromContent: importMode === "content-rebuild",
   };
+}
+
+export async function exportProgramContent(programId) {
+  const bundle = { programId, exportedAt: new Date().toISOString(), version: 1 };
+  for (const key of PROGRAM_CONTENT_KEYS) {
+    const data = await cmsStore.getAll(key, programId);
+    if (Array.isArray(data)) {
+      bundle[key] = data;
+    } else if (data) {
+      bundle[key] = [data];
+    } else {
+      bundle[key] = [];
+    }
+  }
+  return bundle;
+}
+
+export function downloadProgramExport(programId, programName = programId) {
+  return exportProgramContent(programId).then((bundle) => {
+    const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${programName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-cms-backup.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+    return bundle;
+  });
 }
 
 export function getImportOptionsForProgram(programId) {
@@ -177,13 +244,18 @@ export function getImportOptionsForProgram(programId) {
     options.push({
       id: "bundled",
       label: "Import bundled site content",
-      description: "Load the pre-built pages, branding, and navigation stored in this repository for this program.",
+      description: "Load the pre-built pages stored in this repository for this program.",
     });
   }
   options.push({
     id: "json",
-    label: "Import from JSON file",
-    description: "Upload a content folder export (global.json, home.json, etc.) or a CMS backup JSON file.",
+    label: "Import CMS backup (recommended)",
+    description: "Upload a backup JSON exported from Admin. This restores your exact pages, sections, and edits.",
+  });
+  options.push({
+    id: "json-content",
+    label: "Import content copy files",
+    description: "Upload content/*.json files (global.json, home.json, etc.). These rebuild the standard 9-page site from marketing copy — not custom CMS edits.",
   });
   if (programId !== "forge-marketing" && hasBundledContent("forge-marketing")) {
     options.push({
@@ -200,7 +272,7 @@ export async function importProgramFromFile(programId, file, replace = true) {
   return importProgramFromFiles(programId, [file], replace);
 }
 
-export async function importProgramFromFiles(programId, files, replace = true) {
+export async function importProgramFromFiles(programId, files, replace = true, { contentRebuild = false } = {}) {
   if (!files?.length) throw new Error("No files selected.");
 
   const fileDataList = [];
@@ -222,7 +294,20 @@ export async function importProgramFromFiles(programId, files, replace = true) {
   }
 
   const merged = mergeUploadedContentFiles(fileDataList);
-  return importProgramContent(programId, { source: "json", json: merged, replace });
+
+  if (contentRebuild && !Array.isArray(merged.pages)) {
+    return importProgramContent(programId, { source: "json", json: merged, replace });
+  }
+
+  if (Array.isArray(merged.pages) && merged.pages.length) {
+    return importProgramContent(programId, { source: "json", json: merged, replace });
+  }
+
+  if (contentRebuild || merged.global || merged.home || merged.site) {
+    return importProgramContent(programId, { source: "json", json: merged, replace });
+  }
+
+  throw new Error("Could not detect import format. Export a CMS backup from Admin, or include global.json with your content files.");
 }
 
 export async function importBundledProgram(programId, replace = true) {

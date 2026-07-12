@@ -11,6 +11,7 @@ import {
   resolveProgramFromHost,
   isPreviewHost,
 } from "../core/programs.js";
+import { LOCAL_STORE_KEY } from "../core/constants.js";
 
 const ACTIVE_PROGRAM_KEY = "forge_cms_active_program";
 
@@ -130,7 +131,8 @@ export function CmsProvider({ children }) {
 
     try {
       migrateLegacyStore();
-      if (!cmsStore.isSeeded()) {
+      const hasExistingStore = typeof window !== "undefined" && Boolean(localStorage.getItem(LOCAL_STORE_KEY));
+      if (!cmsStore.isSeeded() && !hasExistingStore) {
         seedLocalStore();
         clearSeedCache();
       }
@@ -167,9 +169,23 @@ export function CmsProvider({ children }) {
       setPrograms(mergeProgramDefaults(programList));
 
       if (loadedPages.length === 0) {
-        const fallback = getProgramContentFromSeed(pid);
-        applyContentToState(fallback, stateSetters);
-        setUsingFallback(true);
+        if (isAdminMode) {
+          setPages([]);
+          setBranding(null);
+          setNavigation(null);
+          setFooters([]);
+          setForms([]);
+          setSettings(null);
+          setPopups([]);
+          setRedirects([]);
+          setSeoGlobal(null);
+          setCollections([]);
+          setUsingFallback(false);
+        } else {
+          const fallback = getProgramContentFromSeed(pid);
+          applyContentToState(fallback, stateSetters);
+          setUsingFallback(true);
+        }
       } else {
         setPages(loadedPages);
         setBranding(normalizeSingleton(b));
