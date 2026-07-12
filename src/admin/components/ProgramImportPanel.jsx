@@ -7,12 +7,14 @@ import {
   copyProgramContent,
   downloadProgramExport,
 } from "../../cms/store/programImport.js";
+import { mergeUploadedContentFiles, parseJsonText, analyzeMergedUpload } from "../../cms/store/contentBuilders.js";
 import AdminPageHeader, { AdminButton, AdminCard, Toast } from "./AdminPageHeader.jsx";
 
 export default function ProgramImportPanel({ program, onClose, onImported }) {
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [preview, setPreview] = useState(null);
   const backupInputId = useId();
   const contentInputId = useId();
   const backupRef = useRef(null);
@@ -26,12 +28,17 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
     setBusy(true);
     try {
       const result = await fn();
-      const modeNote = result.rebuiltFromContent
-        ? " (rebuilt 9 pages from content copy files)"
-        : result.importMode === "cms-backup"
-          ? " (restored from CMS backup)"
-          : "";
-      setToast(`Imported ${result.pagesImported} pages for ${program.name}${modeNote}`);
+      let message = `Imported ${result.pagesImported} pages for ${program.name}`;
+      if (result.rebuiltFromContent) {
+        message += " — rebuilt 9 pages from content copy files";
+      } else if (result.importMode === "cms-backup") {
+        message += " — restored your uploaded CMS pages";
+        if (result.importedPageTitles?.length) {
+          message += `: ${result.importedPageTitles.slice(0, 5).join(", ")}${result.importedPageTitles.length > 5 ? "…" : ""}`;
+        }
+      }
+      setToast(message);
+      setPreview(null);
       onImported?.(result);
     } catch (err) {
       setToast(err.message || "Import failed");
@@ -56,6 +63,25 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
     }
   };
 
+  const previewFiles = async (files) => {
+    const list = Array.from(files || []).filter((f) => f.name?.toLowerCase().endsWith(".json"));
+    if (!list.length) {
+      setPreview(null);
+      return;
+    }
+    const fileDataList = [];
+    for (const file of list) {
+      const data = parseJsonText(await file.text());
+      fileDataList.push({ name: file.name, data });
+    }
+    const merged = mergeUploadedContentFiles(fileDataList);
+    const analysis = analyzeMergedUpload(merged);
+    setPreview({
+      fileNames: list.map((f) => f.name),
+      analysis,
+    });
+  };
+
   const importFiles = async (files, contentRebuild = false) => {
     const list = Array.from(files || []).filter((f) => f.name?.toLowerCase().endsWith(".json"));
     if (!list.length) {
@@ -66,11 +92,13 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
   };
 
   const handleBackupInput = async (event) => {
+    await previewFiles(event.target.files);
     await importFiles(event.target.files, false);
     event.target.value = "";
   };
 
   const handleContentInput = async (event) => {
+    await previewFiles(event.target.files);
     await importFiles(event.target.files, true);
     event.target.value = "";
   };
@@ -78,6 +106,7 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
   const handleDrop = async (event, contentRebuild = false) => {
     event.preventDefault();
     setDragOver(false);
+    await previewFiles(event.dataTransfer.files);
     await importFiles(event.dataTransfer.files, contentRebuild);
   };
 
@@ -89,14 +118,13 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
       >
         <AdminPageHeader
           title={`Import / Export — ${program.name}`}
-          description="Export saves your exact CMS pages. Import that backup to restore edits. Content copy files only rebuild the default 9-page template from marketing text."
+          description="CMS backup files restore your exact pages. Content copy files (global.json, home.json) only rebuild the 9-page template."
         />
 
         <div className="mt-6">
-          <AdminCard title="Export CMS backup (do this first)">
+          <AdminCard title="Export CMS backup (for custom pages)">
             <p className="text-sm text-[#94A3B8] mb-4">
-              Download a JSON backup of this program&apos;s pages, branding, navigation, and settings.
-              Re-import this file to restore your exact site — including custom edits made in the page builder.
+              Export first if you have custom pages edited in the page builder. Re-import that single backup file to restore them exactly.
             </p>
             <AdminButton variant="secondary" onClick={handleExport} disabled={busy}>
               <Save size={16} /> Export backup JSON
@@ -148,14 +176,16 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
                   >
                     <FileJson size={28} className="mx-auto text-[#64748B] mb-3" />
                     <p className="text-sm text-white font-medium mb-1">Drop CMS backup JSON here</p>
-                    <p className="text-xs text-[#64748B] mb-4">Use a file exported from this screen, or a full CMS store backup</p>
+                    <p className="text-xs text-[#64748B] mb-4">
+                      Must contain page objects with <code className="text-[#94A3B8]">sections</code> — not content/*.json copy files
+                    </p>
                     <label
                       htmlFor={backupInputId}
                       className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold transition-colors cursor-pointer ${
                         busy ? "opacity-50 pointer-events-none" : "bg-[#F97316] hover:bg-[#ea580c] text-white"
                       }`}
                     >
-                      <Upload size={16} /> Choose backup file
+                      <Upload size={16} /> Choose CMS backup file(s)
                     </label>
                   </div>
                 </AdminCard>
@@ -187,6 +217,21 @@ export default function ProgramImportPanel({ program, onClose, onImported }) {
             return null;
           })}
         </div>
+
+        {preview && (
+          <div className="mt-4 rounded-xl border border-[#1E293B] bg-[#0B1220] p-4 text-sm">
+            <p className="text-white font-medium mb-2">Last upload detected</p>
+            <p className="text-[#94A3B8] mb-2">Files: {preview.fileNames.join(", ")}</p>
+            <p className="text-[#94A3B8]">
+              Format: <strong className="text-white">{preview.analysis.format}</strong>
+              {" · "}
+              Pages: <strong className="text-white">{preview.analysis.pageCount}</strong>
+              {preview.analysis.pageTitles?.length > 0 && (
+                <> — {preview.analysis.pageTitles.join(", ")}</>
+              )}
+            </p>
+          </div>
+        )}
 
         <div className="flex justify-end mt-6">
           <AdminButton variant="ghost" onClick={onClose} disabled={busy}>Close</AdminButton>

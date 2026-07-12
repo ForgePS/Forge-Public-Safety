@@ -1,4 +1,4 @@
-import { DEFAULT_PROGRAMS, belongsToProgram, programSingletonId } from "../core/programs.js";
+import { DEFAULT_PROGRAMS, belongsToProgram, programSingletonId, withProgramId } from "../core/programs.js";
 import { getLocalStore, setLocalStore } from "./localStore.js";
 import * as cmsStore from "./index.js";
 import { clearSeedCache } from "./contentFallback.js";
@@ -9,6 +9,9 @@ import {
   normalizeLegacyContentJson,
   mergeUploadedContentFiles,
   parseJsonText,
+  extractPagesFromPayload,
+  analyzeMergedUpload,
+  looksLikeCmsPage,
 } from "./contentBuilders.js";
 
 const PROGRAM_CONTENT_KEYS = [
@@ -61,6 +64,11 @@ function mergeBundleIntoStore(store, bundle) {
   return next;
 }
 
+function normalizeSingletonArray(items, programId) {
+  if (!Array.isArray(items)) return items ? [withProgramId(items, programId)] : [];
+  return items.map((item) => withProgramId(item, programId));
+}
+
 async function saveBundleToFirebase(programId, bundle, userId) {
   for (const key of PROGRAM_CONTENT_KEYS) {
     const items = bundle[key];
@@ -84,12 +92,22 @@ async function removeProgramFromFirebase(programId) {
   }
 }
 
-async function verifyProgramImport(programId) {
+async function verifyProgramImport(programId, expectedPages = null) {
   const pages = await cmsStore.getAll("pages", programId);
   if (!pages?.length) {
     throw new Error(
-      "Import finished but no pages were saved for this program. Export your site from Admin first (Export backup), then import that file — content/*.json files only rebuild the default 9-page template from copy."
+      "Import finished but no pages were saved for this program. Use a CMS backup JSON with a pages array (Export backup from Admin), not content/*.json copy files."
     );
+  }
+  if (expectedPages?.length) {
+    const importedSlugs = new Set(pages.map((p) => p.slug));
+    const expectedSlugs = new Set(expectedPages.map((p) => p.slug));
+    const matched = [...expectedSlugs].filter((slug) => importedSlugs.has(slug)).length;
+    if (matched === 0) {
+      throw new Error(
+        `Import saved ${pages.length} pages, but none matched the uploaded files. Try switching to the correct program before importing.`
+      );
+    }
   }
   return pages.length;
 }
@@ -117,34 +135,33 @@ export function buildContentFromJson(programId, json) {
 
 export function buildContentFromCmsExport(programId, json) {
   const bundle = {};
-  const allPages = Array.isArray(json.pages) ? json.pages : [];
+  const allPages = extractPagesFromPayload(json);
+
+  if (allPages.length) {
+    bundle.pages = allPages.map((page) => withProgramId({ ...page }, programId));
+  }
 
   PROGRAM_CONTENT_KEYS.forEach((key) => {
+    if (key === "pages") return;
     const items = json[key];
     if (!Array.isArray(items)) return;
     const filtered = filterItemsForProgram(items, programId);
-    if (filtered.length) {
-      bundle[key] = filtered.map((item) => ({ ...item, programId }));
+    const source = filtered.length ? filtered : items;
+    if (source.length) {
+      bundle[key] = normalizeSingletonArray(source, programId);
     }
   });
 
   if (!bundle.pages?.length) {
-    if (allPages.length && !allPages.some((page) => page?.programId)) {
-      bundle.pages = allPages.map((page) => ({ ...page, programId }));
-    } else if (allPages.length) {
-      throw new Error(
-        `This backup has ${allPages.length} pages, but none belong to program "${programId}". Switch to the correct program before importing, or export from the program you want to restore.`
-      );
-    } else {
-      throw new Error("CMS backup must include a pages array with at least one page.");
-    }
+    throw new Error("CMS backup must include at least one page with sections.");
   }
 
   return bundle;
 }
 
 function detectJsonFormat(json) {
-  if (Array.isArray(json.pages) && json.pages.length) return "cms-export";
+  const pages = extractPagesFromPayload(json);
+  if (pages.length) return "cms-export";
   if (json.global?.site || json.site || json.home || json["products-page"]) return "legacy-content";
   return "unknown";
 }
@@ -156,6 +173,7 @@ export async function importProgramContent(programId, options = {}) {
     replace = true,
     userId = "import",
     sourceProgramId = null,
+    expectedPages = null,
   } = options;
 
   let bundle;
@@ -198,7 +216,7 @@ export async function importProgramContent(programId, options = {}) {
   }
 
   clearSeedCache();
-  const pagesImported = await verifyProgramImport(programId);
+  const pagesImported = await verifyProgramImport(programId, expectedPages);
 
   return {
     programId,
@@ -207,6 +225,7 @@ export async function importProgramContent(programId, options = {}) {
     source,
     importMode,
     rebuiltFromContent: importMode === "content-rebuild",
+    importedPageTitles: (bundle.pages || []).map((p) => p.title || p.slug),
   };
 }
 
@@ -250,7 +269,7 @@ export function getImportOptionsForProgram(programId) {
   options.push({
     id: "json",
     label: "Import CMS backup (recommended)",
-    description: "Upload a backup JSON exported from Admin. This restores your exact pages, sections, and edits.",
+    description: "Upload a backup JSON exported from Admin, individual page JSON files, or a full CMS store export with pages[].",
   });
   options.push({
     id: "json-content",
@@ -268,8 +287,8 @@ export function getImportOptionsForProgram(programId) {
   return options;
 }
 
-export async function importProgramFromFile(programId, file, replace = true) {
-  return importProgramFromFiles(programId, [file], replace);
+export async function importProgramFromFile(programId, file, replace = true, options = {}) {
+  return importProgramFromFiles(programId, [file], replace, options);
 }
 
 export async function importProgramFromFiles(programId, files, replace = true, { contentRebuild = false } = {}) {
@@ -294,20 +313,28 @@ export async function importProgramFromFiles(programId, files, replace = true, {
   }
 
   const merged = mergeUploadedContentFiles(fileDataList);
+  const analysis = analyzeMergedUpload(merged);
+  const expectedPages = extractPagesFromPayload(merged);
 
-  if (contentRebuild && !Array.isArray(merged.pages)) {
+  if (analysis.format === "cms-backup") {
+    return importProgramContent(programId, {
+      source: "json",
+      json: merged,
+      replace,
+      expectedPages,
+    });
+  }
+
+  if (contentRebuild) {
     return importProgramContent(programId, { source: "json", json: merged, replace });
   }
 
-  if (Array.isArray(merged.pages) && merged.pages.length) {
-    return importProgramContent(programId, { source: "json", json: merged, replace });
-  }
-
-  if (contentRebuild || merged.global || merged.home || merged.site) {
-    return importProgramContent(programId, { source: "json", json: merged, replace });
-  }
-
-  throw new Error("Could not detect import format. Export a CMS backup from Admin, or include global.json with your content files.");
+  const fileNames = fileDataList.map((f) => f.name).join(", ");
+  throw new Error(
+    `No CMS pages found in: ${fileNames}. ` +
+    "Content copy files (global.json, home.json, etc.) only rebuild the 9-page template — use \"Import content copy files\" for those. " +
+    "To restore custom pages, export a CMS backup from Admin first, or upload JSON files that contain page objects with sections."
+  );
 }
 
 export async function importBundledProgram(programId, replace = true) {
@@ -325,3 +352,5 @@ export async function copyProgramContent(targetProgramId, sourceProgramId, repla
 export async function restoreProgramWebsite(programId) {
   return importBundledProgram(programId, true);
 }
+
+export { analyzeMergedUpload, looksLikeCmsPage };

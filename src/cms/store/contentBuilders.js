@@ -759,16 +759,48 @@ export function parseJsonText(text) {
   return JSON.parse(cleaned);
 }
 
+export function looksLikeCmsPage(value) {
+  return Boolean(
+    value
+    && typeof value === "object"
+    && !Array.isArray(value)
+    && typeof value.slug === "string"
+    && Array.isArray(value.sections)
+  );
+}
+
+export function extractPagesFromPayload(data) {
+  if (!data) return [];
+  if (Array.isArray(data)) {
+    return data.filter(looksLikeCmsPage);
+  }
+  if (looksLikeCmsPage(data)) return [data];
+  if (Array.isArray(data.pages)) return data.pages.filter(looksLikeCmsPage);
+  if (data.forge_cms_data_v2?.pages) return extractPagesFromPayload(data.forge_cms_data_v2);
+  if (data.store?.pages) return extractPagesFromPayload(data.store);
+  if (data.data?.pages) return extractPagesFromPayload(data.data);
+  return [];
+}
+
 export function mergeUploadedContentFiles(fileDataList) {
   const merged = {};
-  let hasCmsExport = false;
+  const collectedPages = [];
 
   for (const { name, data } of fileDataList) {
     const lower = name.toLowerCase();
 
+    const pagesFromFile = extractPagesFromPayload(data);
+    if (pagesFromFile.length) {
+      collectedPages.push(...pagesFromFile);
+      Object.keys(data).forEach((key) => {
+        if (key !== "pages") merged[key] = data[key];
+      });
+      continue;
+    }
+
     if (Array.isArray(data?.pages) && data.pages.length) {
+      collectedPages.push(...data.pages);
       Object.assign(merged, data);
-      hasCmsExport = true;
       continue;
     }
 
@@ -789,6 +821,24 @@ export function mergeUploadedContentFiles(fileDataList) {
     }
   }
 
-  if (hasCmsExport) return merged;
+  if (collectedPages.length) {
+    merged.pages = collectedPages;
+  }
+
   return merged;
+}
+
+export function analyzeMergedUpload(merged) {
+  const pages = extractPagesFromPayload(merged);
+  if (pages.length) {
+    return {
+      format: "cms-backup",
+      pageCount: pages.length,
+      pageTitles: pages.map((p) => p.title || p.slug).slice(0, 8),
+    };
+  }
+  if (merged.global?.site || merged.site || merged.home || merged["products-page"]) {
+    return { format: "content-copy", pageCount: 9, pageTitles: ["home", "products", "solutions", "company", "contact", "resources", "privacy", "terms", "security"] };
+  }
+  return { format: "unknown", pageCount: 0, pageTitles: [] };
 }
