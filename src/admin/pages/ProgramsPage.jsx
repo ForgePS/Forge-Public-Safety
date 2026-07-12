@@ -1,13 +1,18 @@
 import { useState } from "react";
-import { Plus, ExternalLink, Trash2 } from "lucide-react";
+import { Plus, ExternalLink, Trash2, Download } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { createProgram, PROGRAM_TYPES } from "../../cms/core/programs.js";
+import { importBundledProgram } from "../../cms/store/programImport.js";
+import { hasBundledContent, listImportablePrograms } from "../../cms/store/programContentSources.js";
+import ProgramImportPanel from "../components/ProgramImportPanel.jsx";
 import AdminPageHeader, { AdminButton, AdminInput, AdminSelect, AdminTextarea, AdminCard, Toast } from "../components/AdminPageHeader.jsx";
 
 export default function ProgramsPage() {
-  const { programs, programId, setProgramId, store, refreshPrograms } = useCms();
+  const { programs, programId, setProgramId, store, refreshPrograms, refresh } = useCms();
   const [selected, setSelected] = useState(null);
+  const [importProgram, setImportProgram] = useState(null);
   const [toast, setToast] = useState("");
+  const [busy, setBusy] = useState(false);
 
   const openNew = () => {
     setSelected(createProgram());
@@ -43,6 +48,27 @@ export default function ProgramsPage() {
     }
   };
 
+  const importAllBundled = async () => {
+    setBusy(true);
+    try {
+      let total = 0;
+      for (const id of listImportablePrograms()) {
+        const result = await importBundledProgram(id, true);
+        total += result.pagesImported;
+      }
+      await refresh();
+      setToast(`Imported ${total} pages across all programs`);
+    } catch (err) {
+      setToast(err.message || "Import failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleImported = async () => {
+    await refresh();
+  };
+
   const deleteProgram = async (program) => {
     if (program.id === "forge-marketing") {
       setToast("Cannot delete the default marketing program");
@@ -61,7 +87,14 @@ export default function ProgramsPage() {
       <AdminPageHeader
         title="Programs"
         description="Manage every Forge website and application from one control center."
-        actions={<AdminButton onClick={openNew}><Plus size={16} /> Add Program</AdminButton>}
+        actions={(
+          <div className="flex flex-wrap gap-2">
+            <AdminButton variant="secondary" onClick={importAllBundled} disabled={busy}>
+              <Download size={16} /> Import all sites
+            </AdminButton>
+            <AdminButton onClick={openNew}><Plus size={16} /> Add Program</AdminButton>
+          </div>
+        )}
       />
 
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -93,6 +126,16 @@ export default function ProgramsPage() {
                 {p.id === programId ? "Currently editing" : "Switch to this program"}
               </button>
               <div className="flex items-center gap-2">
+                {(hasBundledContent(p.id) || p.id !== "forge-marketing") && (
+                  <button
+                    type="button"
+                    title="Import site content"
+                    onClick={(e) => { e.stopPropagation(); setImportProgram(p); }}
+                    className="p-1.5 text-[#64748B] hover:text-[#F97316]"
+                  >
+                    <Download size={14} />
+                  </button>
+                )}
                 {p.liveUrl && (
                   <a href={p.liveUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="p-1.5 text-[#64748B] hover:text-white">
                     <ExternalLink size={14} />
@@ -139,12 +182,25 @@ export default function ProgramsPage() {
                 help="Production domains that serve this program's content"
               />
             </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <AdminButton variant="ghost" onClick={() => setSelected(null)}>Cancel</AdminButton>
-              <AdminButton onClick={saveProgram}>Save Program</AdminButton>
+            <div className="flex justify-between gap-2 mt-6">
+              <AdminButton variant="secondary" onClick={() => setImportProgram(selected)} disabled={busy}>
+                <Download size={16} /> Import content
+              </AdminButton>
+              <div className="flex gap-2">
+                <AdminButton variant="ghost" onClick={() => setSelected(null)}>Cancel</AdminButton>
+                <AdminButton onClick={saveProgram}>Save Program</AdminButton>
+              </div>
             </div>
           </div>
         </div>
+      )}
+
+      {importProgram && (
+        <ProgramImportPanel
+          program={importProgram}
+          onClose={() => setImportProgram(null)}
+          onImported={handleImported}
+        />
       )}
 
       <Toast message={toast} onClose={() => setToast("")} />

@@ -1,0 +1,32 @@
+{
+  "productModules": [
+    {
+      "id": "incident-reporting",
+      "name": "Incident Reporting",
+      "subtitle": "NFIRS & narratives",
+      "description": "Structured incident forms, narrative tools, and NFIRS-ready exports.",
+      "liveLink": false
+    },
+    {
+      "id": "records-management",
+      "name": "Records Management",
+      "subtitle": "Department system of record",
+      "description": "Searchable records, approvals, and audit trails for every incident and document.",
+      "liveLink": false
+    },
+    {
+      "id": "field-integration",
+      "name": "Forge Field",
+      "subtitle": "Scene to records",
+      "description": "Capture incident details in the field and sync to RMS for completion and approval.",
+      "liveLink": false
+    },
+    {
+      "id": "portals",
+      "name": "Department Portals",
+      "subtitle": "Station & role views",
+      "description": "Role-based portals for chiefs, records staff, and station officers.",
+      "liveLink": true
+    }
+  ]
+}

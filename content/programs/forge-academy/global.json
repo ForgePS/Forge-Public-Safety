@@ -1,0 +1,21 @@
+{
+  "site": {
+    "name": "Forge Academy",
+    "tagline": "Training platform for fire service professionals",
+    "footerBlurb": "Registration, classes, skills tracking, testing, certificates, and campus signage — built for training academies.",
+    "demoEmail": "demo@forgepublicsafety.com",
+    "privacyEmail": "privacy@forgepublicsafety.com",
+    "securityEmail": "security@forgepublicsafety.com",
+    "rmsUrl": "https://rms.forgepublicsafety.com",
+    "pricingNote": "Academy pricing based on enrollment and campus size — contact us for a pilot quote."
+  },
+  "navigation": {
+    "main": [
+      { "label": "Programs", "href": "/products" },
+      { "label": "Resources", "href": "/resources" },
+      { "label": "About", "href": "/company" },
+      { "label": "Contact", "href": "/contact" }
+    ],
+    "ctaLabel": "Student Login"
+  }
+}

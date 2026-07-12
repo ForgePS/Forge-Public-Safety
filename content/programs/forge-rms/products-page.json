@@ -1,0 +1,22 @@
+{
+  "products": {
+    "heroEyebrow": "Features",
+    "heroTitle": "Everything in Forge RMS",
+    "heroDescription": "Incident documentation, records management, and reporting tools designed for fire departments.",
+    "heroSecondaryLink": "Contact our team for module configuration and rollout planning.",
+    "baseEyebrow": "Foundation",
+    "baseTitle": "Included with every deployment",
+    "baseDescription": "Core platform services every department relies on.",
+    "coreTitle": "Incident & records",
+    "coreDescription": "Document incidents, manage narratives, and maintain your department's system of record.",
+    "addonsEyebrow": "Ecosystem",
+    "addonsTitle": "Works with the Forge platform",
+    "addonsDescription": "RMS integrates with Personnel, Training, Fleet, Analytics, and Command modules."
+  },
+  "basePackageFeatures": [
+    "Role-based access and audit logging",
+    "Encrypted transport and tenant isolation",
+    "Department portals and station views",
+    "Configurable forms and workflows"
+  ]
+}

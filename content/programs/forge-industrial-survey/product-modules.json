@@ -1,0 +1,32 @@
+{
+  "productModules": [
+    {
+      "id": "surveys",
+      "name": "Survey Templates",
+      "subtitle": "Configurable checklists",
+      "description": "Build repeatable survey templates for walk-throughs, PPE checks, and hazard assessments.",
+      "liveLink": false
+    },
+    {
+      "id": "field-capture",
+      "name": "Field Capture",
+      "subtitle": "Mobile assessments",
+      "description": "Complete surveys on tablets or phones with photos, notes, and signatures.",
+      "liveLink": false
+    },
+    {
+      "id": "findings",
+      "name": "Findings & Actions",
+      "subtitle": "Close the loop",
+      "description": "Assign corrective actions, track due dates, and verify closure.",
+      "liveLink": false
+    },
+    {
+      "id": "reporting",
+      "name": "Compliance Reporting",
+      "subtitle": "Audit-ready exports",
+      "description": "Roll-up dashboards and exportable reports for leadership and regulators.",
+      "liveLink": false
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "company": {
+    "eyebrow": "About Forge Academy",
+    "title": "Training platform from Forge Public Safety",
+    "description": "Forge Academy is the training product in the Forge ecosystem — built for fire service academies and regional training sites.",
+    "paragraphs": [
+      "Forge Academy handles registration, class management, skills tracking, enterprise testing, certificates, and campus digital signage.",
+      "Academy runs on its own Firebase project and integrates with the broader Forge platform through shared identifiers and APIs — not shared databases.",
+      "Campus Signage manages training-site TVs. Department operations displays are configured separately in ForgePS Dashboard once RMS feeds are live."
+    ],
+    "closingTitle": "See Academy in action",
+    "closingDescription": "Request a pilot demo or explore the live Academy deployment."
+  }
+}

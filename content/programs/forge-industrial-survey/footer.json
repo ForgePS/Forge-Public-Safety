@@ -1,0 +1,19 @@
+{
+  "footerColumns": {
+    "Product": [
+      { "label": "Features", "href": "/products" },
+      { "label": "Solutions", "href": "/solutions" },
+      { "label": "Resources", "href": "/resources" }
+    ],
+    "Company": [
+      { "label": "About", "href": "/company" },
+      { "label": "Forge Public Safety", "href": "https://forge-website-b276c.web.app" },
+      { "label": "Contact", "href": "/contact" }
+    ],
+    "Legal": [
+      { "label": "Privacy Policy", "href": "/privacy" },
+      { "label": "Terms of Service", "href": "/terms" },
+      { "label": "Security", "href": "/security" }
+    ]
+  }
+}

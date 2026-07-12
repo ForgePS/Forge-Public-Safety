@@ -1,0 +1,30 @@
+{
+  "home": {
+    "heroEyebrow": "Industrial Safety",
+    "heroTitle": "SAFETY SURVEYS & COMPLIANCE",
+    "heroLead": "Conduct industrial safety surveys, track findings, and manage corrective actions across facilities and teams.",
+    "heroBody": "Forge Industrial Safety helps safety managers run structured assessments in the field and report results to leadership with audit-ready documentation.",
+    "heroBullets": [
+      "Configurable survey templates",
+      "Mobile-friendly field capture",
+      "Findings and corrective action tracking",
+      "Executive reporting dashboards"
+    ],
+    "modulesEyebrow": "Platform",
+    "modulesTitle": "Built for industrial safety teams",
+    "modulesDescription": "From walk-through surveys to compliance reporting — one system for safety managers and field assessors.",
+    "productsEyebrow": "Capabilities",
+    "productsTitle": "Core capabilities",
+    "productsDescription": "Tools safety teams use every day to assess risk and close the loop on findings.",
+    "whyEyebrow": "Why Forge Industrial Safety",
+    "whyTitle": "Structured assessments, not spreadsheets",
+    "whyDescription": "Replace ad-hoc checklists with repeatable surveys, photo evidence, and tracked remediation.",
+    "whyCards": [
+      { "title": "Field-ready surveys", "copy": "Assessors complete structured surveys on tablets or phones — online or offline." },
+      { "title": "Findings workflow", "copy": "Assign corrective actions, set due dates, and verify closure with photo evidence." },
+      { "title": "Audit-ready reports", "copy": "Export assessment history and compliance status for leadership and regulators." }
+    ],
+    "closingTitle": "See Industrial Safety in action",
+    "closingDescription": "Request a demo to walk through survey templates, field capture, and reporting."
+  }
+}

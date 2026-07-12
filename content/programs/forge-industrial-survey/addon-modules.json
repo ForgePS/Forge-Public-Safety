@@ -1,0 +1,19 @@
+{
+  "addOnModules": [
+    {
+      "name": "Multi-site management",
+      "subtitle": "Regional rollups",
+      "description": "Compare scores and open findings across facilities and regions."
+    },
+    {
+      "name": "Custom integrations",
+      "subtitle": "EHS systems",
+      "description": "Export findings to existing EHS or work-order systems via API."
+    },
+    {
+      "name": "Assessor training",
+      "subtitle": "Rollout support",
+      "description": "Train field teams on templates, capture workflows, and reporting."
+    }
+  ]
+}

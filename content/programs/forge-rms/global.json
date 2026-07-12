@@ -1,0 +1,21 @@
+{
+  "site": {
+    "name": "Forge RMS",
+    "tagline": "Records Management for Fire Departments",
+    "footerBlurb": "NFIRS-compliant incident and records management built for modern fire departments.",
+    "demoEmail": "demo@forgepublicsafety.com",
+    "privacyEmail": "privacy@forgepublicsafety.com",
+    "securityEmail": "security@forgepublicsafety.com",
+    "rmsUrl": "https://rms.forgepublicsafety.com",
+    "pricingNote": "Department pricing based on modules and station count — contact us for a quote."
+  },
+  "navigation": {
+    "main": [
+      { "label": "Features", "href": "/products" },
+      { "label": "Resources", "href": "/resources" },
+      { "label": "Company", "href": "/company" },
+      { "label": "Contact", "href": "/contact" }
+    ],
+    "ctaLabel": "Request Demo"
+  }
+}

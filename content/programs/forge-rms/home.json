@@ -1,0 +1,30 @@
+{
+  "home": {
+    "heroEyebrow": "Forge RMS",
+    "heroTitle": "INCIDENT & RECORDS MANAGEMENT",
+    "heroLead": "Complete incident and records management. NFIRS-compliant reporting, narrative tools, and seamless data flow from dispatch to documentation.",
+    "heroBody": "Forge RMS is the records backbone for fire departments — connecting field operations, personnel, and executive reporting in one platform.",
+    "heroBullets": [
+      "NFIRS-compliant incident reporting",
+      "Narrative tools and structured forms",
+      "Dispatch-to-documentation workflow",
+      "Department portals and role-based access"
+    ],
+    "modulesEyebrow": "Platform",
+    "modulesTitle": "Built for fire department operations",
+    "modulesDescription": "RMS connects with the Forge ecosystem — personnel, training, fleet, analytics, and command — so your data flows once and works everywhere.",
+    "productsEyebrow": "Capabilities",
+    "productsTitle": "Core RMS capabilities",
+    "productsDescription": "Everything your department needs to document incidents, manage records, and report with confidence.",
+    "whyEyebrow": "Why Forge RMS",
+    "whyTitle": "Trusted by agencies that need accuracy and speed",
+    "whyDescription": "Designed for public safety workloads with audit trails, encryption, and workflows that match how fire departments actually operate.",
+    "whyCards": [
+      { "title": "NFIRS-ready reporting", "copy": "Structured exports and validation help your team submit clean NFIRS data without duplicate entry." },
+      { "title": "Connected to Forge Field", "copy": "Field crews capture incident details on scene; records staff finish narratives and approvals in RMS." },
+      { "title": "Executive visibility", "copy": "Roll-up dashboards and operational metrics feed Forge Analytics for chiefs and administrators." }
+    ],
+    "closingTitle": "See Forge RMS in action",
+    "closingDescription": "Request a guided demo or explore the live platform gateway used by departments today."
+  }
+}

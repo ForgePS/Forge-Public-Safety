@@ -1,0 +1,19 @@
+{
+  "footerColumns": {
+    "Platform": [
+      { "label": "Programs", "href": "/products" },
+      { "label": "Resources", "href": "/resources" },
+      { "label": "Live app", "href": "https://forge-academy-95f84.web.app" }
+    ],
+    "Academy": [
+      { "label": "Student login", "href": "https://forge-academy-95f84.web.app" },
+      { "label": "Admin console", "href": "https://forge-academy-95f84.web.app/admin" },
+      { "label": "Contact", "href": "/contact" }
+    ],
+    "Forge": [
+      { "label": "Forge Public Safety", "href": "https://forge-website-b276c.web.app" },
+      { "label": "Forge RMS", "href": "https://rms.forgepublicsafety.com" },
+      { "label": "Privacy", "href": "/privacy" }
+    ]
+  }
+}

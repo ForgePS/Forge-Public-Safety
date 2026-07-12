@@ -1,0 +1,14 @@
+{
+  "company": {
+    "eyebrow": "About Forge RMS",
+    "title": "Records management from Forge Public Safety",
+    "description": "Forge RMS is part of the Forge platform — one operating system for fire departments and public safety agencies.",
+    "paragraphs": [
+      "Forge RMS provides incident and records management with NFIRS-compliant reporting, narrative tools, and workflows that connect field operations to documentation.",
+      "Built by Forge Public Safety, RMS shares authentication, branding, and data standards with Forge Personnel, Training, Fleet, Analytics, and Command.",
+      "Departments deploy RMS by station or shift, with implementation support for configuration, data migration, and training."
+    ],
+    "closingTitle": "Ready to learn more?",
+    "closingDescription": "Request a demo to see incident reporting, records workflows, and department portals."
+  }
+}

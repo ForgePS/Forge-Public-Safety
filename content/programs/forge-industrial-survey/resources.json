@@ -1,0 +1,30 @@
+{
+  "resources": {
+    "eyebrow": "Resources",
+    "title": "Implementation and support",
+    "description": "Template setup, checklist migration, and rollout support for industrial safety programs.",
+    "cards": [
+      {
+        "title": "Checklist migration",
+        "copy": "Import existing Excel or PDF checklists into configurable survey templates.",
+        "linkLabel": "Request migration help",
+        "linkHref": "/contact",
+        "external": false
+      },
+      {
+        "title": "Support",
+        "copy": "Questions about surveys, findings workflows, or reporting — contact our team.",
+        "linkLabel": "Contact support",
+        "linkHref": "/contact",
+        "external": false
+      },
+      {
+        "title": "Forge platform",
+        "copy": "Industrial Safety is part of the Forge Public Safety product family.",
+        "linkLabel": "Visit Forge Public Safety",
+        "linkHref": "https://forge-website-b276c.web.app",
+        "external": true
+      }
+    ]
+  }
+}

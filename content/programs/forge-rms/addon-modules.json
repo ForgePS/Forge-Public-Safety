@@ -1,0 +1,19 @@
+{
+  "addOnModules": [
+    {
+      "name": "Forge Personnel",
+      "subtitle": "Scheduling & certifications",
+      "description": "Connect incident assignments and personnel records in one platform."
+    },
+    {
+      "name": "Forge Analytics",
+      "subtitle": "Executive dashboards",
+      "description": "Operational KPIs and roll-up reporting from RMS data."
+    },
+    {
+      "name": "Forge Command",
+      "subtitle": "Incident awareness",
+      "description": "Real-time unit tracking and situational awareness during active incidents."
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "resources": {
+    "eyebrow": "Resources",
+    "title": "Live academy, support, and onboarding",
+    "description": "Access the production Academy app, contact support, or request help with catalog import and pilot setup.",
+    "cards": [
+      {
+        "title": "Live Academy app",
+        "copy": "Student and instructor portals, admin console, and campus signage on the production Academy deployment.",
+        "linkLabel": "Open Forge Academy",
+        "linkHref": "https://forge-academy-95f84.web.app",
+        "external": true
+      },
+      {
+        "title": "Admin console",
+        "copy": "Manage courses, testing, certificates, and campus TVs from the Academy admin.",
+        "linkLabel": "Open admin",
+        "linkHref": "https://forge-academy-95f84.web.app/admin",
+        "external": true
+      },
+      {
+        "title": "Implementation",
+        "copy": "We help academies import catalogs, configure testing, and roll out student portals.",
+        "linkLabel": "Request Demo",
+        "linkHref": "/contact",
+        "external": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "addOnModules": [
+    {
+      "name": "Catalog import",
+      "subtitle": "Course migration",
+      "description": "Import existing course catalogs and schedules into Academy."
+    },
+    {
+      "name": "Certificate templates",
+      "subtitle": "Branded credentials",
+      "description": "Custom certificate layouts with merge fields and digital verification."
+    },
+    {
+      "name": "Forge RMS link",
+      "subtitle": "Planned integration",
+      "description": "Shared department and personnel identifiers for cross-product sync."
+    }
+  ]
+}

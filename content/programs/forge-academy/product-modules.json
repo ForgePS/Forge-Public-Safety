@@ -1,0 +1,32 @@
+{
+  "productModules": [
+    {
+      "id": "registration",
+      "name": "Registration & Classes",
+      "subtitle": "Student lifecycle",
+      "description": "Registration, enrollment, attendance, and class schedules for students and instructors.",
+      "liveLink": false
+    },
+    {
+      "id": "skills",
+      "name": "Skills Tracking",
+      "subtitle": "Compliance & verification",
+      "description": "Track skills, verify competencies, and automate compliance alerts across your academy.",
+      "liveLink": false
+    },
+    {
+      "id": "testing",
+      "name": "Enterprise Testing",
+      "subtitle": "Exams & certificates",
+      "description": "Proctored exams, eligibility rules, retests, grading, and certificate release workflows.",
+      "liveLink": false
+    },
+    {
+      "id": "signage",
+      "name": "Campus Signage",
+      "subtitle": "Training-site TVs",
+      "description": "Schedules, dining, and announcements on campus digital displays.",
+      "liveLink": true
+    }
+  ]
+}

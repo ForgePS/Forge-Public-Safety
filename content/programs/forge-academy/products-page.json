@@ -1,0 +1,22 @@
+{
+  "products": {
+    "heroEyebrow": "Programs",
+    "heroTitle": "Training platform modules",
+    "heroDescription": "Registration, classes, skills, testing, certificates, and campus signage for fire service academies.",
+    "heroSecondaryLink": "Contact our team for pilot setup and catalog import.",
+    "baseEyebrow": "Foundation",
+    "baseTitle": "Included with every academy",
+    "baseDescription": "Core services every training site needs on day one.",
+    "coreTitle": "Training operations",
+    "coreDescription": "Manage students, instructors, classes, and skills from connected portals.",
+    "addonsEyebrow": "Advanced",
+    "addonsTitle": "Testing & campus",
+    "addonsDescription": "Enterprise testing workflows and campus digital signage."
+  },
+  "basePackageFeatures": [
+    "Student and instructor portals",
+    "Class schedules and registration",
+    "Skills tracking and compliance alerts",
+    "Department and roster management"
+  ]
+}

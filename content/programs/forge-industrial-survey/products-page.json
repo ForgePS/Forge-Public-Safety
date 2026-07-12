@@ -1,0 +1,22 @@
+{
+  "products": {
+    "heroEyebrow": "Features",
+    "heroTitle": "Industrial safety platform",
+    "heroDescription": "Survey templates, field capture, findings tracking, and compliance reporting for industrial operations.",
+    "heroSecondaryLink": "Contact our team for template setup and rollout planning.",
+    "baseEyebrow": "Foundation",
+    "baseTitle": "Included with every deployment",
+    "baseDescription": "Core platform services for safety managers and field teams.",
+    "coreTitle": "Survey & compliance",
+    "coreDescription": "Run assessments, document findings, and track remediation across sites.",
+    "addonsEyebrow": "Add-ons",
+    "addonsTitle": "Extend your program",
+    "addonsDescription": "Additional modules for larger safety programs and multi-site operations."
+  },
+  "basePackageFeatures": [
+    "Configurable survey templates",
+    "Role-based access for assessors and managers",
+    "Photo and note attachments",
+    "Exportable compliance reports"
+  ]
+}

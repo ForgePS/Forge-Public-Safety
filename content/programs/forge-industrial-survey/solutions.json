@@ -1,0 +1,15 @@
+{
+  "solutions": {
+    "eyebrow": "Solutions",
+    "title": "Safety programs for industrial sites",
+    "description": "Templates and workflows for common industrial safety assessment programs.",
+    "items": [
+      { "title": "Facility walk-through surveys", "copy": "Structured checklists for plant floors, warehouses, and maintenance areas." },
+      { "title": "PPE & hazard assessments", "copy": "Document PPE compliance and hazard identification with photo evidence." },
+      { "title": "Corrective action tracking", "copy": "Assign owners, due dates, and verification for every finding." },
+      { "title": "Multi-site rollups", "copy": "Compare compliance scores and open findings across facilities." }
+    ],
+    "closingTitle": "Configure surveys for your sites",
+    "closingDescription": "We help safety teams import existing checklists and roll out by facility or region."
+  }
+}

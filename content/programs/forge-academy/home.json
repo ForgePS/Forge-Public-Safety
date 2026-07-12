@@ -1,0 +1,30 @@
+{
+  "home": {
+    "heroEyebrow": "Forge Academy",
+    "heroTitle": "TRAINING BUILT FOR FIRE SERVICE",
+    "heroLead": "Registration, classes, skills, testing, certificates, and campus digital signage — one platform for training academies.",
+    "heroBody": "Forge Academy is the training hub in the Forge ecosystem. Students, instructors, and administrators work from connected portals while campus TVs show schedules and announcements.",
+    "heroBullets": [
+      "Student & instructor portals",
+      "Skills tracking and compliance",
+      "Enterprise testing and certificates",
+      "Campus digital signage"
+    ],
+    "modulesEyebrow": "Platform",
+    "modulesTitle": "Everything your academy runs on",
+    "modulesDescription": "From registration through certification — manage classes, testing, and campus displays without juggling separate systems.",
+    "productsEyebrow": "Capabilities",
+    "productsTitle": "Core Academy modules",
+    "productsDescription": "Purpose-built for fire training academies and regional training sites.",
+    "whyEyebrow": "Why Forge Academy",
+    "whyTitle": "Designed for academies, not generic LMS tools",
+    "whyDescription": "Built alongside fire departments and training coordinators who need skills tracking, proctored testing, and certificate workflows.",
+    "whyCards": [
+      { "title": "Student lifecycle", "copy": "Registration, class enrollment, attendance, skills verification, and certification in one place." },
+      { "title": "Enterprise testing", "copy": "Proctored exams, eligibility rules, retests, and certificate release workflows." },
+      { "title": "Campus signage", "copy": "Training-site TVs show schedules, dining, and announcements — separate from department ops displays." }
+    ],
+    "closingTitle": "Launch your academy on Forge",
+    "closingDescription": "Request a pilot demo or sign in to the Academy admin to manage courses and testing."
+  }
+}

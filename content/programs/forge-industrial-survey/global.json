@@ -1,0 +1,21 @@
+{
+  "site": {
+    "name": "Forge Industrial Safety",
+    "tagline": "Safety surveys and compliance for industrial operations",
+    "footerBlurb": "Industrial safety assessments, compliance tracking, and field survey tools for manufacturing and industrial sites.",
+    "demoEmail": "demo@forgepublicsafety.com",
+    "privacyEmail": "privacy@forgepublicsafety.com",
+    "securityEmail": "security@forgepublicsafety.com",
+    "rmsUrl": "https://forge-website-b276c.web.app",
+    "pricingNote": "Site and user pricing based on facilities and survey volume — contact us for a quote."
+  },
+  "navigation": {
+    "main": [
+      { "label": "Solutions", "href": "/solutions" },
+      { "label": "Features", "href": "/products" },
+      { "label": "Resources", "href": "/resources" },
+      { "label": "Contact", "href": "/contact" }
+    ],
+    "ctaLabel": "Request Demo"
+  }
+}
