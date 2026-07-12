@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Palette, Menu, PanelBottom, Image, FormInput,
   Database, Search, Settings, Shield, Mail, Bell, Plug, Code, History, LogOut, ExternalLink, Layers,
@@ -6,6 +6,7 @@ import {
 import { useAuth } from "../../cms/context/AuthContext.jsx";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import ProgramSwitcher from "../components/ProgramSwitcher.jsx";
+import { isFullBleedAdminRoute } from "../components/AdminSplitLayout.jsx";
 
 const NAV_ITEMS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -32,6 +33,8 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const { program } = useCms();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fullBleed = isFullBleedAdminRoute(location.pathname);
 
   const handleLogout = async () => {
     await logout();
@@ -41,7 +44,7 @@ export default function AdminLayout() {
   const previewUrl = program?.liveUrl || "/";
 
   return (
-    <div className="min-h-screen bg-[#0B1220] text-white flex">
+    <div className="min-h-screen h-screen bg-[#0B1220] text-white flex overflow-hidden">
       <aside className="w-64 shrink-0 border-r border-[#1E293B] flex flex-col">
         <div className="p-4 border-b border-[#1E293B]">
           <h1 className="text-lg font-black tracking-tight">Forge CMS</h1>
@@ -77,7 +80,7 @@ export default function AdminLayout() {
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto">
+      <main className={`flex-1 min-h-0 flex flex-col ${fullBleed ? "overflow-hidden" : "overflow-y-auto"}`}>
         <Outlet />
       </main>
     </div>

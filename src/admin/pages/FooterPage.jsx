@@ -120,5 +120,5 @@ export default function FooterPage() {
     </LiveSitePreview>
   );
 
-  return <AdminSplitLayout editor={editor} preview={preview} />;
+  return <div className="h-full min-h-0"><AdminSplitLayout editor={editor} preview={preview} /></div>;
 }
