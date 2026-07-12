@@ -1,4 +1,5 @@
 import { AdminInput, AdminTextarea, AdminSelect } from "./AdminPageHeader.jsx";
+import ImageUploadInput, { MediaListEditor, SlidesEditor } from "./ImageUploadInput.jsx";
 
 export default function FieldEditor({ field, value, onChange, forms, collections }) {
   switch (field.type) {
@@ -44,7 +45,21 @@ export default function FieldEditor({ field, value, onChange, forms, collections
       );
 
     case "media":
-      return <AdminInput label={field.label} value={value} onChange={onChange} placeholder="/assets/image.png or URL" help="Enter image URL or upload via Media Library" />;
+      return (
+        <ImageUploadInput
+          label={field.label}
+          value={value}
+          onChange={onChange}
+          required={field.required}
+          help="Upload from your computer, pick from the media library, or paste a URL"
+        />
+      );
+
+    case "mediaList":
+      return <MediaListEditor label={field.label} value={value} onChange={onChange} />;
+
+    case "slides":
+      return <SlidesEditor label={field.label} value={value} onChange={onChange} />;
 
     case "link":
       return <AdminInput label={field.label} value={value} onChange={onChange} placeholder="/page or https://..." />;
@@ -136,6 +151,11 @@ function CardsEditor({ label, value = [], onChange }) {
           <AdminInput label="Title" value={card.title || card.name} onChange={(v) => update(i, card.name !== undefined ? "name" : "title", v)} />
           <AdminInput label="Subtitle" value={card.subtitle} onChange={(v) => update(i, "subtitle", v)} />
           <AdminTextarea label="Description" value={card.description || card.copy} onChange={(v) => update(i, card.copy !== undefined ? "copy" : "description", v)} rows={2} />
+          <ImageUploadInput
+            label="Image (optional)"
+            value={card.image || card.icon || ""}
+            onChange={(v) => update(i, "image", v)}
+          />
           <button onClick={() => remove(i)} className="text-xs text-red-400 hover:text-red-300">Remove</button>
         </div>
       ))}

@@ -5,6 +5,7 @@ import { createId } from "../../cms/core/ids.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminButton, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
 import AdminSplitLayout from "../components/AdminSplitLayout.jsx";
 import LiveSitePreview from "../components/LiveSitePreview.jsx";
+import ImageUploadInput from "../components/ImageUploadInput.jsx";
 
 export default function FooterPage() {
   const { footers, store, refresh, branding, navigation } = useCms();
@@ -47,7 +48,7 @@ export default function FooterPage() {
         <div className="mt-8 space-y-6">
           <AdminCard title="Footer Content">
             <div className="space-y-4">
-              <AdminInput label="Logo URL" value={footer.logo} onChange={(v) => setFooter({ ...footer, logo: v })} />
+              <ImageUploadInput label="Logo" value={footer.logo} onChange={(v) => setFooter({ ...footer, logo: v })} />
               <AdminTextarea label="Blurb" value={footer.blurb} onChange={(v) => setFooter({ ...footer, blurb: v })} />
               <AdminInput label="Copyright Text" value={footer.copyright} onChange={(v) => setFooter({ ...footer, copyright: v })} />
               <AdminInput label="Background Color" value={footer.backgroundColor} onChange={(v) => setFooter({ ...footer, backgroundColor: v })} />

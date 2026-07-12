@@ -3,6 +3,7 @@ import { useCms } from "../../cms/context/CmsContext.jsx";
 import AdminPageHeader, { AdminInput, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
 import AdminSplitLayout from "../components/AdminSplitLayout.jsx";
 import LiveSitePreview, { BrandingPreviewSample } from "../components/LiveSitePreview.jsx";
+import ImageUploadInput from "../components/ImageUploadInput.jsx";
 
 function useSingletonEditor(key) {
   const { store, refresh, navigation, footers } = useCms();
@@ -51,11 +52,11 @@ export default function BrandingPage() {
           </AdminCard>
           <AdminCard title="Logos">
             <div className="space-y-4">
-              <AdminInput label="Primary Logo URL" value={data.logos?.primary} onChange={(v) => updateLogo("primary", v)} />
-              <AdminInput label="Alternate Logo" value={data.logos?.alternate} onChange={(v) => updateLogo("alternate", v)} />
-              <AdminInput label="Dark Mode Logo" value={data.logos?.dark} onChange={(v) => updateLogo("dark", v)} />
-              <AdminInput label="Light Mode Logo" value={data.logos?.light} onChange={(v) => updateLogo("light", v)} />
-              <AdminInput label="Favicon URL" value={data.favicon} onChange={(v) => setData({ ...data, favicon: v })} />
+              <ImageUploadInput label="Primary Logo" value={data.logos?.primary} onChange={(v) => updateLogo("primary", v)} />
+              <ImageUploadInput label="Alternate Logo" value={data.logos?.alternate} onChange={(v) => updateLogo("alternate", v)} />
+              <ImageUploadInput label="Dark Mode Logo" value={data.logos?.dark} onChange={(v) => updateLogo("dark", v)} />
+              <ImageUploadInput label="Light Mode Logo" value={data.logos?.light} onChange={(v) => updateLogo("light", v)} />
+              <ImageUploadInput label="Favicon" value={data.favicon} onChange={(v) => setData({ ...data, favicon: v })} help="Small icon shown in browser tabs (32×32 or 64×64 recommended)" />
             </div>
           </AdminCard>
           <AdminCard title="Colors">

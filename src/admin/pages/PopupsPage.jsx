@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { createId } from "../../cms/core/ids.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminButton, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
+import ImageUploadInput from "../components/ImageUploadInput.jsx";
 
 export default function PopupsPage() {
   const { store, refresh } = useCms();
@@ -51,6 +52,7 @@ export default function PopupsPage() {
                     <option value="bar">Announcement Bar</option>
                   </select>
                   <AdminTextarea label="Content" value={selected.content} onChange={(v) => setSelected({ ...selected, content: v })} />
+                  <ImageUploadInput label="Popup Image" value={selected.image} onChange={(v) => setSelected({ ...selected, image: v })} />
                   <AdminInput label="Button Label" value={selected.buttonLabel} onChange={(v) => setSelected({ ...selected, buttonLabel: v })} />
                   <AdminInput label="Button Link" value={selected.buttonHref} onChange={(v) => setSelected({ ...selected, buttonHref: v })} />
                   <AdminInput label="Start Date" type="datetime-local" value={selected.startDate?.slice(0, 16) || ""} onChange={(v) => setSelected({ ...selected, startDate: v ? new Date(v).toISOString() : "" })} />

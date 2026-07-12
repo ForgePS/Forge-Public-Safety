@@ -17,6 +17,7 @@ import { validatePage, sanitizeSlug } from "../../cms/core/validation.js";
 import LiveSitePreview from "../components/LiveSitePreview.jsx";
 import FieldEditor from "../components/FieldEditor.jsx";
 import AdminPageHeader, { AdminButton, AdminInput, AdminSelect, AdminTextarea, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
+import ImageUploadInput from "../components/ImageUploadInput.jsx";
 
 export default function PageBuilderPage() {
   const { pageId } = useParams();
@@ -241,7 +242,7 @@ export default function PageBuilderPage() {
                 <AdminInput label="Canonical URL" value={page.seo?.canonicalUrl} onChange={(v) => updatePage({ ...page, seo: { ...page.seo, canonicalUrl: v } })} />
                 <AdminInput label="Social Title" value={page.seo?.socialTitle} onChange={(v) => updatePage({ ...page, seo: { ...page.seo, socialTitle: v } })} />
                 <AdminTextarea label="Social Description" value={page.seo?.socialDescription} onChange={(v) => updatePage({ ...page, seo: { ...page.seo, socialDescription: v } })} rows={2} />
-                <AdminInput label="Social Image URL" value={page.seo?.socialImage} onChange={(v) => updatePage({ ...page, seo: { ...page.seo, socialImage: v } })} />
+                <ImageUploadInput label="Social Image" value={page.seo?.socialImage} onChange={(v) => updatePage({ ...page, seo: { ...page.seo, socialImage: v } })} help="Image shown when this page is shared on social media" />
                 <label className="flex items-center gap-2 text-sm text-white">
                   <input type="checkbox" checked={page.seo?.index !== false} onChange={(e) => updatePage({ ...page, seo: { ...page.seo, index: e.target.checked } })} /> Allow indexing
                 </label>
