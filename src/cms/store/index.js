@@ -1,13 +1,13 @@
-import { CMS_COLLECTIONS } from "../core/constants.js";
+import { CMS_COLLECTIONS, LOCAL_STORE_KEY, LEGACY_STORE_KEY } from "../core/constants.js";
+import { DEFAULT_PROGRAM_ID, DEFAULT_PROGRAMS, withProgramId, belongsToProgram, programSingletonId } from "../core/programs.js";
 import {
   getLocalStore,
   getLocalItem,
   upsertLocalItem,
   deleteLocalItem,
-  getLocalSingleton,
-  setLocalSingleton,
   addLocalVersion,
   isLocalStoreSeeded,
+  setLocalStore,
 } from "./localStore.js";
 import {
   isFirebaseConfigured,
@@ -15,7 +15,6 @@ import {
   firestoreGetDoc,
   firestoreSetDoc,
   firestoreDeleteDoc,
-  firestoreGetBySlug,
   firestoreSubscribe,
 } from "./firebase.js";
 
@@ -40,6 +39,7 @@ const COLLECTION_MAP = {
   redirects: CMS_COLLECTIONS.redirects,
   seoGlobal: CMS_COLLECTIONS.seoGlobal,
   search: CMS_COLLECTIONS.search,
+  programs: CMS_COLLECTIONS.programs,
 };
 
 const SINGLETON_KEYS = new Set(["branding", "navigation", "settings", "seoGlobal", "search"]);
@@ -48,16 +48,40 @@ function useFirebase() {
   return isFirebaseConfigured();
 }
 
-export async function getAll(key) {
+function filterByProgram(items, programId) {
+  if (!Array.isArray(items)) return items;
+  const pid = programId || DEFAULT_PROGRAM_ID;
+  return items.filter((item) => belongsToProgram(item, pid));
+}
+
+function getSingletonForProgram(items, programId) {
+  const pid = programSingletonId(programId);
+  if (!Array.isArray(items)) {
+    return items?.programId === pid || items?.id === pid ? items : null;
+  }
+  return items.find((item) => item.id === pid || item.programId === pid) || null;
+}
+
+export async function getAll(key, programId = null) {
+  let data;
   if (useFirebase()) {
     if (SINGLETON_KEYS.has(key)) {
-      const doc = await firestoreGetDoc(COLLECTION_MAP[key], "default");
-      return doc;
+      if (programId) {
+        return firestoreGetDoc(COLLECTION_MAP[key], programSingletonId(programId));
+      }
+      const snap = await firestoreGetCollection(COLLECTION_MAP[key]);
+      return snap;
     }
-    return firestoreGetCollection(COLLECTION_MAP[key]);
+    data = await firestoreGetCollection(COLLECTION_MAP[key]);
+  } else {
+    const store = getLocalStore();
+    data = SINGLETON_KEYS.has(key) ? store[key] : store[key] || [];
   }
-  const store = getLocalStore();
-  return SINGLETON_KEYS.has(key) ? store[key] : store[key] || [];
+
+  if (key === "programs") return Array.isArray(data) ? data : [];
+  if (programId && SINGLETON_KEYS.has(key)) return getSingletonForProgram(Array.isArray(data) ? data : [data].filter(Boolean), programId);
+  if (programId) return filterByProgram(Array.isArray(data) ? data : [], programId);
+  return data;
 }
 
 export async function getById(key, id) {
@@ -67,17 +91,14 @@ export async function getById(key, id) {
   return getLocalItem(key, id);
 }
 
-export async function getPageBySlug(slug) {
+export async function getPageBySlug(slug, programId = DEFAULT_PROGRAM_ID) {
   const normalizedSlug = slug === "/" || slug === "" ? "home" : slug.replace(/^\//, "");
-  if (useFirebase()) {
-    return firestoreGetBySlug(COLLECTION_MAP.pages, normalizedSlug);
-  }
-  const pages = getLocalStore().pages || [];
-  return pages.find((p) => p.slug === normalizedSlug) || null;
+  const pages = await getAll("pages", programId);
+  return (pages || []).find((p) => p.slug === normalizedSlug) || null;
 }
 
-export async function getPublishedPages() {
-  const pages = await getAll("pages");
+export async function getPublishedPages(programId = DEFAULT_PROGRAM_ID) {
+  const pages = await getAll("pages", programId);
   const now = new Date();
   return (pages || []).filter((p) => {
     if (p.status === "published") return true;
@@ -86,26 +107,35 @@ export async function getPublishedPages() {
   });
 }
 
-export async function save(key, item, userId = "system") {
-  const id = item.id || (SINGLETON_KEYS.has(key) ? "default" : undefined);
-  if (!id) throw new Error("Item must have an id");
+const GLOBAL_KEYS = new Set(["programs", "roles", "users"]);
 
-  const payload = {
+export async function save(key, item, userId = "system", programId = null) {
+  const pid = programId || item.programId || DEFAULT_PROGRAM_ID;
+  const base = {
     ...item,
-    id,
+    id: item.id || (SINGLETON_KEYS.has(key) ? programSingletonId(pid) : undefined),
     updatedAt: new Date().toISOString(),
     updatedBy: userId,
   };
+  const payload = GLOBAL_KEYS.has(key) ? base : withProgramId(base, pid);
+
+  if (!payload.id) throw new Error("Item must have an id");
 
   if (useFirebase()) {
-    await firestoreSetDoc(COLLECTION_MAP[key], id, payload);
+    await firestoreSetDoc(COLLECTION_MAP[key], payload.id, payload);
   } else if (SINGLETON_KEYS.has(key)) {
-    setLocalSingleton(key, payload);
+    const store = getLocalStore();
+    const existing = Array.isArray(store[key]) ? store[key] : store[key] ? [store[key]] : [];
+    const index = existing.findIndex((i) => i.id === payload.id || i.programId === pid);
+    const next = [...existing];
+    if (index >= 0) next[index] = payload;
+    else next.push(payload);
+    upsertLocalItem(key, next);
   } else {
     upsertLocalItem(key, payload);
   }
 
-  await saveVersion(key, id, payload, userId);
+  await saveVersion(key, payload.id, payload, userId, undefined, pid);
   return payload;
 }
 
@@ -117,14 +147,14 @@ export async function remove(key, id) {
   }
 }
 
-export async function saveVersion(resourceType, resourceId, data, userId, summary = "Updated") {
-  const version = {
+export async function saveVersion(resourceType, resourceId, data, userId, summary = "Updated", programId = DEFAULT_PROGRAM_ID) {
+  const version = withProgramId({
     resourceType,
     resourceId,
     data: JSON.parse(JSON.stringify(data)),
     userId,
     summary,
-  };
+  }, programId);
   if (useFirebase()) {
     const versionId = `ver_${Date.now()}`;
     await firestoreSetDoc(COLLECTION_MAP.versions, versionId, {
@@ -137,10 +167,13 @@ export async function saveVersion(resourceType, resourceId, data, userId, summar
   }
 }
 
-export async function getVersions(resourceType, resourceId) {
+export async function getVersions(resourceType, resourceId, programId = null) {
   const all = await getAll("versions");
   return (all || [])
-    .filter((v) => v.resourceType === resourceType && v.resourceResourceId === resourceId || v.resourceId === resourceId)
+    .filter((v) => {
+      if (programId && !belongsToProgram(v, programId)) return false;
+      return v.resourceType === resourceType && (v.resourceId === resourceId);
+    })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
@@ -150,7 +183,7 @@ export function subscribe(key, callback) {
   }
   const handler = () => {
     const store = getLocalStore();
-    callback(SINGLETON_KEYS.has(key) ? [store[key]].filter(Boolean) : store[key] || []);
+    callback(store[key] || []);
   };
   window.addEventListener("cms-store-changed", handler);
   handler();
@@ -160,6 +193,39 @@ export function subscribe(key, callback) {
 export function isSeeded() {
   if (useFirebase()) return true;
   return isLocalStoreSeeded();
+}
+
+export function migrateLegacyStore() {
+  try {
+    const legacy = localStorage.getItem(LEGACY_STORE_KEY);
+    if (!legacy || localStorage.getItem(LOCAL_STORE_KEY)) return false;
+    const data = JSON.parse(legacy);
+    const tag = (items) => {
+      if (!items) return items;
+      if (Array.isArray(items)) return items.map((i) => withProgramId(i, DEFAULT_PROGRAM_ID));
+      return withProgramId({ ...items, id: items.id === "default" ? DEFAULT_PROGRAM_ID : items.id }, DEFAULT_PROGRAM_ID);
+    };
+    const migrated = {
+      ...data,
+      programs: data.programs?.length ? data.programs : [],
+      pages: tag(data.pages),
+      footers: tag(data.footers),
+      forms: tag(data.forms),
+      media: tag(data.media),
+      collections: tag(data.collections),
+      popups: tag(data.popups),
+      redirects: tag(data.redirects),
+      branding: Array.isArray(data.branding) ? tag(data.branding) : tag([data.branding].filter(Boolean)),
+      navigation: Array.isArray(data.navigation) ? tag(data.navigation) : tag([data.navigation].filter(Boolean)),
+      settings: Array.isArray(data.settings) ? tag(data.settings) : tag([data.settings].filter(Boolean)),
+      seoGlobal: Array.isArray(data.seoGlobal) ? tag(data.seoGlobal) : tag([data.seoGlobal].filter(Boolean)),
+      search: Array.isArray(data.search) ? tag(data.search) : tag([data.search].filter(Boolean)),
+    };
+    setLocalStore(migrated);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export { useFirebase as isUsingFirebase };

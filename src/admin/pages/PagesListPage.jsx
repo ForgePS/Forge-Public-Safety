@@ -8,7 +8,7 @@ import { sanitizeSlug } from "../../cms/core/validation.js";
 import AdminPageHeader, { AdminButton } from "../components/AdminPageHeader.jsx";
 
 export default function PagesListPage() {
-  const { pages, store, refresh } = useCms();
+  const { pages, store, refresh, programId } = useCms();
   const navigate = useNavigate();
   const [toast, setToast] = useState("");
 
@@ -16,6 +16,7 @@ export default function PagesListPage() {
     const page = {
       id: createPageId(),
       ...DEFAULT_PAGE,
+      programId,
       title: "New Page",
       slug: `new-page-${Date.now()}`,
       createdAt: new Date().toISOString(),

@@ -1,11 +1,47 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import { useLocation } from "react-router-dom";
 import * as cmsStore from "../store/index.js";
 import { seedLocalStore } from "../store/seed.js";
-import { isSeeded } from "../store/index.js";
+import { isSeeded, migrateLegacyStore } from "../store/index.js";
+import {
+  DEFAULT_PROGRAM_ID,
+  DEFAULT_PROGRAMS,
+  resolveProgramFromHost,
+} from "../core/programs.js";
+
+const ACTIVE_PROGRAM_KEY = "forge_cms_active_program";
+
+const GLOBAL_STORE_KEYS = new Set(["programs", "roles", "users"]);
 
 const CmsContext = createContext(null);
 
+function readStoredProgramId() {
+  try {
+    return localStorage.getItem(ACTIVE_PROGRAM_KEY) || DEFAULT_PROGRAM_ID;
+  } catch {
+    return DEFAULT_PROGRAM_ID;
+  }
+}
+
+function writeStoredProgramId(id) {
+  try {
+    localStorage.setItem(ACTIVE_PROGRAM_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
 export function CmsProvider({ children }) {
+  const location = useLocation();
+  const isAdminMode = location.pathname.startsWith("/admin") && !location.pathname.startsWith("/admin/login");
+
+  const [programs, setPrograms] = useState(DEFAULT_PROGRAMS);
+  const [programId, setProgramIdState] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_PROGRAM_ID;
+    if (window.location.pathname.startsWith("/admin")) return readStoredProgramId();
+    return resolveProgramFromHost(window.location.hostname, DEFAULT_PROGRAMS).id;
+  });
+
   const [pages, setPages] = useState([]);
   const [branding, setBranding] = useState(null);
   const [navigation, setNavigation] = useState(null);
@@ -19,22 +55,54 @@ export function CmsProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [initialized, setInitialized] = useState(false);
 
-  const loadAll = useCallback(async () => {
+  const program = useMemo(
+    () => programs.find((p) => p.id === programId) || programs[0] || DEFAULT_PROGRAMS[0],
+    [programs, programId]
+  );
+
+  const setProgramId = useCallback((id) => {
+    writeStoredProgramId(id);
+    setProgramIdState(id);
+  }, []);
+
+  const refreshPrograms = useCallback(async () => {
+    const list = await cmsStore.getAll("programs");
+    setPrograms(Array.isArray(list) && list.length ? list : DEFAULT_PROGRAMS);
+  }, []);
+
+  const loadAll = useCallback(async (pid = programId) => {
+    migrateLegacyStore();
     if (!cmsStore.isSeeded()) {
       seedLocalStore();
     }
-    const [p, b, n, f, fm, s, pop, red, seo, col] = await Promise.all([
-      cmsStore.getAll("pages"),
-      cmsStore.getAll("branding"),
-      cmsStore.getAll("navigation"),
-      cmsStore.getAll("footers"),
-      cmsStore.getAll("forms"),
-      cmsStore.getAll("settings"),
-      cmsStore.getAll("popups"),
-      cmsStore.getAll("redirects"),
-      cmsStore.getAll("seoGlobal"),
-      cmsStore.getAll("collections"),
+
+    const [
+      programList,
+      p,
+      b,
+      n,
+      f,
+      fm,
+      s,
+      pop,
+      red,
+      seo,
+      col,
+    ] = await Promise.all([
+      cmsStore.getAll("programs"),
+      cmsStore.getAll("pages", pid),
+      cmsStore.getAll("branding", pid),
+      cmsStore.getAll("navigation", pid),
+      cmsStore.getAll("footers", pid),
+      cmsStore.getAll("forms", pid),
+      cmsStore.getAll("settings", pid),
+      cmsStore.getAll("popups", pid),
+      cmsStore.getAll("redirects", pid),
+      cmsStore.getAll("seoGlobal", pid),
+      cmsStore.getAll("collections", pid),
     ]);
+
+    setPrograms(Array.isArray(programList) && programList.length ? programList : DEFAULT_PROGRAMS);
     setPages(Array.isArray(p) ? p : []);
     setBranding(b?.id ? b : (Array.isArray(b) ? b[0] : null));
     setNavigation(n?.id ? n : (Array.isArray(n) ? n[0] : null));
@@ -47,20 +115,25 @@ export function CmsProvider({ children }) {
     setCollections(Array.isArray(col) ? col : []);
     setLoading(false);
     setInitialized(true);
-  }, []);
+  }, [programId]);
 
   useEffect(() => {
-    loadAll();
-    const unsubs = [
-      cmsStore.subscribe("pages", (data) => setPages(data)),
-    ];
-    const onStoreChange = () => loadAll();
+    if (!isAdminMode) {
+      const resolved = resolveProgramFromHost(window.location.hostname, programs);
+      if (resolved.id !== programId) setProgramIdState(resolved.id);
+    }
+  }, [isAdminMode, programs, programId]);
+
+  useEffect(() => {
+    setLoading(true);
+    loadAll(programId);
+  }, [programId, loadAll]);
+
+  useEffect(() => {
+    const onStoreChange = () => loadAll(programId);
     window.addEventListener("cms-store-changed", onStoreChange);
-    return () => {
-      unsubs.forEach((u) => u());
-      window.removeEventListener("cms-store-changed", onStoreChange);
-    };
-  }, [loadAll]);
+    return () => window.removeEventListener("cms-store-changed", onStoreChange);
+  }, [loadAll, programId]);
 
   const getPublishedPage = useCallback((slug) => {
     const normalized = slug === "/" || slug === "" ? "home" : slug.replace(/^\//, "");
@@ -73,9 +146,26 @@ export function CmsProvider({ children }) {
     });
   }, [pages]);
 
-  const getFooter = useCallback((footerId = "default") => {
+  const getFooter = useCallback((footerId) => {
     return footers.find((f) => f.id === footerId) || footers[0] || null;
   }, [footers]);
+
+  const store = useMemo(() => ({
+    getAll: (key) => (GLOBAL_STORE_KEYS.has(key) ? cmsStore.getAll(key) : cmsStore.getAll(key, programId)),
+    getById: (key, id) => cmsStore.getById(key, id),
+    getPageBySlug: (slug) => cmsStore.getPageBySlug(slug, programId),
+    getPublishedPages: () => cmsStore.getPublishedPages(programId),
+    save: (key, item, userId = "system") => (
+      GLOBAL_STORE_KEYS.has(key)
+        ? cmsStore.save(key, item, userId)
+        : cmsStore.save(key, item, userId, programId)
+    ),
+    remove: (key, id) => cmsStore.remove(key, id),
+    getVersions: (resourceType, resourceId) => cmsStore.getVersions(resourceType, resourceId, programId),
+    subscribe: cmsStore.subscribe,
+    isSeeded: cmsStore.isSeeded,
+    isUsingFirebase: cmsStore.isUsingFirebase,
+  }), [programId]);
 
   const value = useMemo(() => ({
     pages,
@@ -88,13 +178,23 @@ export function CmsProvider({ children }) {
     redirects,
     seoGlobal,
     collections,
+    programs,
+    program,
+    programId,
+    setProgramId,
+    isAdminMode,
     loading,
     initialized,
     getPublishedPage,
     getFooter,
-    refresh: loadAll,
-    store: cmsStore,
-  }), [pages, branding, navigation, footers, forms, settings, popups, redirects, seoGlobal, collections, loading, initialized, getPublishedPage, getFooter, loadAll]);
+    refresh: () => loadAll(programId),
+    refreshPrograms,
+    store,
+  }), [
+    pages, branding, navigation, footers, forms, settings, popups, redirects,
+    seoGlobal, collections, programs, program, programId, setProgramId,
+    isAdminMode, loading, initialized, getPublishedPage, getFooter, loadAll, refreshPrograms, store,
+  ]);
 
   return <CmsContext.Provider value={value}>{children}</CmsContext.Provider>;
 }

@@ -19,7 +19,11 @@ export const CMS_COLLECTIONS = {
   redirects: "cms_redirects",
   seoGlobal: "cms_seo_global",
   search: "cms_search",
+  programs: "cms_programs",
 };
+
+export const LOCAL_STORE_KEY = "forge_cms_data_v2";
+export const LEGACY_STORE_KEY = "forge_cms_data_v1";
 
 export const PAGE_STATUS = {
   draft: "draft",
@@ -43,6 +47,7 @@ export const DEFAULT_ROLES = [
       "pages.*", "sections.*", "branding.*", "navigation.*", "footer.*",
       "media.*", "forms.*", "collections.*", "seo.*", "settings.*",
       "email.*", "popups.*", "integrations.read", "roles.read", "versions.*",
+      "programs.*",
     ],
   },
   {
@@ -84,5 +89,3 @@ export const DEFAULT_ROLES = [
     permissions: ["*.read"],
   },
 ];
-
-export const LOCAL_STORE_KEY = "forge_cms_data_v1";

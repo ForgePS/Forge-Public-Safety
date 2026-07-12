@@ -1,12 +1,15 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, FileText, Palette, Menu, PanelBottom, Image, FormInput,
-  Database, Search, Settings, Shield, Mail, Bell, Plug, Code, History, LogOut, ExternalLink,
+  Database, Search, Settings, Shield, Mail, Bell, Plug, Code, History, LogOut, ExternalLink, Layers,
 } from "lucide-react";
 import { useAuth } from "../../cms/context/AuthContext.jsx";
+import { useCms } from "../../cms/context/CmsContext.jsx";
+import ProgramSwitcher from "../components/ProgramSwitcher.jsx";
 
 const NAV_ITEMS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/admin/programs", label: "Programs", icon: Layers },
   { to: "/admin/pages", label: "Pages", icon: FileText },
   { to: "/admin/branding", label: "Branding", icon: Palette },
   { to: "/admin/navigation", label: "Navigation", icon: Menu },
@@ -27,6 +30,7 @@ const NAV_ITEMS = [
 
 export default function AdminLayout() {
   const { user, logout } = useAuth();
+  const { program } = useCms();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -34,12 +38,17 @@ export default function AdminLayout() {
     navigate("/admin/login");
   };
 
+  const previewUrl = program?.liveUrl || "/";
+
   return (
     <div className="min-h-screen bg-[#0B1220] text-white flex">
       <aside className="w-64 shrink-0 border-r border-[#1E293B] flex flex-col">
         <div className="p-4 border-b border-[#1E293B]">
           <h1 className="text-lg font-black tracking-tight">Forge CMS</h1>
-          <p className="text-xs text-[#64748B] mt-1">Website Management</p>
+          <p className="text-xs text-[#64748B] mt-1">Unified Control Center</p>
+          <div className="mt-3">
+            <ProgramSwitcher />
+          </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
           {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
@@ -59,8 +68,8 @@ export default function AdminLayout() {
           ))}
         </nav>
         <div className="p-3 border-t border-[#1E293B] space-y-2">
-          <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 text-sm text-[#94A3B8] hover:text-white rounded-lg hover:bg-white/5">
-            <ExternalLink size={16} /> View Website
+          <a href={previewUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-3 py-2 text-sm text-[#94A3B8] hover:text-white rounded-lg hover:bg-white/5">
+            <ExternalLink size={16} /> View {program?.shortName || "Site"}
           </a>
           <div className="px-3 py-2 text-xs text-[#64748B]">{user?.name || user?.email}</div>
           <button onClick={handleLogout} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-[#94A3B8] hover:text-white rounded-lg hover:bg-white/5">

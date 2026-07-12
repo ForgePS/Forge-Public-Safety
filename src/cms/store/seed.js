@@ -9,6 +9,7 @@ import {
   createSection,
 } from "../blocks/registry.js";
 import { DEFAULT_ROLES } from "../core/constants.js";
+import { DEFAULT_PROGRAMS, DEFAULT_PROGRAM_ID, withProgramId, createProgram } from "../core/programs.js";
 import { setLocalStore } from "./localStore.js";
 
 import globalData from "../../../content/global.json";
@@ -360,7 +361,8 @@ function buildLegalPage(slug, title, sections) {
 
 function buildBranding() {
   return {
-    id: "default",
+    id: DEFAULT_PROGRAM_ID,
+    programId: DEFAULT_PROGRAM_ID,
     ...DEFAULT_BRANDING,
     companyName: globalData.site.name,
     tagline: globalData.site.tagline,
@@ -370,7 +372,8 @@ function buildBranding() {
 
 function buildNavigation() {
   return {
-    id: "default",
+    id: DEFAULT_PROGRAM_ID,
+    programId: DEFAULT_PROGRAM_ID,
     ...DEFAULT_NAVIGATION,
     mainMenu: globalData.navigation.main.map((item) => ({
       id: createId("nav"),
@@ -400,8 +403,8 @@ function buildFooter() {
   }));
 
   return [{
-    id: "default",
-    ...DEFAULT_FOOTER,
+    id: DEFAULT_PROGRAM_ID,
+    programId: DEFAULT_PROGRAM_ID,
     name: "Default Footer",
     logo: "/assets/forge-logo.png",
     blurb: globalData.site.footerBlurb,
@@ -520,64 +523,168 @@ function buildCollections() {
   ];
 }
 
-export function buildSeedData() {
+function tagProgram(items, programId = DEFAULT_PROGRAM_ID) {
+  if (!items) return items;
+  if (Array.isArray(items)) return items.map((i) => withProgramId(i, programId));
+  return withProgramId(items, programId);
+}
+
+function buildStarterPages(program) {
+  return [
+    {
+      id: `page_home_${program.id}`,
+      programId: program.id,
+      title: "Home",
+      slug: "home",
+      status: program.status === "active" ? "draft" : "draft",
+      layout: "default",
+      seo: { title: `${program.name} — Home`, description: program.description },
+      sections: [{
+        id: createSectionId(),
+        type: "hero",
+        hidden: false,
+        settings: { padding: { top: "96px", right: "0", bottom: "96px", left: "0" }, background: { type: "color", color: program.color || "#0B1220" } },
+        blocks: [{
+          id: createBlockId(),
+          type: "hero",
+          hidden: false,
+          settings: {},
+          content: {
+            eyebrow: program.shortName,
+            title: program.name.toUpperCase(),
+            lead: program.description || "Build your site with the Forge CMS page builder.",
+            body: "",
+            bullets: [],
+            backgroundImage: "",
+            buttons: [{ label: "Get Started", href: "/contact", style: "primary", newTab: false }],
+          },
+        }],
+      }],
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: `page_contact_${program.id}`,
+      programId: program.id,
+      title: "Contact",
+      slug: "contact",
+      status: "draft",
+      layout: "default",
+      seo: { title: `Contact — ${program.name}`, description: "" },
+      sections: [{
+        id: createSectionId(),
+        type: "heading",
+        hidden: false,
+        settings: { padding: { top: "80px", right: "0", bottom: "80px", left: "0" }, background: { type: "color", color: "#000000" } },
+        blocks: [{
+          id: createBlockId(),
+          type: "heading",
+          hidden: false,
+          settings: {},
+          content: { eyebrow: "Contact", title: "Get in Touch", description: "Contact our team to learn more.", align: "center" },
+        }],
+      }],
+      createdAt: new Date().toISOString(),
+    },
+  ];
+}
+
+function buildProgramBundle(program, includeFullMarketing = false) {
+  if (includeFullMarketing) {
+    return {
+      pages: tagProgram([
+        buildHomePage(),
+        buildProductsPage(),
+        buildSolutionsPage(),
+        buildCompanyPage(),
+        buildContactPage(),
+        buildResourcesPage(),
+        buildLegalPage("privacy", "Privacy Policy", [
+          { title: "Information We Collect", body: "We collect information you provide directly to us." },
+          { title: "Contact Us", body: `Contact us at ${globalData.site.privacyEmail}.` },
+        ]),
+        buildLegalPage("terms", "Terms of Service", [
+          { title: "Use of the Platform", body: "Services subject to these terms." },
+        ]),
+        buildLegalPage("security", "Security", [
+          { title: "Platform Security", body: "Encrypted transport and role-based access." },
+        ]),
+      ], program.id),
+      branding: [buildBranding()],
+      navigation: [buildNavigation()],
+      footers: buildFooter(),
+      forms: tagProgram(buildDemoForm(), program.id),
+      collections: tagProgram(buildCollections(), program.id),
+      settings: [tagProgram(buildSettings(), program.id)],
+      emailTemplates: tagProgram(buildEmailTemplates(), program.id),
+      redirects: tagProgram([{ id: "pricing-redirect", from: "/pricing", to: "/contact", type: "301", enabled: true }], program.id),
+      seoGlobal: [tagProgram({
+        id: program.id,
+        defaultTitle: globalData.site.name,
+        titleTemplate: "{{page.title}} — {{site.name}}",
+        defaultDescription: globalData.site.footerBlurb,
+        robotsTxt: "User-agent: *\nAllow: /",
+        sitemapEnabled: true,
+      }, program.id)],
+      search: [tagProgram({
+        id: program.id,
+        enabled: true,
+        placeholder: "Search...",
+        noResultsMessage: "No results found.",
+        excludePages: [],
+      }, program.id)],
+    };
+  }
+
   return {
-    pages: [
-      buildHomePage(),
-      buildProductsPage(),
-      buildSolutionsPage(),
-      buildCompanyPage(),
-      buildContactPage(),
-      buildResourcesPage(),
-      buildLegalPage("privacy", "Privacy Policy", [
-        { title: "Information We Collect", body: "We collect information you provide directly to us, such as when you create an account, request a demo, or contact our support team." },
-        { title: "How We Use Your Information", body: "We use the information we collect to provide, maintain, and improve the Forge platform." },
-        { title: "Data Security", body: "Forge uses industry-standard encryption (AES-256 at rest, TLS 1.3 in transit) for agency data." },
-        { title: "Contact Us", body: `If you have questions about this Privacy Policy, contact us at ${globalData.site.privacyEmail}.` },
-      ]),
-      buildLegalPage("terms", "Terms of Service", [
-        { title: "Use of the Platform", body: "Forge Public Safety provides software services to public safety agencies subject to these terms." },
-        { title: "Agency Responsibilities", body: "Agencies are responsible for maintaining the confidentiality of account credentials." },
-        { title: "Changes", body: "We may update these terms from time to time." },
-      ]),
-      buildLegalPage("security", "Security", [
-        { title: "Platform Security", body: "Forge is designed for public safety workloads with encrypted transport, role-based access, and audit logging." },
-        { title: "Operational Practices", body: "We follow secure development practices and monitor platform availability." },
-        { title: "Report a concern", body: `Security questions can be sent to ${globalData.site.securityEmail}.` },
-      ]),
-    ],
+    pages: buildStarterPages(program),
+    branding: [tagProgram({
+      id: program.id,
+      programId: program.id,
+      ...DEFAULT_BRANDING,
+      companyName: program.name,
+      tagline: program.description,
+      colors: { ...DEFAULT_BRANDING.colors, primary: program.color || DEFAULT_BRANDING.colors.primary },
+    }, program.id)],
+    navigation: [tagProgram({ id: program.id, programId: program.id, ...DEFAULT_NAVIGATION, mainMenu: [], headerButtons: [] }, program.id)],
+    footers: [tagProgram({ id: program.id, programId: program.id, ...DEFAULT_FOOTER, name: `${program.name} Footer`, blurb: program.description, columns: [] }, program.id)],
+    forms: [],
+    collections: [],
+    settings: [tagProgram({ id: program.id, programId: program.id, business: { name: program.name, tagline: program.description }, contact: {}, maintenance: { enabled: false, message: "" } }, program.id)],
+    emailTemplates: [],
+    redirects: [],
+    seoGlobal: [tagProgram({ id: program.id, defaultTitle: program.name, defaultDescription: program.description, sitemapEnabled: true }, program.id)],
+    search: [tagProgram({ id: program.id, enabled: true, placeholder: "Search...", noResultsMessage: "No results." }, program.id)],
+  };
+}
+
+export function buildSeedData() {
+  const programs = DEFAULT_PROGRAMS;
+  const bundles = programs.map((p) => buildProgramBundle(p, p.id === DEFAULT_PROGRAM_ID));
+
+  const merge = (key) => bundles.flatMap((b) => b[key] || []);
+
+  return {
+    programs,
+    pages: merge("pages"),
     savedSections: [],
-    branding: buildBranding(),
-    navigation: buildNavigation(),
-    footers: buildFooter(),
+    branding: merge("branding"),
+    navigation: merge("navigation"),
+    footers: merge("footers"),
     media: [],
-    forms: buildDemoForm(),
+    forms: merge("forms"),
     formSubmissions: [],
-    collections: buildCollections(),
+    collections: merge("collections"),
     collectionEntries: [],
-    settings: buildSettings(),
-    emailTemplates: buildEmailTemplates(),
+    settings: merge("settings"),
+    emailTemplates: merge("emailTemplates"),
     popups: [],
     integrations: [],
     roles: DEFAULT_ROLES,
     users: [{ id: "admin", email: "admin@forgepublicsafety.com", role: "super_admin", name: "Administrator" }],
     versions: [],
-    redirects: [{ id: "pricing-redirect", from: "/pricing", to: "/contact", type: "301", enabled: true }],
-    seoGlobal: {
-      id: "default",
-      defaultTitle: globalData.site.name,
-      titleTemplate: "{{page.title}} — {{site.name}}",
-      defaultDescription: globalData.site.footerBlurb,
-      robotsTxt: "User-agent: *\nAllow: /\nSitemap: /sitemap.xml",
-      sitemapEnabled: true,
-    },
-    search: {
-      id: "default",
-      enabled: true,
-      placeholder: "Search...",
-      noResultsMessage: "No results found. Try different keywords.",
-      excludePages: [],
-    },
+    redirects: merge("redirects"),
+    seoGlobal: merge("seoGlobal"),
+    search: merge("search"),
   };
 }
 

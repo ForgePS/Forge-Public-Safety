@@ -21,6 +21,7 @@ import IntegrationsPage from "./pages/IntegrationsPage.jsx";
 import CustomCodePage from "./pages/CustomCodePage.jsx";
 import VersionsPage from "./pages/VersionsPage.jsx";
 import SearchPage from "./pages/SearchPage.jsx";
+import ProgramsPage from "./pages/ProgramsPage.jsx";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -36,6 +37,7 @@ export default function AdminApp() {
         <Route path="login" element={<LoginPage />} />
         <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
           <Route index element={<DashboardPage />} />
+          <Route path="programs" element={<ProgramsPage />} />
           <Route path="pages" element={<PagesListPage />} />
           <Route path="pages/:pageId" element={<PageBuilderPage />} />
           <Route path="branding" element={<BrandingPage />} />

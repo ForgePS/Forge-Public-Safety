@@ -16,17 +16,18 @@ function writeStore(data) {
 
 function emptyStore() {
   return {
+    programs: [],
     pages: [],
     savedSections: [],
-    branding: null,
-    navigation: null,
+    branding: [],
+    navigation: [],
     footers: [],
     media: [],
     forms: [],
     formSubmissions: [],
     collections: [],
     collectionEntries: [],
-    settings: null,
+    settings: [],
     emailTemplates: [],
     popups: [],
     integrations: [],
@@ -34,8 +35,8 @@ function emptyStore() {
     users: [],
     versions: [],
     redirects: [],
-    seoGlobal: null,
-    search: null,
+    seoGlobal: [],
+    search: [],
   };
 }
 
@@ -58,13 +59,22 @@ export function updateLocalCollection(collection, updater) {
 export function getLocalItem(collection, id) {
   const store = getLocalStore();
   const items = store[collection];
-  if (!Array.isArray(items)) return items;
+  if (!Array.isArray(items)) {
+    if (items?.id === id) return items;
+    return null;
+  }
   return items.find((item) => item.id === id) || null;
 }
 
 export function upsertLocalItem(collection, item) {
   return updateLocalCollection(collection, (items) => {
-    if (!Array.isArray(items)) return item;
+    if (Array.isArray(item)) return item;
+    if (!Array.isArray(items)) {
+      if (items && typeof items === "object" && !Array.isArray(items) && items.id === item.id) {
+        return { ...items, ...item, updatedAt: new Date().toISOString() };
+      }
+      return item;
+    }
     const index = items.findIndex((i) => i.id === item.id);
     if (index >= 0) {
       const next = [...items];
@@ -82,15 +92,6 @@ export function deleteLocalItem(collection, id) {
   });
 }
 
-export function getLocalSingleton(collection) {
-  const store = getLocalStore();
-  return store[collection];
-}
-
-export function setLocalSingleton(collection, data) {
-  return updateLocalCollection(collection, data);
-}
-
 export function addLocalVersion(entry) {
   return updateLocalCollection("versions", (versions) => [
     {
@@ -103,7 +104,8 @@ export function addLocalVersion(entry) {
 }
 
 export function isLocalStoreSeeded() {
-  return Boolean(readStore()?.pages?.length);
+  const store = readStore();
+  return Boolean(store?.programs?.length || store?.pages?.length);
 }
 
 export function clearLocalStore() {
