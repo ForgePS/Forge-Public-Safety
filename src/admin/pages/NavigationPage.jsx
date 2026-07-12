@@ -3,9 +3,11 @@ import { Plus, Trash2 } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { createId } from "../../cms/core/ids.js";
 import AdminPageHeader, { AdminInput, AdminButton, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
+import AdminSplitLayout from "../components/AdminSplitLayout.jsx";
+import LiveSitePreview from "../components/LiveSitePreview.jsx";
 
 export default function NavigationPage() {
-  const { store, refresh } = useCms();
+  const { store, refresh, branding, footers } = useCms();
   const [nav, setNav] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
@@ -36,10 +38,10 @@ export default function NavigationPage() {
     setNav({ ...nav, mainMenu: nav.mainMenu.filter((item) => item.id !== id) });
   };
 
-  return (
+  const editor = (
     <div>
       <div className="p-8">
-        <AdminPageHeader title="Header & Navigation" description="Configure main menu, header buttons, announcement bar, and mobile navigation." />
+        <AdminPageHeader title="Header & Navigation" description="Configure main menu, header buttons, and announcement bar. See changes live on the right." />
         <div className="mt-8 space-y-6">
           <AdminCard title="Header Settings">
             <div className="grid gap-4 md:grid-cols-2">
@@ -99,4 +101,21 @@ export default function NavigationPage() {
       <Toast message={toast} onClose={() => setToast("")} />
     </div>
   );
+
+  const preview = (
+    <LiveSitePreview
+      branding={branding}
+      navigation={nav}
+      footer={footers?.[0]}
+      label="Navigation Preview"
+    >
+      <div className="py-24 px-8 text-center">
+        <p className="text-xs uppercase tracking-wider text-[#64748B] mb-4">Page content area</p>
+        <h2 className="text-3xl font-black text-white mb-4">Your page content appears here</h2>
+        <p className="text-[#94A3B8] max-w-md mx-auto">The header above reflects your navigation changes instantly as you edit menu items and buttons.</p>
+      </div>
+    </LiveSitePreview>
+  );
+
+  return <AdminSplitLayout editor={editor} preview={preview} />;
 }

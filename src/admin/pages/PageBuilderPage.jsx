@@ -8,24 +8,24 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  ArrowLeft, Plus, GripVertical, Eye, EyeOff, Copy, Trash2, Undo2, Redo2, Monitor, Tablet, Smartphone, Save,
+  ArrowLeft, Plus, GripVertical, Eye, EyeOff, Copy, Trash2, Undo2, Redo2, Save,
 } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { getAllBlockTypes, getBlockDef, createBlock, createSection, DEFAULT_SEO } from "../../cms/blocks/registry.js";
 import { createSectionId, createBlockId } from "../../cms/core/ids.js";
 import { validatePage, sanitizeSlug } from "../../cms/core/validation.js";
-import { PageRenderer } from "../../cms/renderer/BlockRenderer.jsx";
+import LiveSitePreview from "../components/LiveSitePreview.jsx";
 import FieldEditor from "../components/FieldEditor.jsx";
 import AdminPageHeader, { AdminButton, AdminInput, AdminSelect, AdminTextarea, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
 
 export default function PageBuilderPage() {
   const { pageId } = useParams();
-  const { pages, branding, forms, collections, store, refresh } = useCms();
+  const { pages, branding, navigation, footers, forms, collections, store, refresh } = useCms();
   const [page, setPage] = useState(null);
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedBlock, setSelectedBlock] = useState(null);
   const [previewMode, setPreviewMode] = useState(false);
-  const [breakpoint, setBreakpoint] = useState("desktop");
+  const [hoveredSection, setHoveredSection] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
   const [history, setHistory] = useState([]);
@@ -183,12 +183,7 @@ export default function PageBuilderPage() {
         <div className="flex items-center gap-2">
           <AdminButton variant="ghost" onClick={undo} disabled={historyIndex <= 0}><Undo2 size={16} /></AdminButton>
           <AdminButton variant="ghost" onClick={redo} disabled={historyIndex >= history.length - 1}><Redo2 size={16} /></AdminButton>
-          <div className="flex rounded-lg border border-[#1E293B] overflow-hidden">
-            {[{ id: "desktop", icon: Monitor }, { id: "tablet", icon: Tablet }, { id: "mobile", icon: Smartphone }].map(({ id, icon: Icon }) => (
-              <button key={id} onClick={() => setBreakpoint(id)} className={`p-2 ${breakpoint === id ? "bg-[#F97316]/15 text-[#F97316]" : "text-[#64748B] hover:text-white"}`}><Icon size={16} /></button>
-            ))}
-          </div>
-          <AdminButton variant="secondary" onClick={() => setPreviewMode(!previewMode)}><Eye size={16} /> {previewMode ? "Edit" : "Preview"}</AdminButton>
+          <AdminButton variant="secondary" onClick={() => setPreviewMode(!previewMode)}><Eye size={16} /> {previewMode ? "Edit" : "Focus"}</AdminButton>
           <AdminButton onClick={handleSave} disabled={saving}><Save size={16} /> {saving ? "Saving..." : "Save"}</AdminButton>
         </div>
       </div>
@@ -258,8 +253,23 @@ export default function PageBuilderPage() {
           </aside>
         )}
 
-        <div className={`flex-1 overflow-y-auto bg-black ${breakpoint === "mobile" ? "max-w-[375px] mx-auto border-x border-[#1E293B]" : breakpoint === "tablet" ? "max-w-[768px] mx-auto border-x border-[#1E293B]" : ""}`}>
-          <PageRenderer page={page} branding={branding} forms={forms} collections={collections} />
+        <div className="flex-1 overflow-hidden min-w-0">
+          <LiveSitePreview
+            branding={branding}
+            navigation={navigation}
+            footer={footers?.[0]}
+            page={page}
+            forms={forms}
+            collections={collections}
+            highlight={selectedSection || hoveredSection}
+            onSectionClick={(id) => {
+              setSelectedSection(id);
+              const section = page.sections?.find((s) => s.id === id);
+              setSelectedBlock(section?.blocks?.[0]?.id);
+            }}
+            onSectionHover={setHoveredSection}
+            label={`Editing: ${page.title}`}
+          />
         </div>
 
         {!previewMode && selectedBlockData && blockDef && (

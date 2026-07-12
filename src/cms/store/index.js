@@ -207,7 +207,7 @@ export function migrateLegacyStore() {
     };
     const migrated = {
       ...data,
-      programs: data.programs?.length ? data.programs : [],
+      programs: data.programs?.length ? data.programs : DEFAULT_PROGRAMS,
       pages: tag(data.pages),
       footers: tag(data.footers),
       forms: tag(data.forms),

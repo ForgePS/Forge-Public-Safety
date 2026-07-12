@@ -3,9 +3,11 @@ import { Plus, Trash2 } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { createId } from "../../cms/core/ids.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminButton, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
+import AdminSplitLayout from "../components/AdminSplitLayout.jsx";
+import LiveSitePreview from "../components/LiveSitePreview.jsx";
 
 export default function FooterPage() {
-  const { footers, store, refresh } = useCms();
+  const { footers, store, refresh, branding, navigation } = useCms();
   const [footer, setFooter] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
@@ -38,10 +40,10 @@ export default function FooterPage() {
     });
   };
 
-  return (
+  const editor = (
     <div>
       <div className="p-8">
-        <AdminPageHeader title="Footer Builder" description="Configure footer columns, links, copyright, and legal links." />
+        <AdminPageHeader title="Footer Builder" description="Configure footer columns, links, and copyright. Preview updates in real time." />
         <div className="mt-8 space-y-6">
           <AdminCard title="Footer Content">
             <div className="space-y-4">
@@ -101,4 +103,21 @@ export default function FooterPage() {
       <Toast message={toast} onClose={() => setToast("")} />
     </div>
   );
+
+  const preview = (
+    <LiveSitePreview
+      branding={branding}
+      navigation={navigation}
+      footer={footer}
+      label="Footer Preview"
+      showChrome
+    >
+      <div className="py-32 px-8 text-center min-h-[300px]">
+        <p className="text-xs uppercase tracking-wider text-[#64748B] mb-4">Page content area</p>
+        <h2 className="text-2xl font-black text-white">Scroll down to see footer</h2>
+      </div>
+    </LiveSitePreview>
+  );
+
+  return <AdminSplitLayout editor={editor} preview={preview} />;
 }

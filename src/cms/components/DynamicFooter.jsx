@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { useCms } from "../context/CmsContext.jsx";
 
-export default function DynamicFooter({ footerId = "default" }) {
-  const { getFooter, branding } = useCms();
-  const footer = getFooter(footerId);
+export default function DynamicFooter({ footerId, footer: footerProp, branding: brandingProp, preview = false }) {
+  const cms = useCms();
+  const branding = brandingProp ?? cms.branding;
+  const footer = footerProp ?? cms.getFooter(footerId);
   if (!footer) return null;
 
   const logo = footer.logo || branding?.logos?.primary || "/assets/forge-logo.png";
@@ -27,7 +28,9 @@ export default function DynamicFooter({ footerId = "default" }) {
                 <ul className="space-y-2">
                   {(col.links || []).map((link) => (
                     <li key={link.id}>
-                      {link.href?.startsWith("http") ? (
+                      {preview ? (
+                        <span className="text-sm text-[#94A3B8]">{link.label}</span>
+                      ) : link.href?.startsWith("http") ? (
                         <a href={link.href} className="text-sm text-[#94A3B8] hover:text-white transition-colors" target={link.newTab ? "_blank" : undefined} rel="noreferrer">{link.label}</a>
                       ) : (
                         <Link to={link.href || "/"} className="text-sm text-[#94A3B8] hover:text-white transition-colors">{link.label}</Link>
@@ -44,7 +47,11 @@ export default function DynamicFooter({ footerId = "default" }) {
           <p>{footer.copyright || `© ${new Date().getFullYear()} ${companyName}. All rights reserved.`}</p>
           <div className="flex flex-wrap gap-4">
             {(footer.legalLinks || []).map((link) => (
-              <Link key={link.id} to={link.href || "/"} className="hover:text-white">{link.label}</Link>
+              preview ? (
+                <span key={link.id} className="text-[#64748B]">{link.label}</span>
+              ) : (
+                <Link key={link.id} to={link.href || "/"} className="hover:text-white">{link.label}</Link>
+              )
             ))}
           </div>
         </div>

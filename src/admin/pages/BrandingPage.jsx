@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import AdminPageHeader, { AdminInput, AdminCard, SaveBar, Toast } from "../components/AdminPageHeader.jsx";
+import AdminSplitLayout from "../components/AdminSplitLayout.jsx";
+import LiveSitePreview, { BrandingPreviewSample } from "../components/LiveSitePreview.jsx";
 
 function useSingletonEditor(key) {
-  const { store, refresh } = useCms();
+  const { store, refresh, navigation, footers } = useCms();
   const [data, setData] = useState(null);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
@@ -25,21 +27,21 @@ function useSingletonEditor(key) {
     }
   };
 
-  return { data, setData, save, saving, toast, setToast };
+  return { data, setData, save, saving, toast, setToast, navigation, footers };
 }
 
 export default function BrandingPage() {
-  const { data, setData, save, saving, toast, setToast } = useSingletonEditor("branding");
+  const { data, setData, save, saving, toast, setToast, navigation, footers } = useSingletonEditor("branding");
   if (!data) return <div className="p-8 text-[#64748B]">Loading...</div>;
 
   const updateColor = (key, value) => setData({ ...data, colors: { ...data.colors, [key]: value } });
   const updateFont = (key, value) => setData({ ...data, fonts: { ...data.fonts, [key]: value } });
   const updateLogo = (key, value) => setData({ ...data, logos: { ...data.logos, [key]: value } });
 
-  return (
+  const editor = (
     <div>
       <div className="p-8">
-        <AdminPageHeader title="Global Branding" description="Manage logos, colors, fonts, and global styles applied across the entire website." />
+        <AdminPageHeader title="Global Branding" description="Manage logos, colors, fonts, and global styles. Preview updates in real time." />
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <AdminCard title="Company">
             <div className="space-y-4">
@@ -85,6 +87,19 @@ export default function BrandingPage() {
       <Toast message={toast} onClose={() => setToast("")} />
     </div>
   );
+
+  const preview = (
+    <LiveSitePreview
+      branding={data}
+      navigation={navigation}
+      footer={footers?.[0]}
+      label="Branding Preview"
+    >
+      <BrandingPreviewSample branding={data} />
+    </LiveSitePreview>
+  );
+
+  return <AdminSplitLayout editor={editor} preview={preview} />;
 }
 
 function ColorInput({ label, value, onChange }) {
