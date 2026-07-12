@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const restoreDefaultContent = async () => {
     if (!confirm("Restore default website content for this program? Your current pages and settings will be replaced.")) return;
     clearLocalStore();
+    clearSeedCache();
     seedLocalStore();
     await refresh();
     setToast("Default content restored — refresh the public site");

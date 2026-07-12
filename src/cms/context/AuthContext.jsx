@@ -22,7 +22,11 @@ export function AuthProvider({ children }) {
     }
     const auth = getFirebaseAuth();
     if (!auth) { setLoading(false); return; }
-    return onAuthStateChanged(auth, async (fbUser) => {
+
+    const timeout = setTimeout(() => setLoading(false), 5000);
+
+    const unsub = onAuthStateChanged(auth, async (fbUser) => {
+      clearTimeout(timeout);
       if (fbUser) {
         const store = getLocalStore();
         const cmsUser = store.users?.find((u) => u.email === fbUser.email) || { role: "read_only", email: fbUser.email, name: fbUser.displayName || fbUser.email };
@@ -32,6 +36,11 @@ export function AuthProvider({ children }) {
       }
       setLoading(false);
     });
+
+    return () => {
+      clearTimeout(timeout);
+      unsub();
+    };
   }, []);
 
   const login = async (email, password) => {

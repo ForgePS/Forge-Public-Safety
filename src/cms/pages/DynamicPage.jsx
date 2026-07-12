@@ -9,7 +9,7 @@ import { isPreviewHost } from "../core/programs.js";
 
 export default function DynamicPage({ slug: propSlug }) {
   const params = useParams();
-  const { getPageForDisplay, branding, forms, collections, loading, redirects, settings, pages, program } = useCms();
+  const { getPageForDisplay, branding, forms, collections, loading, contentError, redirects, settings, pages, program } = useCms();
   const brandingStyles = useBrandingStyles();
 
   const slug = propSlug || params.slug || "home";
@@ -33,7 +33,12 @@ export default function DynamicPage({ slug: propSlug }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-pulse text-[#64748B]">Loading...</div>
+        <div className="text-center">
+          <div className="animate-pulse text-[#64748B] mb-4">Loading website...</div>
+          {contentError && (
+            <p className="text-sm text-yellow-400 max-w-md px-4">{contentError}</p>
+          )}
+        </div>
       </div>
     );
   }

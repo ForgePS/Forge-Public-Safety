@@ -20,7 +20,8 @@ const CmsContext = createContext(null);
 
 function readStoredProgramId() {
   try {
-    return localStorage.getItem(ACTIVE_PROGRAM_KEY) || DEFAULT_PROGRAM_ID;
+    const stored = localStorage.getItem(ACTIVE_PROGRAM_KEY) || DEFAULT_PROGRAM_ID;
+    return DEFAULT_PROGRAMS.some((p) => p.id === stored) ? stored : DEFAULT_PROGRAM_ID;
   } catch {
     return DEFAULT_PROGRAM_ID;
   }
@@ -38,6 +39,14 @@ function normalizeSingleton(data) {
   return data?.id ? data : (Array.isArray(data) ? data[0] : null);
 }
 
+function mergeProgramDefaults(storedPrograms) {
+  const list = Array.isArray(storedPrograms) && storedPrograms.length ? storedPrograms : DEFAULT_PROGRAMS;
+  return list.map((p) => {
+    const defaults = DEFAULT_PROGRAMS.find((d) => d.id === p.id);
+    return defaults ? { ...defaults, ...p, name: defaults.name, shortName: defaults.shortName, description: defaults.description } : p;
+  });
+}
+
 function applyContentToState(content, setters) {
   setters.setPages(Array.isArray(content.pages) ? content.pages : []);
   setters.setBranding(content.branding || null);
@@ -49,7 +58,7 @@ function applyContentToState(content, setters) {
   setters.setRedirects(Array.isArray(content.redirects) ? content.redirects : []);
   setters.setSeoGlobal(content.seoGlobal || null);
   setters.setCollections(Array.isArray(content.collections) ? content.collections : []);
-  if (content.programs?.length) setters.setPrograms(content.programs);
+  if (content.programs?.length) setters.setPrograms(mergeProgramDefaults(content.programs));
 }
 
 export function CmsProvider({ children }) {
@@ -79,7 +88,7 @@ export function CmsProvider({ children }) {
   const [contentError, setContentError] = useState(null);
   const [usingFallback, setUsingFallback] = useState(false);
 
-  const loadInProgressRef = useRef(false);
+  const loadGenerationRef = useRef(0);
   const programIdRef = useRef(programId);
   programIdRef.current = programId;
 
@@ -89,7 +98,8 @@ export function CmsProvider({ children }) {
   );
 
   const setProgramId = useCallback((id) => {
-    if (id === programIdRef.current) return;
+    if (!id || id === programIdRef.current) return;
+    if (!DEFAULT_PROGRAMS.some((p) => p.id === id)) return;
     writeStoredProgramId(id);
     setSwitchingProgram(true);
     setProgramIdState(id);
@@ -97,7 +107,7 @@ export function CmsProvider({ children }) {
 
   const refreshPrograms = useCallback(async () => {
     const list = await cmsStore.getAll("programs");
-    setPrograms(Array.isArray(list) && list.length ? list : DEFAULT_PROGRAMS);
+    setPrograms(mergeProgramDefaults(list));
   }, []);
 
   const stateSetters = useMemo(() => ({
@@ -114,12 +124,9 @@ export function CmsProvider({ children }) {
     setCollections,
   }), []);
 
-  const loadAll = useCallback(async (pid, { isSwitch = false } = {}) => {
-    if (loadInProgressRef.current) return;
-    loadInProgressRef.current = true;
-    setContentError(null);
-    setUsingFallback(false);
-    if (isSwitch) setSwitchingProgram(true);
+  const loadAll = useCallback(async (pid) => {
+    const generation = ++loadGenerationRef.current;
+    setLoading(true);
 
     try {
       migrateLegacyStore();
@@ -154,8 +161,10 @@ export function CmsProvider({ children }) {
         cmsStore.getAll("collections", pid),
       ]);
 
+      if (generation !== loadGenerationRef.current) return;
+
       const loadedPages = Array.isArray(p) ? p : [];
-      setPrograms(Array.isArray(programList) && programList.length ? programList : DEFAULT_PROGRAMS);
+      setPrograms(mergeProgramDefaults(programList));
 
       if (loadedPages.length === 0) {
         const fallback = getProgramContentFromSeed(pid);
@@ -172,18 +181,22 @@ export function CmsProvider({ children }) {
         setRedirects(Array.isArray(red) ? red : []);
         setSeoGlobal(normalizeSingleton(seo));
         setCollections(Array.isArray(col) ? col : []);
+        setUsingFallback(false);
       }
+      setContentError(null);
     } catch (err) {
+      if (generation !== loadGenerationRef.current) return;
       console.error("CMS load failed, using seed content:", err);
       setContentError(err.message || "Failed to load content");
       const fallback = getProgramContentFromSeed(pid);
       applyContentToState(fallback, stateSetters);
       setUsingFallback(true);
     } finally {
-      setLoading(false);
-      setSwitchingProgram(false);
-      setInitialized(true);
-      loadInProgressRef.current = false;
+      if (generation === loadGenerationRef.current) {
+        setLoading(false);
+        setSwitchingProgram(false);
+        setInitialized(true);
+      }
     }
   }, [stateSetters]);
 
@@ -195,19 +208,15 @@ export function CmsProvider({ children }) {
   }, [isAdminMode, programs, programId]);
 
   useEffect(() => {
-    const isSwitch = initialized;
-    if (!initialized) setLoading(true);
-    loadAll(programId, { isSwitch });
-  }, [programId]); // eslint-disable-line react-hooks/exhaustive-deps -- load on program change only
+    loadAll(programId);
+  }, [programId, loadAll]);
 
   useEffect(() => {
     let timer;
     const onStoreChange = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        if (!loadInProgressRef.current) {
-          loadAll(programIdRef.current);
-        }
+        loadAll(programIdRef.current);
       }, 300);
     };
     window.addEventListener("cms-store-changed", onStoreChange);
