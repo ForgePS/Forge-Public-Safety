@@ -4,6 +4,7 @@ import * as cmsStore from "../store/index.js";
 import { seedLocalStore } from "../store/seed.js";
 import { migrateLegacyStore } from "../store/index.js";
 import { getProgramContentFromSeed, clearSeedCache } from "../store/contentFallback.js";
+import { ensurePublicSiteBootstrap } from "../store/productionBootstrap.js";
 import { brandingStylesFromBranding } from "../core/brandingStyles.js";
 import {
   DEFAULT_PROGRAM_ID,
@@ -131,6 +132,11 @@ export function CmsProvider({ children }) {
 
     try {
       migrateLegacyStore();
+
+      if (!isAdminMode && !cmsStore.isUsingFirebase()) {
+        await ensurePublicSiteBootstrap(pid);
+      }
+
       const hasExistingStore = typeof window !== "undefined" && Boolean(localStorage.getItem(LOCAL_STORE_KEY));
       if (!cmsStore.isSeeded() && !hasExistingStore) {
         seedLocalStore();
@@ -165,8 +171,26 @@ export function CmsProvider({ children }) {
 
       if (generation !== loadGenerationRef.current) return;
 
-      const loadedPages = Array.isArray(p) ? p : [];
-      setPrograms(mergeProgramDefaults(programList));
+      let loadedPages = Array.isArray(p) ? p : [];
+      setPrograms((prev) => {
+        const next = mergeProgramDefaults(programList);
+        if (prev.length === next.length && prev.every((item, i) => item.id === next[i]?.id)) return prev;
+        return next;
+      });
+
+      const applyLoadedContent = () => {
+        setPages(loadedPages);
+        setBranding(normalizeSingleton(b));
+        setNavigation(normalizeSingleton(n));
+        setFooters(Array.isArray(f) ? f : []);
+        setForms(Array.isArray(fm) ? fm : []);
+        setSettings(normalizeSingleton(s));
+        setPopups(Array.isArray(pop) ? pop : []);
+        setRedirects(Array.isArray(red) ? red : []);
+        setSeoGlobal(normalizeSingleton(seo));
+        setCollections(Array.isArray(col) ? col : []);
+        setUsingFallback(false);
+      };
 
       if (loadedPages.length === 0) {
         if (isAdminMode) {
@@ -182,31 +206,29 @@ export function CmsProvider({ children }) {
           setCollections([]);
           setUsingFallback(false);
         } else {
-          const fallback = getProgramContentFromSeed(pid);
+          const bootstrapSlice = await ensurePublicSiteBootstrap(pid);
+          const fallback = bootstrapSlice?.pages?.length
+            ? bootstrapSlice
+            : getProgramContentFromSeed(pid);
           applyContentToState(fallback, stateSetters);
           setUsingFallback(true);
         }
       } else {
-        setPages(loadedPages);
-        setBranding(normalizeSingleton(b));
-        setNavigation(normalizeSingleton(n));
-        setFooters(Array.isArray(f) ? f : []);
-        setForms(Array.isArray(fm) ? fm : []);
-        setSettings(normalizeSingleton(s));
-        setPopups(Array.isArray(pop) ? pop : []);
-        setRedirects(Array.isArray(red) ? red : []);
-        setSeoGlobal(normalizeSingleton(seo));
-        setCollections(Array.isArray(col) ? col : []);
-        setUsingFallback(false);
+        applyLoadedContent();
       }
       setContentError(null);
     } catch (err) {
       if (generation !== loadGenerationRef.current) return;
       console.error("CMS load failed, using seed content:", err);
       setContentError(err.message || "Failed to load content");
-      const fallback = getProgramContentFromSeed(pid);
-      applyContentToState(fallback, stateSetters);
-      setUsingFallback(true);
+      if (!isAdminMode) {
+        const bootstrapSlice = await ensurePublicSiteBootstrap(pid);
+        const fallback = bootstrapSlice?.pages?.length
+          ? bootstrapSlice
+          : getProgramContentFromSeed(pid);
+        applyContentToState(fallback, stateSetters);
+        setUsingFallback(true);
+      }
     } finally {
       if (generation === loadGenerationRef.current) {
         setLoading(false);
@@ -214,14 +236,13 @@ export function CmsProvider({ children }) {
         setInitialized(true);
       }
     }
-  }, [stateSetters]);
+  }, [stateSetters, isAdminMode]);
 
   useEffect(() => {
-    if (!isAdminMode) {
-      const resolved = resolveProgramFromHost(window.location.hostname, programs);
-      if (resolved.id !== programId) setProgramIdState(resolved.id);
-    }
-  }, [isAdminMode, programs, programId]);
+    if (isAdminMode) return;
+    const resolved = resolveProgramFromHost(window.location.hostname, DEFAULT_PROGRAMS);
+    if (resolved.id !== programId) setProgramIdState(resolved.id);
+  }, [isAdminMode, programId]);
 
   useEffect(() => {
     loadAll(programId);

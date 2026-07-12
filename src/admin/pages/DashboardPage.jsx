@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
-import { FileText, Plus, Layers, ExternalLink } from "lucide-react";
+import { FileText, Plus, Layers, ExternalLink, AlertTriangle } from "lucide-react";
+import { useState } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
-import { PROGRAM_TYPES } from "../../cms/core/programs.js";
-import AdminPageHeader from "../components/AdminPageHeader.jsx";
+import { DEFAULT_PROGRAM_ID, PROGRAM_TYPES } from "../../cms/core/programs.js";
+import { restoreProgramWebsite } from "../../cms/store/programImport.js";
+import AdminPageHeader, { AdminButton } from "../components/AdminPageHeader.jsx";
 
 export default function DashboardPage() {
-  const { pages, forms, settings, programs, program, programId, setProgramId, loading, switchingProgram } = useCms();
+  const { pages, forms, settings, programs, program, programId, setProgramId, loading, switchingProgram, refresh } = useCms();
+  const [restoring, setRestoring] = useState(false);
 
   if (loading) return <div className="p-8 text-[#64748B]">Loading dashboard...</div>;
 
@@ -13,12 +16,60 @@ export default function DashboardPage() {
   const drafts = pages.filter((p) => p.status === "draft").length;
   const recent = [...pages].sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)).slice(0, 5);
 
+  const restoreWebsite = async () => {
+    setRestoring(true);
+    try {
+      await restoreProgramWebsite(programId);
+      await refresh();
+    } finally {
+      setRestoring(false);
+    }
+  };
+
   return (
     <div className="p-8">
       <AdminPageHeader
         title="Control Center"
         description={`Managing ${program?.name || "your program"}. Switch programs from the sidebar to edit another site.`}
       />
+
+      {pages.length === 0 && (
+        <div className="mt-6 rounded-xl border border-[#F97316]/30 bg-[#F97316]/10 p-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={20} className="text-[#F97316] shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-white font-medium">No pages found for {program?.name}</p>
+              <p className="text-sm text-[#94A3B8] mt-1 mb-4">
+                {programId === DEFAULT_PROGRAM_ID
+                  ? "Your Forge Public Safety website content is missing for this program. Restore it below, or switch programs if you were editing the wrong site."
+                  : "This program has no pages yet. Switch to Forge Public Safety for your main marketing website, or restore default content for this program."}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <AdminButton onClick={restoreWebsite} disabled={restoring}>
+                  {restoring ? "Restoring..." : "Restore website"}
+                </AdminButton>
+                {programId !== DEFAULT_PROGRAM_ID && (
+                  <AdminButton variant="secondary" onClick={() => setProgramId(DEFAULT_PROGRAM_ID)}>
+                    Switch to Forge Public Safety
+                  </AdminButton>
+                )}
+                <Link to="/admin/programs" className="inline-flex items-center rounded-full px-4 py-2 text-sm font-bold text-[#94A3B8] hover:text-white hover:bg-white/5">
+                  Import / Export
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {programId !== DEFAULT_PROGRAM_ID && pages.length > 0 && (
+        <div className="mt-6 rounded-xl border border-[#1E293B] bg-[#111827] p-4 text-sm text-[#94A3B8]">
+          Editing <strong className="text-white">{program?.name}</strong> — not your main marketing site.{" "}
+          <button type="button" onClick={() => setProgramId(DEFAULT_PROGRAM_ID)} className="text-[#F97316] font-medium hover:underline">
+            Switch to Forge Public Safety
+          </button>
+        </div>
+      )}
 
       <div className="mt-8">
         <div className="flex items-center justify-between mb-4">

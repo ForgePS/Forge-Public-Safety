@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
-import { seedLocalStore } from "../../cms/store/seed.js";
-import { clearLocalStore } from "../../cms/store/localStore.js";
-import { clearSeedCache } from "../../cms/store/contentFallback.js";
+import { restoreProgramWebsite } from "../../cms/store/programImport.js";
+import { DEFAULT_PROGRAM_ID } from "../../cms/core/programs.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
 export default function SettingsPage() {
-  const { store, refresh } = useCms();
+  const { store, refresh, program, programId, setProgramId, pages } = useCms();
   const [settings, setSettings] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [restoring, setRestoring] = useState(false);
   const [toast, setToast] = useState("");
 
   useEffect(() => {
@@ -23,13 +23,18 @@ export default function SettingsPage() {
     setToast("Settings saved");
   };
 
-  const restoreDefaultContent = async () => {
-    if (!confirm("Restore default website content for this program? Your current pages and settings will be replaced.")) return;
-    clearLocalStore();
-    clearSeedCache();
-    seedLocalStore();
-    await refresh();
-    setToast("Default content restored — refresh the public site");
+  const restoreWebsite = async () => {
+    if (!confirm(`Restore the default website content for ${program?.name || "this program"}? This replaces pages and settings for this program only.`)) return;
+    setRestoring(true);
+    try {
+      const result = await restoreProgramWebsite(programId);
+      await refresh();
+      setToast(`Restored ${result.pagesImported} pages for ${program?.name}`);
+    } catch (err) {
+      setToast(err.message || "Restore failed");
+    } finally {
+      setRestoring(false);
+    }
   };
 
   if (!settings) return <div className="p-8 text-[#64748B]">Loading...</div>;
@@ -38,6 +43,30 @@ export default function SettingsPage() {
     <div>
       <div className="p-8">
         <AdminPageHeader title="Website Settings" description="Business info, contact details, maintenance mode, analytics, and integrations." />
+
+        {(pages.length === 0 || programId !== DEFAULT_PROGRAM_ID) && (
+          <div className="mt-6 rounded-xl border border-[#F97316]/30 bg-[#F97316]/10 p-4">
+            <p className="text-sm text-white font-medium mb-2">Website missing or on the wrong program?</p>
+            <p className="text-sm text-[#94A3B8] mb-4">
+              {pages.length === 0
+                ? `No pages are loaded for ${program?.name}. Restore the default site content below.`
+                : `You are editing "${program?.name}". Your main marketing website is Forge Public Safety.`}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {pages.length === 0 && (
+                <AdminButton onClick={restoreWebsite} disabled={restoring}>
+                  {restoring ? "Restoring..." : "Restore website for this program"}
+                </AdminButton>
+              )}
+              {programId !== DEFAULT_PROGRAM_ID && (
+                <AdminButton variant="secondary" onClick={() => setProgramId(DEFAULT_PROGRAM_ID)}>
+                  Switch to Forge Public Safety
+                </AdminButton>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <AdminCard title="Business Information">
             <div className="space-y-4">
@@ -76,12 +105,15 @@ export default function SettingsPage() {
               <AdminInput label="Date Format" value={settings.locale?.dateFormat} onChange={(v) => setSettings({ ...settings, locale: { ...settings.locale, dateFormat: v } })} />
             </div>
           </AdminCard>
-          <AdminCard title="Website not showing?">
+          <AdminCard title="Restore website content">
             <p className="text-sm text-[#94A3B8] mb-4">
-              If the public site is blank or shows 404, restore the default marketing content. Local dev runs at{" "}
-              <strong className="text-white">http://localhost:5173</strong> (not port 80).
+              Restores the default marketing pages for <strong className="text-white">{program?.name}</strong> only.
+              Other programs are not affected. Local dev runs at{" "}
+              <strong className="text-white">http://localhost:5173</strong>.
             </p>
-            <AdminButton variant="secondary" onClick={restoreDefaultContent}>Restore default content</AdminButton>
+            <AdminButton variant="secondary" onClick={restoreWebsite} disabled={restoring}>
+              {restoring ? "Restoring..." : "Restore website for this program"}
+            </AdminButton>
           </AdminCard>
         </div>
       </div>

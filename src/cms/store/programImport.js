@@ -321,3 +321,7 @@ export async function copyProgramContent(targetProgramId, sourceProgramId, repla
     replace,
   });
 }
+
+export async function restoreProgramWebsite(programId) {
+  return importBundledProgram(programId, true);
+}

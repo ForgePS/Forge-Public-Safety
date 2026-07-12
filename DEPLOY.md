@@ -14,6 +14,16 @@ npm run deploy
 
 This deploys **hosting + Firestore rules + Storage rules** only. Your site will go live.
 
+Each build bundles default website content into `/cms-seed.json` so **https://forge-website-b276c.web.app** shows the marketing site even before anyone visits Admin.
+
+If the live site is blank, pull the latest code and redeploy:
+
+```powershell
+git pull origin cursor/multi-program-cms-hub-1b94
+npm install
+npm run deploy
+```
+
 ---
 
 ## Do NOT run bare `firebase deploy`
