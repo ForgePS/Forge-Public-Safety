@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
-import { restoreProgramWebsite } from "../../cms/store/programImport.js";
+import { restoreProgramWebsite, hardResetSiteFromDeployedSeed } from "../../cms/store/programImport.js";
 import { DEFAULT_PROGRAM_ID } from "../../cms/core/programs.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
@@ -10,29 +10,53 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [toast, setToast] = useState("");
+  const [toastType, setToastType] = useState("success");
 
   useEffect(() => {
     store.getAll("settings").then((s) => setSettings(s?.id ? s : (Array.isArray(s) ? s[0] : null)));
   }, [store]);
 
+  const showToast = (message, type = "success") => {
+    setToastType(type);
+    setToast(message);
+  };
+
   const save = async () => {
     setSaving(true);
-    await store.save("settings", settings);
-    await refresh();
-    setSaving(false);
-    setToast("Settings saved");
+    try {
+      await store.save("settings", settings);
+      await refresh();
+      showToast("Settings saved");
+    } catch (err) {
+      showToast(err.message || "Save failed", "error");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const restoreWebsite = async () => {
-    if (!confirm(`Restore the default website content for ${program?.name || "this program"}? This replaces pages and settings for this program only.`)) return;
+    if (!confirm(`Replace ${program?.name || "this program"} with the deployed website seed?`)) return;
     setRestoring(true);
     try {
       const result = await restoreProgramWebsite(programId);
       await refresh();
-      setToast(`Restored ${result.pagesImported} pages for ${program?.name}`);
+      showToast(`Restored ${result.pagesImported} pages from deployed seed (${result.source || "bundled"})`);
     } catch (err) {
-      setToast(err.message || "Restore failed");
+      showToast(err.message || "Restore failed", "error");
     } finally {
+      setRestoring(false);
+    }
+  };
+
+  const hardReset = async () => {
+    if (!confirm("Wipe ALL browser CMS data and reload the deployed website seed? This cannot be undone in this browser.")) return;
+    setRestoring(true);
+    try {
+      const result = await hardResetSiteFromDeployedSeed();
+      showToast(`Loaded ${result.pagesImported} pages from seed. Reloading…`);
+      window.setTimeout(() => window.location.assign("/"), 600);
+    } catch (err) {
+      showToast(err.message || "Hard reset failed", "error");
       setRestoring(false);
     }
   };
@@ -44,28 +68,29 @@ export default function SettingsPage() {
       <div className="p-8">
         <AdminPageHeader title="Website Settings" description="Business info, contact details, maintenance mode, analytics, and integrations." />
 
-        {(pages.length === 0 || programId !== DEFAULT_PROGRAM_ID) && (
-          <div className="mt-6 rounded-xl border border-[#F97316]/30 bg-[#F97316]/10 p-4">
-            <p className="text-sm text-white font-medium mb-2">Website missing or on the wrong program?</p>
-            <p className="text-sm text-[#94A3B8] mb-4">
-              {pages.length === 0
-                ? `No pages are loaded for ${program?.name}. Restore the default site content below.`
-                : `You are editing "${program?.name}". Your main marketing website is Forge Public Safety.`}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {pages.length === 0 && (
-                <AdminButton onClick={restoreWebsite} disabled={restoring}>
-                  {restoring ? "Restoring..." : "Restore website for this program"}
-                </AdminButton>
-              )}
-              {programId !== DEFAULT_PROGRAM_ID && (
-                <AdminButton variant="secondary" onClick={() => setProgramId(DEFAULT_PROGRAM_ID)}>
-                  Switch to Forge Public Safety
-                </AdminButton>
-              )}
-            </div>
+        <div className="mt-6 rounded-xl border border-[#F97316]/40 bg-[#F97316]/10 p-5">
+          <p className="text-sm text-white font-medium mb-1">Site looks wrong / restore did nothing?</p>
+          <p className="text-sm text-[#94A3B8] mb-4">
+            Use <strong className="text-white">Hard reset from deployed seed</strong>. It clears this browser’s saved CMS data and reloads{" "}
+            <code className="text-[#F97316]">/cms-seed.json</code> from Hosting. Ignore Import unless you have a backup file.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <AdminButton onClick={hardReset} disabled={restoring}>
+              {restoring ? "Resetting…" : "Hard reset from deployed seed"}
+            </AdminButton>
+            <AdminButton variant="secondary" onClick={restoreWebsite} disabled={restoring}>
+              {restoring ? "Working…" : `Restore ${program?.name || "this program"} only`}
+            </AdminButton>
+            {programId !== DEFAULT_PROGRAM_ID && (
+              <AdminButton variant="secondary" onClick={() => setProgramId(DEFAULT_PROGRAM_ID)}>
+                Switch to Forge Public Safety
+              </AdminButton>
+            )}
           </div>
-        )}
+          {pages.length === 0 && (
+            <p className="text-sm text-[#F97316] mt-3">No pages loaded for this program right now.</p>
+          )}
+        </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-2">
           <AdminCard title="Business Information">
@@ -105,20 +130,10 @@ export default function SettingsPage() {
               <AdminInput label="Date Format" value={settings.locale?.dateFormat} onChange={(v) => setSettings({ ...settings, locale: { ...settings.locale, dateFormat: v } })} />
             </div>
           </AdminCard>
-          <AdminCard title="Restore website content">
-            <p className="text-sm text-[#94A3B8] mb-4">
-              Restores the default marketing pages for <strong className="text-white">{program?.name}</strong> only.
-              Other programs are not affected. Local dev runs at{" "}
-              <strong className="text-white">http://localhost:5173</strong>.
-            </p>
-            <AdminButton variant="secondary" onClick={restoreWebsite} disabled={restoring}>
-              {restoring ? "Restoring..." : "Restore website for this program"}
-            </AdminButton>
-          </AdminCard>
         </div>
       </div>
       <SaveBar onSave={save} saving={saving} />
-      <Toast message={toast} onClose={() => setToast("")} />
+      <Toast message={toast} type={toastType} onClose={() => setToast("")} />
     </div>
   );
 }

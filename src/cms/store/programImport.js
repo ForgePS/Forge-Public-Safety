@@ -215,7 +215,17 @@ export async function importProgramContent(programId, options = {}) {
 
   if (cmsStore.isUsingFirebase()) {
     if (replace) await removeProgramFromFirebase(programId);
-    await saveBundleToFirebase(programId, bundle, userId);
+    try {
+      await saveBundleToFirebase(programId, bundle, userId);
+    } catch (err) {
+      const msg = err?.message || String(err);
+      if (/permission|Missing or insufficient/i.test(msg)) {
+        throw new Error(
+          "Import failed: Firebase permission denied. Sign in with a real Firebase admin account (not the local “admin” password)."
+        );
+      }
+      throw err;
+    }
   } else {
     const store = getLocalStore();
     const base = replace ? stripProgramContent(store, programId) : store;
@@ -363,7 +373,79 @@ export async function copyProgramContent(targetProgramId, sourceProgramId, repla
 }
 
 export async function restoreProgramWebsite(programId) {
+  // Prefer the deployed cms-seed.json — that is what Hosting actually has.
+  // Falling back to rebuild-from-bundled only if seed fetch fails.
+  const { fetchProductionBootstrap, getProgramSliceFromBootstrap } = await import("./productionBootstrap.js");
+  const bootstrap = await fetchProductionBootstrap({ force: true });
+
+  if (bootstrap?.pages?.length) {
+    const slice = getProgramSliceFromBootstrap(bootstrap, programId);
+    if (!slice?.pages?.length) {
+      throw new Error(`Deployed seed has no pages for program "${programId}".`);
+    }
+
+    const bundle = {
+      pages: slice.pages,
+      branding: slice.branding ? [slice.branding] : [],
+      navigation: slice.navigation ? [slice.navigation] : [],
+      footers: slice.footers || [],
+      forms: slice.forms || [],
+      collections: slice.collections || [],
+      settings: slice.settings ? [slice.settings] : [],
+      redirects: slice.redirects || [],
+      seoGlobal: slice.seoGlobal ? [slice.seoGlobal] : [],
+      popups: slice.popups || [],
+      media: [],
+      emailTemplates: [],
+      search: [],
+    };
+
+    if (cmsStore.isUsingFirebase()) {
+      try {
+        await removeProgramFromFirebase(programId);
+        await saveBundleToFirebase(programId, bundle, "restore");
+      } catch (err) {
+        const msg = err?.message || String(err);
+        if (/permission|Missing or insufficient/i.test(msg)) {
+          throw new Error(
+            "Firestore failed: Firebase permission denied. Sign in with a real Firebase admin account (not the local “admin” password)."
+          );
+        }
+        throw err;
+      }
+    } else {
+      const store = getLocalStore();
+      const base = stripProgramContent(store, programId);
+      const next = mergeBundleIntoStore(base, bundle);
+      next.seedVersion = bootstrap.seedVersion || next.seedVersion;
+      // Keep programs list from full seed when available
+      if (bootstrap.programs?.length) next.programs = bootstrap.programs;
+      setLocalStore(next);
+    }
+
+    clearSeedCache();
+    const pagesImported = await verifyProgramImport(programId, bundle.pages);
+    return {
+      programId,
+      pagesImported,
+      replace: true,
+      source: "cms-seed",
+      importMode: "deployed-seed",
+      rebuiltFromContent: false,
+      importedPageTitles: (bundle.pages || []).map((p) => p.title || p.slug),
+    };
+  }
+
   return importBundledProgram(programId, true);
+}
+
+export async function hardResetSiteFromDeployedSeed() {
+  const { resetBrowserSiteFromSeed } = await import("./productionBootstrap.js");
+  const bootstrap = await resetBrowserSiteFromSeed();
+  return {
+    pagesImported: bootstrap.pages?.length || 0,
+    seedVersion: bootstrap.seedVersion,
+  };
 }
 
 export { analyzeMergedUpload, looksLikeCmsPage };
