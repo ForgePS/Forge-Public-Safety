@@ -1,16 +1,22 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import CtaButton, { SectionHeading } from "../components/CtaButton.jsx";
-import { content, productHref } from "../data/loadContent.js";
+import { productHref } from "../data/loadContent.js";
+import { useContent } from "../data/ContentContext.jsx";
 
 export default function ProductsPage() {
-  const { products } = content;
+  const content = useContent();
+  const { products, ui } = content;
 
   return (
     <div className="bg-black">
       <section className="py-20 bg-[#0B1220] border-b border-[#1E293B]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <SectionHeading eyebrow={products.heroEyebrow} title={products.heroTitle} description={products.heroDescription} />
+          <SectionHeading
+            eyebrow={products.heroEyebrow}
+            title={products.heroTitle}
+            description={products.heroDescription}
+          />
           <div className="mt-8 flex flex-wrap gap-4">
             <CtaButton to="/contact">{content.navigation.ctaLabel}</CtaButton>
             <Link to="/contact" className="inline-flex items-center gap-2 text-sm font-bold text-[#F97316]">
@@ -23,7 +29,11 @@ export default function ProductsPage() {
 
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <SectionHeading eyebrow={products.baseEyebrow} title={products.baseTitle} description={products.baseDescription} />
+          <SectionHeading
+            eyebrow={products.baseEyebrow}
+            title={products.baseTitle}
+            description={products.baseDescription}
+          />
           <ul className="mt-10 grid gap-4 md:grid-cols-2">
             {content.basePackageFeatures.map((feature) => (
               <li key={feature} className="rounded-2xl border border-[#1E293B] bg-[#111827] px-5 py-4 text-[#CBD5E1]">{feature}</li>
@@ -34,7 +44,11 @@ export default function ProductsPage() {
 
       <section className="py-20 bg-[#0B1220]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <SectionHeading eyebrow={products.addonsEyebrow} title={products.addonsTitle} description={products.addonsDescription} />
+          <SectionHeading
+            eyebrow={products.addonsEyebrow}
+            title={products.addonsTitle}
+            description={products.addonsDescription}
+          />
           <div className="mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {content.addOnModules.map((module) => (
               <article key={module.name} className="rounded-[32px] border border-[#1E293B] bg-[#111827] p-8">
@@ -49,7 +63,10 @@ export default function ProductsPage() {
 
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <SectionHeading title={products.coreTitle} description={products.coreDescription} />
+          <SectionHeading
+            title={products.coreTitle}
+            description={products.coreDescription}
+          />
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             {content.productModules.map((product) => (
               <article key={product.id} id={product.id} className="rounded-[32px] border border-[#1E293B] bg-[#111827] p-8">
@@ -58,7 +75,7 @@ export default function ProductsPage() {
                 <p className="text-[#94A3B8] leading-relaxed mb-6">{product.description}</p>
                 {productHref(product) ? (
                   <a href={productHref(product)} className="inline-flex items-center gap-2 text-sm font-bold text-white hover:text-[#F97316]" target="_blank" rel="noreferrer">
-                    Open live platform
+                    {ui.openLivePlatformLabel}
                     <ArrowUpRight size={14} />
                   </a>
                 ) : (
@@ -71,7 +88,7 @@ export default function ProductsPage() {
             ))}
           </div>
           <div className="mt-12 text-center">
-            <CtaButton to="/contact">Request a Demo</CtaButton>
+            <CtaButton to="/contact">{ui.requestDemoLabel}</CtaButton>
           </div>
         </div>
       </section>

@@ -27,14 +27,22 @@ export function SectionHeading({ eyebrow, title, description, align = "left" }) 
   return (
     <div className={`max-w-3xl ${alignClass}`}>
       {eyebrow && (
-        <span className="block text-xs font-medium tracking-[0.08em] uppercase text-[#64748B] mb-3">
+        <span
+          className="block text-xs font-medium tracking-[0.08em] uppercase text-[#64748B] mb-3"
+        >
           {eyebrow}
         </span>
       )}
-      <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight mb-4">
+      <h2
+        className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight mb-4"
+      >
         {title}
       </h2>
-      {description && <p className="text-lg text-[#94A3B8] leading-relaxed">{description}</p>}
+      {description && (
+        <p className="text-lg text-[#94A3B8] leading-relaxed">
+          {description}
+        </p>
+      )}
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import DemoForm from "../components/DemoForm.jsx";
-import { content } from "../data/loadContent.js";
+import { useContent } from "../data/ContentContext.jsx";
 
 export default function ContactPage() {
+  const content = useContent();
   const { contact, site } = content;
 
   return (

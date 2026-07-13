@@ -5,6 +5,29 @@
     "description": "Tell us about your agency and we'll build a live walkthrough around your workflow — not a generic slide deck.",
     "sidebarTitle": "Talk to our team",
     "sidebarBody": "A first responder on our team will reach out within one business day.",
-    "quote": "The demo sold us in 20 minutes. We were live across all 12 stations in 60 days."
+    "quote": "The demo sold us in 20 minutes. We were live across all 12 stations in 60 days.",
+    "form": {
+      "infoHeading": "Your information",
+      "fields": [
+        { "name": "firstName", "label": "First name", "placeholder": "Marcus", "required": true },
+        { "name": "lastName", "label": "Last name", "placeholder": "Webb", "required": true },
+        { "name": "title", "label": "Title / Role", "placeholder": "Fire Chief, EMS Director...", "required": false },
+        { "name": "agency", "label": "Agency name", "placeholder": "Riverside Fire Department", "required": true },
+        { "name": "email", "label": "Work email", "placeholder": "chief@riverside.gov", "required": true },
+        { "name": "phone", "label": "Phone (optional)", "placeholder": "(662) 555-0100", "required": false }
+      ],
+      "agencyHeading": "About your agency",
+      "agencyTypeLabel": "Agency type",
+      "agencyTypes": ["Fire & Rescue", "EMS / Ambulance", "Emergency Management", "Combined Fire/EMS", "Law Enforcement", "Other"],
+      "agencySizeLabel": "Agency size",
+      "agencySizes": ["Under 25 personnel", "25–100 personnel", "100–500 personnel", "500+ personnel"],
+      "productLabel": "Product interest",
+      "productOptions": ["Forge RMS", "Forge Personnel", "Forge Training", "Forge Prevention", "Forge Fleet", "Forge Analytics", "Forge Command"],
+      "notesLabel": "Anything else we should know? (optional)",
+      "notesPlaceholder": "Current software pain points, timeline, specific workflows you want to see...",
+      "submitLabel": "Request My Demo",
+      "successTitle": "Thanks — your email app should open now.",
+      "successBody": "Send the message to complete your demo request. If nothing opened, email us directly at"
+    }
   }
 }

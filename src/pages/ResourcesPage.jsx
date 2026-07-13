@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import CtaButton, { SectionHeading } from "../components/CtaButton.jsx";
-import { content } from "../data/loadContent.js";
+import { useContent } from "../data/ContentContext.jsx";
 
 export default function ResourcesPage() {
+  const content = useContent();
   const { resources } = content;
 
   return (

@@ -1,0 +1,20 @@
+{
+  "theme": {
+    "typography": {
+      "headingFont": "system",
+      "bodyFont": "system",
+      "textScale": "100%",
+      "headingWeight": "700",
+      "headingCase": "none"
+    },
+    "colors": {
+      "accent": "#f97316",
+      "background": "#000000",
+      "text": "#f8fafc",
+      "muted": "#94a3b8",
+      "panel": "#111827",
+      "border": "#1e293b",
+      "navy": "#0f172a"
+    }
+  }
+}
