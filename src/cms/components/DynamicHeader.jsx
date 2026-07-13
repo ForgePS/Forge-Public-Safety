@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { useCms } from "../context/CmsContext.jsx";
+import { normalizeHref, isExternalHref } from "../core/urls.js";
 
 export default function DynamicHeader({ navigation: navigationProp, branding: brandingProp, preview = false }) {
   const cms = useCms();
@@ -23,7 +24,14 @@ export default function DynamicHeader({ navigation: navigationProp, branding: br
         <div className="text-center text-sm py-2 px-4" style={{ backgroundColor: navigation.announcementBar.backgroundColor, color: navigation.announcementBar.textColor }}>
           {navigation.announcementBar.text}
           {navigation.announcementBar.link && (
-            <a href={navigation.announcementBar.link} className="ml-2 underline font-bold">{navigation.announcementBar.linkLabel || "Learn more"}</a>
+            <a
+              href={normalizeHref(navigation.announcementBar.link)}
+              className="ml-2 underline font-bold"
+              target={isExternalHref(navigation.announcementBar.link) ? "_blank" : undefined}
+              rel={isExternalHref(navigation.announcementBar.link) ? "noreferrer" : undefined}
+            >
+              {navigation.announcementBar.linkLabel || "Learn more"}
+            </a>
           )}
         </div>
       )}
@@ -47,13 +55,14 @@ export default function DynamicHeader({ navigation: navigationProp, branding: br
                 if (preview) {
                   return <span key={btn.id} className={cls} style={{ backgroundColor: primary }}>{btn.label}</span>;
                 }
-                const isExternal = btn.href?.startsWith("http");
-                return isExternal ? (
-                  <a key={btn.id} href={btn.href} className={cls} style={{ backgroundColor: primary }} target={btn.newTab ? "_blank" : undefined} rel="noreferrer">
+                const href = normalizeHref(btn.href, { fallback: "/contact" });
+                const external = isExternalHref(href);
+                return external ? (
+                  <a key={btn.id} href={href} className={cls} style={{ backgroundColor: primary }} target={btn.newTab === false ? undefined : "_blank"} rel="noreferrer">
                     {btn.label}<ArrowUpRight size={14} />
                   </a>
                 ) : (
-                  <Link key={btn.id} to={btn.href || "/contact"} className={cls} style={{ backgroundColor: primary }}>
+                  <Link key={btn.id} to={href} className={cls} style={{ backgroundColor: primary }}>
                     {btn.label}<span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15"><ArrowUpRight size={14} /></span>
                   </Link>
                 );
@@ -90,8 +99,9 @@ function NavLink({ item, className, preview }) {
   if (preview) {
     return <span className={className}>{item.label}</span>;
   }
-  if (item.href?.startsWith("http")) {
-    return <a href={item.href} className={className} target={item.newTab ? "_blank" : undefined} rel="noreferrer">{item.label}</a>;
+  const href = normalizeHref(item.href);
+  if (isExternalHref(href)) {
+    return <a href={href} className={className} target={item.newTab ? "_blank" : undefined} rel="noreferrer">{item.label}</a>;
   }
-  return <Link to={item.href || "/"} className={className}>{item.label}</Link>;
+  return <Link to={href} className={className}>{item.label}</Link>;
 }

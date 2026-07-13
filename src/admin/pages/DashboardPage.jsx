@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { DEFAULT_PROGRAM_ID, PROGRAM_TYPES } from "../../cms/core/programs.js";
 import { restoreProgramWebsite } from "../../cms/store/programImport.js";
+import { normalizeHref } from "../../cms/core/urls.js";
 import AdminPageHeader, { AdminButton } from "../components/AdminPageHeader.jsx";
 
 export default function DashboardPage() {
@@ -141,7 +142,7 @@ export default function DashboardPage() {
               </div>
             </Link>
             {program?.appUrl && (
-              <a href={program.appUrl} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-4 rounded-xl border border-[#1E293B] hover:border-[#F97316]/50 transition-colors">
+              <a href={normalizeHref(program.appUrl)} target="_blank" rel="noreferrer" className="flex items-center gap-3 p-4 rounded-xl border border-[#1E293B] hover:border-[#F97316]/50 transition-colors">
                 <ExternalLink size={20} className="text-[#F97316]" />
                 <div>
                   <p className="text-sm font-bold text-white">Open {program.shortName} App Admin</p>

@@ -7,6 +7,7 @@ import { useAuth } from "../../cms/context/AuthContext.jsx";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import ProgramSwitcher from "../components/ProgramSwitcher.jsx";
 import { isFullBleedAdminRoute } from "../components/AdminSplitLayout.jsx";
+import { normalizeHref } from "../../cms/core/urls.js";
 
 const NAV_ITEMS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -41,7 +42,7 @@ export default function AdminLayout() {
     navigate("/admin/login");
   };
 
-  const previewUrl = program?.liveUrl || "/";
+  const previewUrl = normalizeHref(program?.liveUrl || "/", { fallback: "/" });
 
   return (
     <div className="min-h-screen h-screen bg-[#0B1220] text-white flex overflow-hidden">
