@@ -9,10 +9,10 @@
     "preview": "vite preview",
     "cms:server": "decap-server",
     "functions:install": "npm install --prefix functions --omit=dev",
-    "deploy": "npm run build && firebase deploy --only hosting,firestore,storage",
-    "deploy:hosting": "npm run build && firebase deploy --only hosting,firestore,storage",
-    "deploy:functions": "npm run functions:install && firebase deploy --only functions",
-    "deploy:all": "npm run build && npm run functions:install && firebase deploy",
+    "deploy": "npm run build && npx firebase-tools deploy --only hosting,firestore,storage",
+    "deploy:hosting": "npm run build && npx firebase-tools deploy --only hosting,firestore,storage",
+    "deploy:functions": "npm run functions:install && npx firebase-tools deploy --only functions",
+    "deploy:all": "npm run build && npm run functions:install && npx firebase-tools deploy",
     "staff:scrape": "node forge-academy/scripts/scrape-afta-staff.mjs",
     "staff:import": "node forge-academy/scripts/import-afta-staff.mjs"
   },
@@ -34,6 +34,7 @@
     "@vitejs/plugin-react": "^4.7.0",
     "decap-cms": "^3.8.0",
     "decap-server": "^3.3.0",
+    "firebase-tools": "^15.23.0",
     "tailwindcss": "^4.1.11",
     "vite": "^7.0.4"
   }
