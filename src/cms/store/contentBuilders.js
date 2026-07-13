@@ -27,6 +27,41 @@ const LEGAL_PAGES = {
   ],
 };
 
+function disciplineHeroSection(content, data) {
+  const global = content.global;
+  const lines = content.productLines?.productLines?.lines || data.lines || [];
+  return {
+    id: createSectionId(),
+    type: "disciplineHero",
+    hidden: false,
+    settings: {
+      width: "full",
+      height: "auto",
+      padding: { top: "0", right: "0", bottom: "0", left: "0" },
+      margin: { top: "0", right: "0", bottom: "0", left: "0" },
+      background: { type: "color", color: "#0B1220" },
+    },
+    blocks: [{
+      id: createBlockId(),
+      type: "disciplineHero",
+      hidden: false,
+      settings: {},
+      content: {
+        eyebrow: data.eyebrow || data.heroEyebrow || content.productLines?.productLines?.eyebrow || "",
+        title: data.title || data.heroTitle || content.productLines?.productLines?.title || "",
+        lead: data.lead || data.heroLead || content.productLines?.productLines?.lead || "",
+        body: data.body || data.heroBody || content.productLines?.productLines?.body || "",
+        bullets: data.bullets || data.heroBullets || [],
+        lines,
+        buttons: data.buttons || [
+          { label: global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
+          { label: "Learn More", href: "/products", style: "outline", newTab: false },
+        ],
+      },
+    }],
+  };
+}
+
 function heroSection(content, data, bgImage = "/assets/hero-firefighter.png") {
   const global = content.global;
   return {
@@ -132,7 +167,7 @@ function buildHomePage(content, programId) {
       description: home.heroLead,
     },
     sections: [
-      heroSection(content, {
+      disciplineHeroSection(content, {
         heroEyebrow: home.heroEyebrow,
         heroTitle: home.heroTitle,
         heroLead: home.heroLead,
@@ -735,6 +770,7 @@ export function normalizeLegacyContentJson(json) {
       contact: json.contact,
       resources: json.resources,
       footer: json.footer,
+      productLines: json["product-lines"] || json.productLines,
     };
   }
   return null;
@@ -751,6 +787,7 @@ const CONTENT_FILE_MAP = {
   "contact.json": "contact",
   "resources.json": "resources",
   "footer.json": "footer",
+  "product-lines.json": "productLines",
 };
 
 export function parseJsonText(text) {

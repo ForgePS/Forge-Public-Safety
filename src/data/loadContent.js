@@ -8,6 +8,7 @@ import companyData from "../../content/company.json";
 import contactData from "../../content/contact.json";
 import resourcesData from "../../content/resources.json";
 import footerData from "../../content/footer.json";
+import productLinesData from "../../content/product-lines.json";
 
 export const content = {
   ...globalData,
@@ -20,6 +21,7 @@ export const content = {
   ...contactData,
   ...resourcesData,
   ...footerData,
+  ...productLinesData,
 };
 
 export const RMS_APP_URL = content.site.rmsUrl;
