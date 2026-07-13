@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors,
@@ -33,31 +33,46 @@ export default function PageBuilderPage() {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showBlockPicker, setShowBlockPicker] = useState(false);
   const [tab, setTab] = useState("content");
+  const dirtyRef = useRef(false);
+  const loadedPageIdRef = useRef(null);
 
   useEffect(() => {
     const p = pages.find((pg) => pg.id === pageId);
-    if (p) {
-      const copy = JSON.parse(JSON.stringify(p));
-      setPage(copy);
-      setHistory([copy]);
-      setHistoryIndex(0);
-      const firstSection = copy.sections?.[0];
-      if (firstSection) {
-        setSelectedSection(firstSection.id);
-        setSelectedBlock(firstSection.blocks?.[0]?.id);
-      }
+    if (!p) {
+      setPage(null);
+      return;
+    }
+
+    const pageChanged = loadedPageIdRef.current !== pageId;
+    if (!pageChanged && dirtyRef.current) return;
+
+    const copy = JSON.parse(JSON.stringify(p));
+    setPage(copy);
+    setHistory([copy]);
+    setHistoryIndex(0);
+    dirtyRef.current = false;
+    loadedPageIdRef.current = pageId;
+    const firstSection = copy.sections?.[0];
+    if (firstSection) {
+      setSelectedSection(firstSection.id);
+      setSelectedBlock(firstSection.blocks?.[0]?.id);
     }
   }, [pageId, pages]);
 
   const pushHistory = useCallback((newPage) => {
-    setHistory((prev) => [...prev.slice(0, historyIndex + 1), JSON.parse(JSON.stringify(newPage))].slice(-50));
+    setHistory((prev) => {
+      const base = prev.slice(0, historyIndex + 1);
+      return [...base, JSON.parse(JSON.stringify(newPage))].slice(-50);
+    });
     setHistoryIndex((i) => Math.min(i + 1, 49));
   }, [historyIndex]);
 
   const updatePage = useCallback((updater) => {
+    dirtyRef.current = true;
     setPage((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
-      pushHistory(next);
+      // Defer history so we don't nest setState
+      queueMicrotask(() => pushHistory(next));
       return next;
     });
   }, [pushHistory]);
@@ -130,7 +145,7 @@ export default function PageBuilderPage() {
     }
   };
 
-  const updateBlockContent = (sectionId, blockId, key, value) => {
+  const updateBlockContent = useCallback((sectionId, blockId, key, value) => {
     updatePage((prev) => ({
       ...prev,
       sections: prev.sections.map((s) => s.id === sectionId ? {
@@ -138,9 +153,9 @@ export default function PageBuilderPage() {
         blocks: s.blocks.map((b) => b.id === blockId ? { ...b, content: { ...b.content, [key]: value } } : b),
       } : s),
     }));
-  };
+  }, [updatePage]);
 
-  const updateBlockContentPatch = (sectionId, blockId, patch) => {
+  const updateBlockContentPatch = useCallback((sectionId, blockId, patch) => {
     updatePage((prev) => ({
       ...prev,
       sections: prev.sections.map((s) => s.id === sectionId ? {
@@ -148,7 +163,21 @@ export default function PageBuilderPage() {
         blocks: s.blocks.map((b) => b.id === blockId ? { ...b, content: { ...b.content, ...patch } } : b),
       } : s),
     }));
-  };
+  }, [updatePage]);
+
+  const handleLiveContentChange = useCallback((sectionId, blockId, key, value) => {
+    setSelectedSection(sectionId);
+    setSelectedBlock(blockId);
+    setTab("content");
+    updateBlockContent(sectionId, blockId, key, value);
+  }, [updateBlockContent]);
+
+  const handleLiveContentPatch = useCallback((sectionId, blockId, patch) => {
+    setSelectedSection(sectionId);
+    setSelectedBlock(blockId);
+    setTab("content");
+    updateBlockContentPatch(sectionId, blockId, patch);
+  }, [updateBlockContentPatch]);
 
   const updateSectionSettings = (sectionId, settings) => {
     updatePage((prev) => ({
@@ -166,6 +195,7 @@ export default function PageBuilderPage() {
     setSaving(true);
     try {
       await store.save("pages", { ...page, slug: sanitizeSlug(page.slug) || page.slug });
+      dirtyRef.current = false;
       await refresh();
       setToast("Page saved successfully");
     } catch (err) {
@@ -186,6 +216,14 @@ export default function PageBuilderPage() {
     acc[cat].push(b);
     return acc;
   }, {});
+
+  const liveEditApi = {
+    store,
+    programId: page.programId,
+    onToast: (message) => setToast(message),
+    onContentChange: handleLiveContentChange,
+    onContentPatch: handleLiveContentPatch,
+  };
 
   const editorPanel = (
     <div className="flex flex-col h-full bg-[#0B1220]">
@@ -338,23 +376,7 @@ export default function PageBuilderPage() {
       }}
       onSectionHover={setHoveredSection}
       label="Live View"
-      liveEdit={{
-        store,
-        programId: page.programId,
-        onToast: (message, type = "success") => setToast(message),
-        onContentChange: (sectionId, blockId, key, value) => {
-          setSelectedSection(sectionId);
-          setSelectedBlock(blockId);
-          setTab("content");
-          updateBlockContent(sectionId, blockId, key, value);
-        },
-        onContentPatch: (sectionId, blockId, patch) => {
-          setSelectedSection(sectionId);
-          setSelectedBlock(blockId);
-          setTab("content");
-          updateBlockContentPatch(sectionId, blockId, patch);
-        },
-      }}
+      liveEdit={liveEditApi}
     />
   );
 

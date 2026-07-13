@@ -56,7 +56,7 @@ export default function LiveSitePreview({
           <Radio size={14} className="text-green-400" />
           <span className="text-xs font-semibold text-white">{label}</span>
           <span className="text-[10px] text-[#64748B] uppercase tracking-wider">
-            {liveEdit ? "Click text to edit · drag image corner to resize · right-click image to replace" : "Updates as you edit"}
+            {liveEdit ? "Click text to edit · hover image for Upload/Library · drag corner to resize · right-click also works" : "Updates as you edit"}
           </span>
         </div>
         <div className="flex rounded-lg border border-[#1E293B] overflow-hidden">
@@ -139,6 +139,9 @@ function InteractivePage({ page, branding, forms, collections, highlight, onSect
             className={`relative group transition-all ${isSelected ? "ring-2 ring-[#F97316] ring-inset" : "hover:ring-2 hover:ring-[#F97316]/40 hover:ring-inset"}`}
             onClick={(e) => {
               if (!onSectionClick) return;
+              if (e.target.closest("[data-editable-text],[data-editable-image],.group\\/editable-img,button,a,input,textarea,[contenteditable='true']")) {
+                return;
+              }
               e.stopPropagation();
               onSectionClick(section.id);
             }}

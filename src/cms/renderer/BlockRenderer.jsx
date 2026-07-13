@@ -154,6 +154,21 @@ export function BlockRenderer({ block, branding, forms, collections }) {
               <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent pointer-events-none" />
             </div>
           )}
+          {previewEdit && (
+            <div className="absolute right-3 top-3 z-40 flex gap-2">
+              <button
+                type="button"
+                className="rounded-md border border-white/20 bg-[#0B1220]/90 px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#F97316]"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  previewEdit.onOpenMediaPicker?.("backgroundImage");
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                Replace background
+              </button>
+            </div>
+          )}
           <div className="relative max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8 py-24 md:py-32">
             <div className="max-w-2xl">
               <Text as="p" fieldKey="eyebrow" value={c.eyebrow} className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4" />
@@ -231,7 +246,7 @@ export function BlockRenderer({ block, branding, forms, collections }) {
     case "image":
       return (
         <figure className="max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8">
-          {c.link ? (
+          {c.link && !previewEdit ? (
             <a href={normalizeHref(c.link)} target={isExternalHref(c.link) ? "_blank" : undefined} rel={isExternalHref(c.link) ? "noreferrer" : undefined}>
               <Media src={c.src} alt={c.alt || ""} fieldKey="src" className="rounded-2xl w-full" width={c.imageWidth} height={c.imageHeight} />
             </a>
