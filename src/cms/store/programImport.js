@@ -125,12 +125,19 @@ export function buildContentFromJson(programId, json) {
   const program = findProgram(programId);
   const normalized = normalizeLegacyContentJson(json);
   if (!normalized?.global?.site) {
-    if (json.home || json.contact || json.footer) {
-      throw new Error("Missing global.json. Include global.json with your other content files.");
+    if (json.home || json.contact || json.footer || json.media) {
+      throw new Error("Missing global.json (or site name). Include global.json with your other content files.");
     }
     throw new Error("Unrecognized JSON format. Use Export backup from this admin panel, or include global.json + home.json content files.");
   }
-  return buildMarketingBundleFromContent(program, normalized);
+  if (!normalized.home) {
+    throw new Error("Missing home.json. Content copy imports need at least global.json and home.json.");
+  }
+  try {
+    return buildMarketingBundleFromContent(program, normalized);
+  } catch (err) {
+    throw new Error(`Could not rebuild pages from content files: ${err.message}`);
+  }
 }
 
 export function buildContentFromCmsExport(programId, json) {
@@ -326,13 +333,19 @@ export async function importProgramFromFiles(programId, files, replace = true, {
   }
 
   if (contentRebuild) {
+    if (analysis.format === "unknown") {
+      throw new Error(
+        `Could not recognize content copy files in: ${fileDataList.map((f) => f.name).join(", ")}. ` +
+        "Include at least global.json (with site) and home.json."
+      );
+    }
     return importProgramContent(programId, { source: "json", json: merged, replace });
   }
 
   const fileNames = fileDataList.map((f) => f.name).join(", ");
   throw new Error(
     `No CMS pages found in: ${fileNames}. ` +
-    "Content copy files (global.json, home.json, etc.) only rebuild the 9-page template — use \"Import content copy files\" for those. " +
+    "Content copy files (global.json, home.json, etc.) only rebuild the template site — use \"Import content copy files\" for those. " +
     "To restore custom pages, export a CMS backup from Admin first, or upload JSON files that contain page objects with sections."
   );
 }

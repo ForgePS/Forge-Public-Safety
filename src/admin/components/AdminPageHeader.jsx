@@ -82,9 +82,9 @@ export function Toast({ message, type = "success", onClose }) {
   if (!message) return null;
   const colors = type === "error" ? "bg-red-500/15 border-red-500/30 text-red-300" : "bg-green-500/15 border-green-500/30 text-green-300";
   return (
-    <div className={`fixed top-4 right-4 z-50 rounded-xl border px-4 py-3 text-sm ${colors}`}>
+    <div className={`fixed top-4 right-4 z-[200] rounded-xl border px-4 py-3 text-sm shadow-xl max-w-md ${colors}`}>
       {message}
-      {onClose && <button onClick={onClose} className="ml-3 opacity-70 hover:opacity-100">×</button>}
+      {onClose && <button type="button" onClick={onClose} className="ml-3 opacity-70 hover:opacity-100">×</button>}
     </div>
   );
 }
