@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Globe, Check, ExternalLink, Loader2 } from "lucide-react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
+import { normalizeHref } from "../../cms/core/urls.js";
 
 export default function ProgramSwitcher() {
   const { programs, programId, program, setProgramId, isAdminMode, switchingProgram } = useCms();
@@ -74,7 +75,7 @@ export default function ProgramSwitcher() {
           </div>
           {program?.liveUrl && (
             <a
-              href={program.liveUrl}
+              href={normalizeHref(program.liveUrl)}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-2 px-3 py-2 border-t border-[#1E293B] text-xs text-[#94A3B8] hover:text-white hover:bg-white/5"

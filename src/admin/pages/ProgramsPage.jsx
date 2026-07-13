@@ -4,6 +4,7 @@ import { useCms } from "../../cms/context/CmsContext.jsx";
 import { createProgram, PROGRAM_TYPES } from "../../cms/core/programs.js";
 import { importBundledProgram } from "../../cms/store/programImport.js";
 import { hasBundledContent, listImportablePrograms } from "../../cms/store/programContentSources.js";
+import { normalizeHref } from "../../cms/core/urls.js";
 import ProgramImportPanel from "../components/ProgramImportPanel.jsx";
 import AdminPageHeader, { AdminButton, AdminInput, AdminSelect, AdminTextarea, AdminCard, Toast } from "../components/AdminPageHeader.jsx";
 
@@ -39,6 +40,8 @@ export default function ProgramsPage() {
     await store.save("programs", {
       ...selected,
       slug: selected.slug || selected.name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      liveUrl: selected.liveUrl ? normalizeHref(selected.liveUrl, { fallback: "" }) : "",
+      appUrl: selected.appUrl ? normalizeHref(selected.appUrl, { fallback: "" }) : "",
       updatedAt: new Date().toISOString(),
     });
     await refreshPrograms();
@@ -137,7 +140,7 @@ export default function ProgramsPage() {
                   <Download size={14} />
                 </button>
                 {p.liveUrl && (
-                  <a href={p.liveUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="p-1.5 text-[#64748B] hover:text-white">
+                  <a href={normalizeHref(p.liveUrl)} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="p-1.5 text-[#64748B] hover:text-white">
                     <ExternalLink size={14} />
                   </a>
                 )}

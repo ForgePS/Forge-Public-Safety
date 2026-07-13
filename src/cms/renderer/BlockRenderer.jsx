@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronDown, Star } from "lucide-react";
 import { useState } from "react";
 import { sectionStyle } from "../core/responsive.js";
+import { normalizeHref, isExternalHref } from "../core/urls.js";
 import CmsForm from "./CmsForm.jsx";
 
 function sanitize(html) {
@@ -11,10 +12,10 @@ function sanitize(html) {
 
 function DisciplineCard({ line }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const href = line.href || "/solutions";
-  const isExternal = href.startsWith("http");
-  const CardWrap = isExternal ? "a" : Link;
-  const wrapProps = isExternal
+  const href = normalizeHref(line.href || "/solutions");
+  const external = isExternalHref(href);
+  const CardWrap = external ? "a" : Link;
+  const wrapProps = external
     ? { href, target: "_blank", rel: "noreferrer" }
     : { to: href };
 
@@ -62,15 +63,16 @@ function ButtonEl({ btn, branding }) {
     ghost: { color: "#94A3B8", background: "transparent" },
   };
   const cls = `inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-colors hover:opacity-90`;
-  const isExternal = btn.href?.startsWith("http");
-  if (isExternal) {
+  const href = normalizeHref(btn.href, { fallback: "/" });
+  const external = isExternalHref(href);
+  if (external) {
     return (
-      <a href={btn.href} className={cls} style={styles[btn.style] || styles.primary} target={btn.newTab ? "_blank" : undefined} rel={btn.newTab ? "noreferrer" : undefined}>
+      <a href={href} className={cls} style={styles[btn.style] || styles.primary} target={btn.newTab ? "_blank" : undefined} rel={btn.newTab ? "noreferrer" : undefined}>
         {btn.label}<ArrowUpRight size={14} />
       </a>
     );
   }
-  return <Link to={btn.href || "/"} className={cls} style={styles[btn.style] || styles.primary}>{btn.label}{btn.style !== "ghost" && <ArrowUpRight size={14} />}</Link>;
+  return <Link to={href} className={cls} style={styles[btn.style] || styles.primary}>{btn.label}{btn.style !== "ghost" && <ArrowUpRight size={14} />}</Link>;
 }
 
 function SectionHeading({ eyebrow, title, description, align = "left" }) {
@@ -169,7 +171,9 @@ export function BlockRenderer({ block, branding, forms, collections }) {
       return (
         <figure className="max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8">
           {c.link ? (
-            <a href={c.link}>{c.src && <img src={c.src} alt={c.alt || ""} className="rounded-2xl w-full" loading="lazy" />}</a>
+            <a href={normalizeHref(c.link)} target={isExternalHref(c.link) ? "_blank" : undefined} rel={isExternalHref(c.link) ? "noreferrer" : undefined}>
+              {c.src && <img src={c.src} alt={c.alt || ""} className="rounded-2xl w-full" loading="lazy" />}
+            </a>
           ) : (
             c.src && <img src={c.src} alt={c.alt || ""} className="rounded-2xl w-full" loading="lazy" />
           )}
@@ -227,7 +231,12 @@ export function BlockRenderer({ block, branding, forms, collections }) {
                 {card.subtitle && <p className="text-sm font-medium text-[var(--cms-primary,#F97316)] mb-3">{card.subtitle}</p>}
                 <p className="text-[#94A3B8] leading-relaxed">{card.description || card.copy}</p>
                 {card.link && (
-                  <a href={card.link} className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-white hover:text-[var(--cms-primary,#F97316)]" target={card.link?.startsWith("http") ? "_blank" : undefined} rel="noreferrer">
+                  <a
+                    href={normalizeHref(card.link)}
+                    className="inline-flex items-center gap-2 mt-4 text-sm font-bold text-white hover:text-[var(--cms-primary,#F97316)]"
+                    target={isExternalHref(card.link) ? "_blank" : undefined}
+                    rel={isExternalHref(card.link) ? "noreferrer" : undefined}
+                  >
                     {card.linkLabel || "Learn More"}<ArrowUpRight size={14} />
                   </a>
                 )}

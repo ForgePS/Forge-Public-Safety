@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useCms } from "../context/CmsContext.jsx";
+import { normalizeHref, isExternalHref } from "../core/urls.js";
 
 export default function DynamicFooter({ footerId, footer: footerProp, branding: brandingProp, preview = false }) {
   const cms = useCms();
@@ -26,17 +27,20 @@ export default function DynamicFooter({ footerId, footer: footerProp, branding: 
                 <p className="text-sm text-[#94A3B8]">{col.content}</p>
               ) : (
                 <ul className="space-y-2">
-                  {(col.links || []).map((link) => (
-                    <li key={link.id}>
-                      {preview ? (
-                        <span className="text-sm text-[#94A3B8]">{link.label}</span>
-                      ) : link.href?.startsWith("http") ? (
-                        <a href={link.href} className="text-sm text-[#94A3B8] hover:text-white transition-colors" target={link.newTab ? "_blank" : undefined} rel="noreferrer">{link.label}</a>
-                      ) : (
-                        <Link to={link.href || "/"} className="text-sm text-[#94A3B8] hover:text-white transition-colors">{link.label}</Link>
-                      )}
-                    </li>
-                  ))}
+                  {(col.links || []).map((link) => {
+                    const href = normalizeHref(link.href);
+                    return (
+                      <li key={link.id}>
+                        {preview ? (
+                          <span className="text-sm text-[#94A3B8]">{link.label}</span>
+                        ) : isExternalHref(href) ? (
+                          <a href={href} className="text-sm text-[#94A3B8] hover:text-white transition-colors" target={link.newTab ? "_blank" : undefined} rel="noreferrer">{link.label}</a>
+                        ) : (
+                          <Link to={href} className="text-sm text-[#94A3B8] hover:text-white transition-colors">{link.label}</Link>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -46,13 +50,16 @@ export default function DynamicFooter({ footerId, footer: footerProp, branding: 
         <div className="mt-12 pt-8 border-t border-[#1E293B] flex flex-col md:flex-row gap-4 md:items-center md:justify-between text-sm text-[#64748B]">
           <p>{footer.copyright || `© ${new Date().getFullYear()} ${companyName}. All rights reserved.`}</p>
           <div className="flex flex-wrap gap-4">
-            {(footer.legalLinks || []).map((link) => (
-              preview ? (
+            {(footer.legalLinks || []).map((link) => {
+              const href = normalizeHref(link.href);
+              return preview ? (
                 <span key={link.id} className="text-[#64748B]">{link.label}</span>
+              ) : isExternalHref(href) ? (
+                <a key={link.id} href={href} className="hover:text-white" target={link.newTab ? "_blank" : undefined} rel="noreferrer">{link.label}</a>
               ) : (
-                <Link key={link.id} to={link.href || "/"} className="hover:text-white">{link.label}</Link>
-              )
-            ))}
+                <Link key={link.id} to={href} className="hover:text-white">{link.label}</Link>
+              );
+            })}
           </div>
         </div>
       </div>
