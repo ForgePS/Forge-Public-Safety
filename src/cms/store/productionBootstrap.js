@@ -76,6 +76,13 @@ export async function resetBrowserSiteFromSeed() {
     throw new Error("Could not download /cms-seed.json. Redeploy the site, then try again.");
   }
   clearLocalStore();
+  // Ensure quota room before writing the seed (seed is small; old media/versions were the problem).
+  try {
+    const { emergencyClearCmsLocalStorage } = await import("./localStore.js");
+    emergencyClearCmsLocalStorage();
+  } catch {
+    /* ignore */
+  }
   setLocalStore(bootstrap);
   clearSeedCache();
   cachedBootstrap = bootstrap;

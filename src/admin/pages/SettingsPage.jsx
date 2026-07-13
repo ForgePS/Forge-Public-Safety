@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { restoreProgramWebsite, hardResetSiteFromDeployedSeed } from "../../cms/store/programImport.js";
-import { compactLocalStore } from "../../cms/store/localStore.js";
+import { compactLocalStore, emergencyClearCmsLocalStorage } from "../../cms/store/localStore.js";
 import { DEFAULT_PROGRAM_ID } from "../../cms/core/programs.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
@@ -86,11 +86,17 @@ export default function SettingsPage() {
               variant="secondary"
               onClick={() => {
                 try {
+                  emergencyClearCmsLocalStorage();
                   compactLocalStore();
                   refresh();
-                  showToast("Freed browser storage (cleared draft media & history)");
+                  showToast("Cleared browser CMS storage. Click Hard reset next if pages look empty.");
                 } catch (err) {
-                  showToast(err.message || "Could not free storage", "error");
+                  try {
+                    emergencyClearCmsLocalStorage();
+                    showToast("Cleared CMS storage key. Click Hard reset from deployed seed.", "error");
+                  } catch (inner) {
+                    showToast(inner.message || err.message || "Could not free storage", "error");
+                  }
                 }
               }}
             >
