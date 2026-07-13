@@ -108,7 +108,7 @@ export function EditableImage({
     return () => window.removeEventListener("click", onDoc);
   }, [menu, closeMenu]);
 
-  if (!edit || !src) {
+  if (!edit) {
     return src ? <img src={src} alt={alt} className={className} style={style} loading="lazy" /> : null;
   }
 
@@ -125,9 +125,9 @@ export function EditableImage({
   const onResizeStart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    const img = wrapRef.current?.querySelector("img");
-    if (!img) return;
-    const rect = img.getBoundingClientRect();
+    const target = wrapRef.current?.querySelector("img") || wrapRef.current;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
     startRef.current = {
       x: e.clientX,
       y: e.clientY,
@@ -186,64 +186,95 @@ export function EditableImage({
     }
   };
 
+  const openMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({ x: e.clientX, y: e.clientY });
+  };
+
+  const menuNode = menu ? (
+    <div
+      className="fixed z-[300] min-w-[180px] rounded-lg border border-[#1E293B] bg-[#0B1220] py-1 shadow-xl"
+      style={{ left: menu.x, top: menu.y }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-[#F97316]/15"
+        onClick={() => {
+          closeMenu();
+          fileRef.current?.click();
+        }}
+      >
+        <ImagePlus size={14} className="text-[#F97316]" /> {src ? "Upload replacement" : "Upload image"}
+      </button>
+      <button
+        type="button"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-[#F97316]/15"
+        onClick={() => {
+          closeMenu();
+          edit.onOpenMediaPicker?.(fieldKey);
+        }}
+      >
+        <Replace size={14} className="text-[#F97316]" /> Choose from library
+      </button>
+    </div>
+  ) : null;
+
+  const fileInput = (
+    <input
+      ref={fileRef}
+      type="file"
+      accept="image/*"
+      className="hidden"
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        replaceFromFile(file);
+      }}
+    />
+  );
+
+  if (!src) {
+    return (
+      <div
+        ref={wrapRef}
+        className={`relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#F97316]/50 bg-[#111827]/80 px-4 py-8 text-center ${resizing ? "select-none" : ""}`}
+        style={sizeStyle}
+        onClick={(e) => {
+          e.stopPropagation();
+          fileRef.current?.click();
+        }}
+        onContextMenu={openMenu}
+      >
+        <ImagePlus size={22} className="text-[#F97316]" />
+        <p className="text-sm font-medium text-white">Add image</p>
+        <p className="text-xs text-[#64748B]">Click to upload · right-click for library</p>
+        {fileInput}
+        {menuNode}
+      </div>
+    );
+  }
+
+  const fillParent = /\bh-full\b/.test(className || "") || /\bw-full\b/.test(className || "");
+
   return (
     <div
       ref={wrapRef}
-      className={`relative group/editable-img ${resizing ? "select-none" : ""}`}
+      className={`relative group/editable-img max-w-full ${fillParent ? "block h-full w-full" : "inline-block"} ${resizing ? "select-none" : ""}`}
       onClick={(e) => e.stopPropagation()}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setMenu({ x: e.clientX, y: e.clientY });
-      }}
+      onContextMenu={openMenu}
     >
       <img src={src} alt={alt} className={className} style={sizeStyle} loading="lazy" draggable={false} />
-      <div className="pointer-events-none absolute inset-0 rounded-inherit ring-0 group-hover/editable-img:ring-2 group-hover/editable-img:ring-[#F97316]/70" />
+      <div className="pointer-events-none absolute inset-0 ring-0 group-hover/editable-img:ring-2 group-hover/editable-img:ring-[#F97316]/70" />
       <button
         type="button"
         title="Drag to resize"
         className="absolute bottom-1 right-1 z-20 h-4 w-4 cursor-se-resize rounded-sm border border-white/80 bg-[#F97316] shadow opacity-0 group-hover/editable-img:opacity-100"
         onPointerDown={onResizeStart}
       />
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          e.target.value = "";
-          replaceFromFile(file);
-        }}
-      />
-      {menu && (
-        <div
-          className="fixed z-[300] min-w-[180px] rounded-lg border border-[#1E293B] bg-[#0B1220] py-1 shadow-xl"
-          style={{ left: menu.x, top: menu.y }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-[#F97316]/15"
-            onClick={() => {
-              closeMenu();
-              fileRef.current?.click();
-            }}
-          >
-            <ImagePlus size={14} className="text-[#F97316]" /> Upload replacement
-          </button>
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-white hover:bg-[#F97316]/15"
-            onClick={() => {
-              closeMenu();
-              edit.onOpenMediaPicker?.(fieldKey);
-            }}
-          >
-            <Replace size={14} className="text-[#F97316]" /> Choose from library
-          </button>
-        </div>
-      )}
+      {fileInput}
+      {menuNode}
     </div>
   );
 }
