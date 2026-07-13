@@ -167,13 +167,13 @@ function buildHomePage(content, programId) {
       description: home.heroLead,
     },
     sections: [
-      disciplineHeroSection(content, {
+      heroSection(content, {
         heroEyebrow: home.heroEyebrow,
         heroTitle: home.heroTitle,
         heroLead: home.heroLead,
         heroBody: home.heroBody,
         heroBullets: home.heroBullets,
-      }),
+      }, content.media?.images?.hero || "/assets/uploads/hero-three-responders.png"),
       cardGridSection(
         home.modulesEyebrow,
         home.modulesTitle,
@@ -441,7 +441,7 @@ function buildBranding(content, program) {
     ...DEFAULT_BRANDING,
     companyName: global.site.name,
     tagline: global.site.tagline,
-    logos: { ...DEFAULT_BRANDING.logos, primary: "/assets/forge-logo.png" },
+    logos: { ...DEFAULT_BRANDING.logos, primary: content.media?.images?.logo || "/assets/uploads/forge-logo-hero.png" },
     colors: { ...DEFAULT_BRANDING.colors, primary: program.color || DEFAULT_BRANDING.colors.primary },
   };
 }
@@ -770,7 +770,7 @@ export function normalizeLegacyContentJson(json) {
       contact: json.contact,
       resources: json.resources,
       footer: json.footer,
-      productLines: json["product-lines"] || json.productLines,
+      media: json.media,
     };
   }
   return null;
@@ -787,7 +787,7 @@ const CONTENT_FILE_MAP = {
   "contact.json": "contact",
   "resources.json": "resources",
   "footer.json": "footer",
-  "product-lines.json": "productLines",
+  "media.json": "media",
 };
 
 export function parseJsonText(text) {

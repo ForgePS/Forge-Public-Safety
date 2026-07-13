@@ -4,7 +4,9 @@
 Firebase project: **forge-website-b276c**  
 Hosting site: **forge-website-b276c**
 
-> **Do not deploy to the old site.** The legacy marketing site at forgepublicsafety.com uses a different Firebase project (`rms-dashboard-7562e`). This repo builds the **new Forge CMS** website.
+> **Do not deploy to the old site.** The legacy marketing site at forgepublicsafety.com uses a different Firebase project (`rms-dashboard-7562e`). This repo builds the **new Forge CMS** website on `forge-website-b276c`.
+>
+> Your homepage hero (Firefighter, EMS, Public Safety) and logo live in **ForgePS/ForgePS-Website** — they are synced into `public/assets/uploads/` and `content/media.json`.
 
 ## Deploy your website (use this)
 
@@ -68,12 +70,12 @@ Wait for `Deploy complete!` then open:
 ## After first deploy
 
 1. Log in at `/admin`
-2. Copy your three homepage people images into `public/assets/uploads/`:
-   - `product-line-firefighter.png`
-   - `product-line-ems.png`
-   - `product-line-public-safety.png`
-3. If the site is empty: **Settings → Restore default content**
-4. **Pages → Home** → Status: **Published** → **Save**
+2. If the site is empty: **Settings → Restore default content**
+3. **Pages → Home** → Status: **Published** → **Save**
+
+Homepage hero and logo come from `content/media.json` (synced from **ForgePS-Website**):
+- Hero (3 responders): `/assets/uploads/hero-three-responders.png`
+- Logo: `/assets/uploads/forge-logo-hero.png`
 
 ---
 

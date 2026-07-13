@@ -94,8 +94,8 @@ export function BlockRenderer({ block, branding, forms, collections }) {
         <section className="relative overflow-hidden">
           {c.backgroundImage && (
             <div className="absolute inset-0">
-              <img src={c.backgroundImage} alt="" className="h-full w-full object-cover opacity-90" loading="lazy" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/20" />
+              <img src={c.backgroundImage} alt="" className="h-full w-full object-cover object-center opacity-95" loading="eager" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
             </div>
           )}
           <div className="relative max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8 py-24 md:py-32">
