@@ -13,7 +13,7 @@ import {
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { getAllBlockTypes, getBlockDef, createBlock, createSection } from "../../cms/blocks/registry.js";
 import { createSectionId, createBlockId } from "../../cms/core/ids.js";
-import { validatePage, sanitizeSlug } from "../../cms/core/validation.js";
+import { validatePage, sanitizeSlug, isValidSlug } from "../../cms/core/validation.js";
 import LiveSitePreview from "../components/LiveSitePreview.jsx";
 import AdminSplitLayout from "../components/AdminSplitLayout.jsx";
 import FieldEditor from "../components/FieldEditor.jsx";
@@ -47,6 +47,10 @@ export default function PageBuilderPage() {
     if (!pageChanged && dirtyRef.current) return;
 
     const copy = JSON.parse(JSON.stringify(p));
+    // Fix legacy bad slugs like products/rms → products-rms before edit/save.
+    if (copy.slug && !isValidSlug(copy.slug)) {
+      copy.slug = sanitizeSlug(copy.slug) || copy.slug;
+    }
     setPage(copy);
     setHistory([copy]);
     setHistoryIndex(0);
@@ -187,17 +191,20 @@ export default function PageBuilderPage() {
   };
 
   const handleSave = async () => {
-    const errors = validatePage(page);
+    const slug = sanitizeSlug(page.slug) || page.slug;
+    const toSave = { ...page, slug };
+    const errors = validatePage(toSave);
     if (errors.length) {
       setToast(`Validation errors: ${errors.join(", ")}`);
       return;
     }
     setSaving(true);
     try {
-      await store.save("pages", { ...page, slug: sanitizeSlug(page.slug) || page.slug });
+      await store.save("pages", toSave);
       dirtyRef.current = false;
       await refresh();
-      setToast("Page saved successfully");
+      setToast(slug !== page.slug ? `Page saved (slug fixed to ${slug})` : "Page saved successfully");
+      if (slug !== page.slug) setPage(toSave);
     } catch (err) {
       setToast(`Error: ${err.message}`);
     } finally {
@@ -332,7 +339,7 @@ export default function PageBuilderPage() {
         {tab === "page" && (
           <div className="p-4 space-y-4">
             <AdminInput label="Page Title" value={page.title} onChange={(v) => updatePage({ ...page, title: v })} />
-            <AdminInput label="URL Slug" value={page.slug} onChange={(v) => updatePage({ ...page, slug: v })} help="Use 'home' for homepage" />
+            <AdminInput label="URL Slug" value={page.slug} onChange={(v) => updatePage({ ...page, slug: v })} help="Lowercase letters, numbers, and hyphens only (example: products-rms)" />
             <AdminSelect label="Status" value={page.status} onChange={(v) => updatePage({ ...page, status: v })} options={[
               { value: "draft", label: "Draft" }, { value: "published", label: "Published" }, { value: "scheduled", label: "Scheduled" },
             ]} />

@@ -13,6 +13,7 @@ import {
   isPreviewHost,
 } from "../core/programs.js";
 import { LOCAL_STORE_KEY } from "../core/constants.js";
+import { isValidSlug, sanitizeSlug } from "../core/validation.js";
 
 const ACTIVE_PROGRAM_KEY = "forge_cms_active_program";
 
@@ -172,6 +173,28 @@ export function CmsProvider({ children }) {
       if (generation !== loadGenerationRef.current) return;
 
       let loadedPages = Array.isArray(p) ? p : [];
+
+      // Auto-fix legacy invalid slugs (e.g. products/rms → products-rms).
+      if (isAdminMode && loadedPages.length) {
+        const fixed = [];
+        for (const page of loadedPages) {
+          if (page?.slug && !isValidSlug(page.slug)) {
+            const nextSlug = sanitizeSlug(page.slug);
+            if (nextSlug && nextSlug !== page.slug) {
+              const updated = { ...page, slug: nextSlug };
+              try {
+                await cmsStore.save("pages", updated, "system", pid);
+                fixed.push(updated);
+                continue;
+              } catch (err) {
+                console.warn("Failed to auto-fix page slug", page.slug, err);
+              }
+            }
+          }
+          fixed.push(page);
+        }
+        loadedPages = fixed;
+      }
       setPrograms((prev) => {
         const next = mergeProgramDefaults(programList);
         if (prev.length === next.length && prev.every((item, i) => item.id === next[i]?.id)) return prev;
