@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { restoreProgramWebsite, hardResetSiteFromDeployedSeed } from "../../cms/store/programImport.js";
 import { compactLocalStore, emergencyClearCmsLocalStorage } from "../../cms/store/localStore.js";
+import { getFirebaseStatus } from "../../cms/store/firebase.js";
 import { DEFAULT_PROGRAM_ID } from "../../cms/core/programs.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
@@ -12,6 +13,7 @@ export default function SettingsPage() {
   const [restoring, setRestoring] = useState(false);
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState("success");
+  const firebaseStatus = getFirebaseStatus();
 
   useEffect(() => {
     store.getAll("settings").then((s) => setSettings(s?.id ? s : (Array.isArray(s) ? s[0] : null)));
@@ -68,6 +70,24 @@ export default function SettingsPage() {
     <div>
       <div className="p-8">
         <AdminPageHeader title="Website Settings" description="Business info, contact details, maintenance mode, analytics, and integrations." />
+
+        <div className="mt-6 rounded-xl border border-[#1E293B] bg-[#111827] p-5">
+          <p className="text-sm text-white font-medium mb-1">Firebase Storage (large uploads)</p>
+          <p className="text-sm text-[#94A3B8] mb-3">
+            {firebaseStatus.storage
+              ? `Connected to project ${firebaseStatus.projectId}. Image uploads go to cloud Storage (up to 10 MB).`
+              : "Not configured in this build. Without Storage, uploads stay in the browser and hit quota limits."}
+          </p>
+          <ul className="text-xs text-[#64748B] space-y-1 mb-3 list-disc pl-5">
+            <li>Storage: {firebaseStatus.storage ? "ready" : "missing VITE_FIREBASE_* / rebuild required"}</li>
+            <li>Bucket: {firebaseStatus.storageBucket || "—"}</li>
+            <li>Firestore CMS backend: {firebaseStatus.firestore ? "enabled" : "off (recommended)"}</li>
+          </ul>
+          <p className="text-xs text-[#64748B]">
+            Setup guide: <code className="text-[#F97316]">FIREBASE_STORAGE_SETUP.md</code> in the repo.
+            After filling <code className="text-[#F97316]">.env.local</code>, run <code className="text-[#F97316]">npm run deploy:rules</code> then <code className="text-[#F97316]">npm run deploy</code>.
+          </p>
+        </div>
 
         <div className="mt-6 rounded-xl border border-[#F97316]/40 bg-[#F97316]/10 p-5">
           <p className="text-sm text-white font-medium mb-1">Site looks wrong / restore did nothing?</p>

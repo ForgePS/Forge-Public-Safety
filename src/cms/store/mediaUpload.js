@@ -1,5 +1,5 @@
 import { createId } from "../core/ids.js";
-import { isFirebaseConfigured, uploadMediaFile } from "./firebase.js";
+import { isFirebaseStorageConfigured, uploadMediaFile } from "./firebase.js";
 
 export const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
@@ -33,8 +33,8 @@ export function validateImageFile(file) {
   if (file.size > MAX_UPLOAD_BYTES) {
     return "Image must be smaller than 10 MB";
   }
-  if (!isFirebaseConfigured() && file.size > MAX_LOCAL_BYTES) {
-    return "Local browser storage limit is 500 KB per image. Use smaller images, or configure Firebase Storage for larger uploads.";
+  if (!isFirebaseStorageConfigured() && file.size > MAX_LOCAL_BYTES) {
+    return "Local browser storage limit is 500 KB per image. Configure Firebase Storage for uploads up to 10 MB.";
   }
   return null;
 }
@@ -47,7 +47,7 @@ export async function uploadImage(file, { store, programId, userId = "system" } 
   let url;
   let storagePath = null;
 
-  if (isFirebaseConfigured()) {
+  if (isFirebaseStorageConfigured()) {
     storagePath = `cms-media/${programId || "default"}/${Date.now()}-${sanitizeFilename(file.name)}`;
     url = await uploadMediaFile(file, storagePath);
   } else {
@@ -65,6 +65,7 @@ export async function uploadImage(file, { store, programId, userId = "system" } 
     caption: "",
     size: file.size,
     createdAt: new Date().toISOString(),
+    storageBackend: storagePath ? "firebase" : "local",
   };
 
   if (store?.save) {
@@ -80,5 +81,6 @@ export function isImageUrl(value) {
     value.startsWith("blob:") ||
     /\.(jpg|jpeg|png|gif|webp|svg)(\?|$)/i.test(value) ||
     value.startsWith("/assets/") ||
-    value.includes("firebasestorage.googleapis.com");
+    value.includes("firebasestorage.googleapis.com") ||
+    value.includes("firebasestorage.app");
 }

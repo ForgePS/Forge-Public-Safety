@@ -23,6 +23,22 @@ npm run deploy
 
 Then open https://forge-website-b276c.web.app — not `/cms`, not Restore/Import.
 
+## Large image uploads (Firebase Storage)
+
+Uploads over ~500 KB need Firebase Storage or they fill browser storage.
+
+See **`FIREBASE_STORAGE_SETUP.md`**, then:
+
+```powershell
+copy .env.example .env.local
+# fill VITE_FIREBASE_* from Firebase Console → Project settings → Web app
+npx firebase-tools use forge-website-b276c
+npm run deploy:rules
+npm run deploy
+```
+
+Leave `VITE_FIREBASE_USE_FIRESTORE=false` unless you are migrating CMS pages to Firestore.
+
 ## Optional: your real product emblems
 
 If you still have `forge-rms.png`, `forge-industrial-safety.png`, and `forge-academy.png` from the style-update chat, copy them into `public/assets/uploads/` and redeploy (placeholders ship until then).

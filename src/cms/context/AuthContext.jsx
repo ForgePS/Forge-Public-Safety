@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { getFirebaseAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, isFirebaseConfigured } from "../store/firebase.js";
+import { getFirebaseAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut, useFirestoreBackend } from "../store/firebase.js";
 import { getLocalStore } from "../store/localStore.js";
 import { hasPermission } from "../core/permissions.js";
 
@@ -12,7 +12,8 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isFirebaseConfigured()) {
+    // Storage-only Firebase mode still uses the local admin password login.
+    if (!useFirestoreBackend()) {
       const session = sessionStorage.getItem("cms_admin_session");
       if (session) {
         try { setUser(JSON.parse(session)); } catch { /* ignore */ }
@@ -44,7 +45,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    if (!isFirebaseConfigured()) {
+    if (!useFirestoreBackend()) {
       const store = getLocalStore();
       const cmsUser = store.users?.find((u) => u.email === email);
       if (email && password === "admin") {
@@ -62,7 +63,7 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     sessionStorage.removeItem("cms_admin_session");
-    if (isFirebaseConfigured()) {
+    if (useFirestoreBackend()) {
       await signOut(getFirebaseAuth());
     }
     setUser(null);

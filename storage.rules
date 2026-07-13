@@ -1,10 +1,30 @@
 rules_version = '2';
 
+// CMS media uploads for the Forge marketing/admin site.
+// Path: cms-media/{programId}/{fileName}
 service firebase.storage {
   match /b/{bucket}/o {
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function underSizeLimit() {
+      return request.resource.size < 10 * 1024 * 1024;
+    }
+
     match /cms-media/{programId}/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null;
+
+      // Authenticated uploads (including Anonymous auth used by the CMS uploader).
+      allow create: if request.auth != null
+                    && isImage()
+                    && underSizeLimit();
+
+      allow update: if request.auth != null
+                    && isImage()
+                    && underSizeLimit();
+
+      allow delete: if request.auth != null;
     }
   }
 }

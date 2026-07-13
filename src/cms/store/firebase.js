@@ -12,20 +12,60 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  signInAnonymously,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 
+function env(name) {
+  const value = import.meta.env[name];
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  apiKey: env("VITE_FIREBASE_API_KEY"),
+  authDomain: env("VITE_FIREBASE_AUTH_DOMAIN"),
+  projectId: env("VITE_FIREBASE_PROJECT_ID"),
+  storageBucket: env("VITE_FIREBASE_STORAGE_BUCKET"),
+  messagingSenderId: env("VITE_FIREBASE_MESSAGING_SENDER_ID"),
+  appId: env("VITE_FIREBASE_APP_ID"),
 };
 
+/** True when web SDK keys are present (Storage and/or Auth can work). */
 export function isFirebaseConfigured() {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+}
+
+/** Prefer Storage for media uploads when bucket is configured. */
+export function isFirebaseStorageConfigured() {
+  return isFirebaseConfigured() && Boolean(firebaseConfig.storageBucket);
+}
+
+/**
+ * Firestore as CMS backend is opt-in.
+ * Default stays localStorage for pages so enabling Storage alone won't blank the site.
+ */
+export function useFirestoreBackend() {
+  if (!isFirebaseConfigured()) return false;
+  return String(env("VITE_FIREBASE_USE_FIRESTORE") || "").toLowerCase() === "true";
+}
+
+export function getFirebaseClientConfig() {
+  return { ...firebaseConfig };
+}
+
+export function getFirebaseStatus() {
+  return {
+    configured: isFirebaseConfigured(),
+    storage: isFirebaseStorageConfigured(),
+    firestore: useFirestoreBackend(),
+    projectId: firebaseConfig.projectId || null,
+    storageBucket: firebaseConfig.storageBucket || null,
+  };
 }
 
 let app = null;
@@ -42,7 +82,7 @@ export function getFirebaseApp() {
 }
 
 export function getDb() {
-  if (!getFirebaseApp()) return null;
+  if (!getFirebaseApp() || !useFirestoreBackend()) return null;
   if (!db) db = getFirestore(getFirebaseApp());
   return db;
 }
@@ -54,7 +94,7 @@ export function getFirebaseAuth() {
 }
 
 export function getFirebaseStorage() {
-  if (!getFirebaseApp()) return null;
+  if (!getFirebaseApp() || !isFirebaseStorageConfigured()) return null;
   if (!storage) storage = getStorage(getFirebaseApp());
   return storage;
 }
@@ -109,11 +149,40 @@ export function firestoreSubscribe(colName, callback, orderField = "updatedAt") 
   });
 }
 
+/** Ensure we can write to Storage (anonymous auth if needed). */
+export async function ensureStorageUploadAuth() {
+  const authClient = getFirebaseAuth();
+  if (!authClient) {
+    throw new Error("Firebase Auth is not configured. Set VITE_FIREBASE_* in .env.local and rebuild.");
+  }
+  if (authClient.currentUser) return authClient.currentUser;
+  try {
+    const cred = await signInAnonymously(authClient);
+    return cred.user;
+  } catch (err) {
+    const message = String(err?.message || err);
+    if (/admin-restricted-operation|operation-not-allowed/i.test(message)) {
+      throw new Error(
+        "Enable Anonymous sign-in in Firebase Console → Authentication → Sign-in method, then try again."
+      );
+    }
+    throw err;
+  }
+}
+
 export async function uploadMediaFile(file, path) {
   const store = getFirebaseStorage();
-  if (!store) throw new Error("Firebase Storage not configured");
+  if (!store) {
+    throw new Error(
+      "Firebase Storage is not configured. Set VITE_FIREBASE_STORAGE_BUCKET (and other VITE_FIREBASE_* keys), then rebuild/redeploy."
+    );
+  }
+  await ensureStorageUploadAuth();
   const storageRef = ref(store, path);
-  await uploadBytes(storageRef, file);
+  await uploadBytes(storageRef, file, {
+    contentType: file.type || "application/octet-stream",
+    cacheControl: "public,max-age=31536000",
+  });
   return getDownloadURL(storageRef);
 }
 
@@ -123,4 +192,4 @@ export async function deleteMediaFile(path) {
   await deleteObject(ref(store, path));
 }
 
-export { signInWithEmailAndPassword, signOut, onAuthStateChanged };
+export { signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously };

@@ -12,7 +12,7 @@ import {
   emergencyClearCmsLocalStorage,
 } from "./localStore.js";
 import {
-  isFirebaseConfigured,
+  useFirestoreBackend,
   firestoreGetCollection,
   firestoreGetDoc,
   firestoreSetDoc,
@@ -47,7 +47,7 @@ const COLLECTION_MAP = {
 const SINGLETON_KEYS = new Set(["branding", "navigation", "settings", "seoGlobal", "search"]);
 
 function useFirebase() {
-  return isFirebaseConfigured();
+  return useFirestoreBackend();
 }
 
 function filterByProgram(items, programId) {
