@@ -85,7 +85,9 @@ Open **http://localhost:5173** (port 5173, not 80).
 
 | Problem | Fix |
 |---------|-----|
+| `Assertion failed: resolving hosting target...` | Pull latest code (adds `"site": "forge-website-b276c"` to `firebase.json`). Then run `firebase login --reauth` and retry `npm run deploy`. |
 | Functions timeout on deploy | Use `npm run deploy` (not `firebase deploy`) |
 | Blank website after deploy | Admin → Settings → Restore default content |
 | Still see old TinaCMS | Pull latest code, `npm run deploy` again |
-| `firebase` not found | Use `npx firebase-tools deploy --only hosting,firestore,storage` |
+| `firebase` not found | Use `npm run deploy` (uses `npx firebase-tools` automatically) |
+| `firebase login:ci` / auth errors | Run `firebase login --reauth` in PowerShell, then deploy again |
