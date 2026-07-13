@@ -1,14 +1,19 @@
 import CtaButton, { SectionHeading } from "../components/CtaButton.jsx";
-import { content } from "../data/loadContent.js";
+import { useContent } from "../data/ContentContext.jsx";
 
 export default function SolutionsPage() {
+  const content = useContent();
   const { solutions } = content;
 
   return (
     <div className="bg-black">
       <section className="py-20 bg-[#0B1220] border-b border-[#1E293B]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <SectionHeading eyebrow={solutions.eyebrow} title={solutions.title} description={solutions.description} />
+          <SectionHeading
+            eyebrow={solutions.eyebrow}
+            title={solutions.title}
+            description={solutions.description}
+          />
         </div>
       </section>
 
@@ -25,7 +30,11 @@ export default function SolutionsPage() {
 
       <section className="py-20 bg-[#0B1220]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center">
-          <SectionHeading align="center" title={solutions.closingTitle} description={solutions.closingDescription} />
+          <SectionHeading
+            align="center"
+            title={solutions.closingTitle}
+            description={solutions.closingDescription}
+          />
           <div className="mt-8 flex justify-center">
             <CtaButton to="/contact">{content.navigation.ctaLabel}</CtaButton>
           </div>

@@ -8,9 +8,13 @@ import companyData from "../../content/company.json";
 import contactData from "../../content/contact.json";
 import resourcesData from "../../content/resources.json";
 import footerData from "../../content/footer.json";
+import legalData from "../../content/legal.json";
+import notFoundData from "../../content/notfound.json";
 import mediaData from "../../content/media.json";
+import themeData from "../../content/theme.json";
 
 export const content = {
+  ...themeData,
   ...globalData,
   ...homeData,
   ...productsPageData,
@@ -21,6 +25,8 @@ export const content = {
   ...contactData,
   ...resourcesData,
   ...footerData,
+  ...legalData,
+  ...notFoundData,
   ...mediaData,
 };
 

@@ -1,33 +1,29 @@
-# Deploy Forge CMS Website
+# Deploy Forge marketing website
 
-**Live site:** https://forge-website-b276c.web.app  
-**Firebase project / hosting site:** `forge-website-b276c`
+**Folder on your PC:** `C:\Users\jerem\Projects\forgepublicsafety-website`  
+**Live URL:** https://forge-website-b276c.web.app
 
-## Deploy (only this)
+The public marketing site now uses the **real ForgePS page structure** (Home, Products, Solutions, Resources, Company, Contact) — same layout/wiring as ForgePS-Website — not the generic CMS block template. Admin CMS stays at `/admin`.
+
+## Deploy (PowerShell)
 
 ```powershell
-git pull origin cursor/multi-program-cms-hub-1b94
+cd C:\Users\jerem\Projects\forgepublicsafety-website
+
+git merge --abort 2>$null
+git fetch origin
+git checkout -B cursor/multi-program-cms-hub-1b94 origin/cursor/multi-program-cms-hub-1b94
+git reset --hard origin/cursor/multi-program-cms-hub-1b94
+git clean -fd
+
 npm install
 npx firebase-tools use forge-website-b276c
 npm run deploy
 ```
 
-After deploy:
-1. Open https://forge-website-b276c.web.app/admin (email anything, password `admin`)
-2. **Settings → Hard reset from deployed seed**
-3. You should land on the homepage with the **3-person hero**
+Then open https://forge-website-b276c.web.app — you should see Solutions / Products / Resources / Company, Request Demo, 3-person hero, and Products → Forge RMS live link.
 
-Do **not** use Import unless you have an Admin-exported CMS backup JSON.
+**Do not use Import or Restore to “fix” the marketing homepage.** That CMS seed path is no longer what the public marketing host renders.
 
-## Verify deploy worked
-
-These must both succeed (image = real PNG, not HTML):
-
-- https://forge-website-b276c.web.app/assets/hero-three-responders.png
-- https://forge-website-b276c.web.app/cms-seed.json → home hero path should be `/assets/hero-three-responders.png`
-
-If the hero URL returns a web page instead of a picture, the deploy did not upload assets — pull again and redeploy.
-
-## Do NOT run bare `firebase deploy`
-
-Use `npm run deploy` (hosting only). Bare `firebase deploy` tries Cloud Functions and fails.
+Verify the hero file is a real image:  
+https://forge-website-b276c.web.app/assets/hero-three-responders.png

@@ -1,0 +1,61 @@
+{
+  "legal": {
+    "lastUpdatedLabel": "Last updated:",
+    "lastUpdated": "June 1, 2026",
+    "privacy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "heading": "Information We Collect",
+          "body": "We collect information you provide directly to us, such as when you create an account, request a demo, or contact our support team. This includes name, email address, phone number, agency name, and role."
+        },
+        {
+          "heading": "How We Use Your Information",
+          "body": "We use the information we collect to provide, maintain, and improve the Forge platform; process transactions; send technical notices and support messages; and respond to your comments and questions."
+        },
+        {
+          "heading": "Data Security",
+          "body": "Forge uses industry-standard encryption (AES-256 at rest, TLS 1.3 in transit) for agency data. Access to customer data is strictly controlled and audited."
+        },
+        {
+          "heading": "Contact Us",
+          "body": "If you have questions about this Privacy Policy, contact us at privacy@forgepublicsafety.com."
+        }
+      ]
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "sections": [
+        {
+          "heading": "Use of the Platform",
+          "body": "Forge Public Safety provides software services to public safety agencies subject to these terms and any applicable order or agreement with your agency."
+        },
+        {
+          "heading": "Agency Responsibilities",
+          "body": "Agencies are responsible for maintaining the confidentiality of account credentials and for ensuring that use of the platform complies with applicable laws and policies."
+        },
+        {
+          "heading": "Changes",
+          "body": "We may update these terms from time to time. Material changes will be communicated to account administrators in advance when possible."
+        }
+      ]
+    },
+    "security": {
+      "title": "Security",
+      "sections": [
+        {
+          "heading": "Platform Security",
+          "body": "Forge is designed for public safety workloads with encrypted transport, role-based access, audit logging, and tenant isolation between agency platforms."
+        },
+        {
+          "heading": "Operational Practices",
+          "body": "We follow secure development practices, monitor platform availability, and restrict administrative access to authorized personnel."
+        },
+        {
+          "heading": "Report a concern",
+          "body": "Security questions or vulnerability reports can be sent to security@forgepublicsafety.com."
+        }
+      ]
+    }
+  }
+}

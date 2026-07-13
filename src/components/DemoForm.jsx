@@ -1,9 +1,5 @@
 import { useState } from "react";
-import { content } from "../data/loadContent.js";
-
-const agencyTypes = ["Fire & Rescue", "EMS / Ambulance", "Emergency Management", "Combined Fire/EMS", "Law Enforcement", "Other"];
-const agencySizes = ["Under 25 personnel", "25–100 personnel", "100–500 personnel", "500+ personnel"];
-const products = ["Forge RMS", "Forge Personnel", "Forge Training", "Forge Prevention", "Forge Fleet", "Forge Analytics", "Forge Command"];
+import { useContent } from "../data/ContentContext.jsx";
 
 function ToggleGroup({ label, options, value, onChange }) {
   return (
@@ -30,51 +26,48 @@ function ToggleGroup({ label, options, value, onChange }) {
 }
 
 export default function DemoForm() {
-  const [submitted, setSubmitted] = useState(false);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    title: "",
-    agency: "",
-    email: "",
-    phone: "",
+  const content = useContent();
+  const { site } = content;
+  const form = content.contact.form;
+
+  const initialState = {
+    ...form.fields.reduce((acc, field) => ({ ...acc, [field.name]: "" }), {}),
     agencyType: "",
     agencySize: "",
     product: "",
     notes: ""
-  });
+  };
+
+  const [submitted, setSubmitted] = useState(false);
+  const [values, setValues] = useState(initialState);
 
   function update(field, value) {
-    setForm((current) => ({ ...current, [field]: value }));
+    setValues((current) => ({ ...current, [field]: value }));
   }
 
   function handleSubmit(event) {
     event.preventDefault();
-    const subject = encodeURIComponent(`Forge demo request — ${form.agency || "Agency"}`);
+    const subject = encodeURIComponent(`Forge demo request — ${values.agency || "Agency"}`);
     const body = encodeURIComponent(
       [
-        `Name: ${form.firstName} ${form.lastName}`,
-        `Title: ${form.title}`,
-        `Agency: ${form.agency}`,
-        `Email: ${form.email}`,
-        `Phone: ${form.phone}`,
-        `Agency type: ${form.agencyType}`,
-        `Agency size: ${form.agencySize}`,
-        `Product interest: ${form.product}`,
+        ...form.fields.map((field) => `${field.label}: ${values[field.name] || ""}`),
+        `${form.agencyTypeLabel}: ${values.agencyType}`,
+        `${form.agencySizeLabel}: ${values.agencySize}`,
+        `${form.productLabel}: ${values.product}`,
         "",
-        form.notes
+        values.notes
       ].join("\n")
     );
-    window.location.href = `mailto:${content.site.demoEmail}?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:${site.demoEmail}?subject=${subject}&body=${body}`;
     setSubmitted(true);
   }
 
   if (submitted) {
     return (
       <div className="rounded-[32px] border border-[#1E293B] bg-[#111827] p-8">
-        <h2 className="text-2xl font-bold text-white mb-3">Thanks — your email app should open now.</h2>
+        <h2 className="text-2xl font-bold text-white mb-3">{form.successTitle}</h2>
         <p className="text-[#94A3B8] leading-relaxed">
-          Send the message to complete your demo request. If nothing opened, email us directly at {content.site.demoEmail}.
+          {form.successBody} {site.demoEmail}.
         </p>
       </div>
     );
@@ -83,24 +76,17 @@ export default function DemoForm() {
   return (
     <form onSubmit={handleSubmit} className="rounded-[32px] border border-[#1E293B] bg-[#111827] p-8 space-y-8">
       <div>
-        <h2 className="text-2xl font-bold text-white mb-2">Your information</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">{form.infoHeading}</h2>
         <div className="grid gap-4 md:grid-cols-2">
-          {[
-            ["firstName", "First name", "Marcus", true],
-            ["lastName", "Last name", "Webb", true],
-            ["title", "Title / Role", "Fire Chief, EMS Director...", false],
-            ["agency", "Agency name", "Riverside Fire Department", true],
-            ["email", "Work email", "chief@riverside.gov", true],
-            ["phone", "Phone (optional)", "(662) 555-0100", false]
-          ].map(([field, label, placeholder, required]) => (
-            <label key={field} className="block space-y-2">
-              <span className="text-sm font-medium text-[#CBD5E1]">{label}</span>
+          {form.fields.map((field) => (
+            <label key={field.name} className="block space-y-2">
+              <span className="text-sm font-medium text-[#CBD5E1]">{field.label}</span>
               <input
-                type={field === "email" ? "email" : "text"}
-                required={required}
-                value={form[field]}
-                onChange={(event) => update(field, event.target.value)}
-                placeholder={placeholder}
+                type={field.name === "email" ? "email" : "text"}
+                required={field.required}
+                value={values[field.name]}
+                onChange={(event) => update(field.name, event.target.value)}
+                placeholder={field.placeholder}
                 className="w-full rounded-xl border border-[#1E293B] bg-black px-4 py-3 text-white placeholder:text-[#475569] outline-none focus:border-[#F97316]"
               />
             </label>
@@ -109,17 +95,17 @@ export default function DemoForm() {
       </div>
 
       <div className="space-y-6">
-        <h2 className="text-2xl font-bold text-white">About your agency</h2>
-        <ToggleGroup label="Agency type" options={agencyTypes} value={form.agencyType} onChange={(value) => update("agencyType", value)} />
-        <ToggleGroup label="Agency size" options={agencySizes} value={form.agencySize} onChange={(value) => update("agencySize", value)} />
-        <ToggleGroup label="Product interest" options={products} value={form.product} onChange={(value) => update("product", value)} />
+        <h2 className="text-2xl font-bold text-white">{form.agencyHeading}</h2>
+        <ToggleGroup label={form.agencyTypeLabel} options={form.agencyTypes} value={values.agencyType} onChange={(value) => update("agencyType", value)} />
+        <ToggleGroup label={form.agencySizeLabel} options={form.agencySizes} value={values.agencySize} onChange={(value) => update("agencySize", value)} />
+        <ToggleGroup label={form.productLabel} options={form.productOptions} value={values.product} onChange={(value) => update("product", value)} />
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-[#CBD5E1]">Anything else we should know? (optional)</span>
+          <span className="text-sm font-medium text-[#CBD5E1]">{form.notesLabel}</span>
           <textarea
             rows={4}
-            value={form.notes}
+            value={values.notes}
             onChange={(event) => update("notes", event.target.value)}
-            placeholder="Current software pain points, timeline, specific workflows you want to see..."
+            placeholder={form.notesPlaceholder}
             className="w-full rounded-xl border border-[#1E293B] bg-black px-4 py-3 text-white placeholder:text-[#475569] outline-none focus:border-[#F97316]"
           />
         </label>
@@ -129,7 +115,7 @@ export default function DemoForm() {
         type="submit"
         className="w-full rounded-full bg-[#F97316] px-6 py-3 text-sm font-bold text-white hover:bg-[#ea580c] transition-colors"
       >
-        Request My Demo
+        {form.submitLabel}
       </button>
     </form>
   );
