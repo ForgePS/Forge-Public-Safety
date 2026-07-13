@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ImagePlus, Replace } from "lucide-react";
 import { uploadImage, validateImageFile } from "../../cms/store/mediaUpload.js";
 
@@ -24,15 +24,19 @@ export function EditableText({
 }) {
   const edit = usePreviewEdit();
   const ref = useRef(null);
+  const lastExternal = useRef(value);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!ref.current || !edit) return;
     if (document.activeElement === ref.current) return;
+    if (lastExternal.current === value && (html ? ref.current.innerHTML : ref.current.textContent) === (value || "")) {
+      return;
+    }
+    lastExternal.current = value;
     if (html) {
-      if (ref.current.innerHTML !== (value || "")) ref.current.innerHTML = value || "";
+      ref.current.innerHTML = value || "";
     } else {
-      const next = value || "";
-      if (ref.current.textContent !== next) ref.current.textContent = next;
+      ref.current.textContent = value || "";
     }
   }, [value, html, edit]);
 
@@ -47,6 +51,7 @@ export function EditableText({
     if (!ref.current) return;
     const next = html ? ref.current.innerHTML : ref.current.innerText;
     if ((next || "") !== (value || "")) {
+      lastExternal.current = next;
       edit.onContentChange(fieldKey, next);
     }
   };
@@ -58,6 +63,7 @@ export function EditableText({
       style={style}
       contentEditable
       suppressContentEditableWarning
+      data-editable-text={fieldKey}
       data-placeholder={`Edit ${fieldKey}…`}
       onClick={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
@@ -78,7 +84,7 @@ export function EditableText({
   );
 }
 
-/** Image with resize handle + right-click replace menu (live preview only). */
+/** Image with resize handle + right-click / toolbar replace (live preview only). */
 export function EditableImage({
   src,
   alt = "",
@@ -90,6 +96,7 @@ export function EditableImage({
   width,
   height,
   objectFit = "cover",
+  toolbar = true,
 }) {
   const edit = usePreviewEdit();
   const fileRef = useRef(null);
@@ -103,9 +110,16 @@ export function EditableImage({
 
   useEffect(() => {
     if (!menu) return undefined;
-    const onDoc = () => closeMenu();
-    window.addEventListener("click", onDoc);
-    return () => window.removeEventListener("click", onDoc);
+    // Defer so the opening contextmenu/click doesn't immediately close the menu.
+    const timer = window.setTimeout(() => {
+      window.addEventListener("click", closeMenu);
+      window.addEventListener("contextmenu", closeMenu);
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("contextmenu", closeMenu);
+    };
   }, [menu, closeMenu]);
 
   if (!edit) {
@@ -195,8 +209,9 @@ export function EditableImage({
   const menuNode = menu ? (
     <div
       className="fixed z-[300] min-w-[180px] rounded-lg border border-[#1E293B] bg-[#0B1220] py-1 shadow-xl"
-      style={{ left: menu.x, top: menu.y }}
+      style={{ left: Math.min(menu.x, window.innerWidth - 200), top: Math.min(menu.y, window.innerHeight - 100) }}
       onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
     >
       <button
         type="button"
@@ -235,12 +250,42 @@ export function EditableImage({
     />
   );
 
+  const actions = toolbar ? (
+    <div className="absolute left-2 top-2 z-30 flex gap-1 opacity-100 sm:opacity-0 sm:group-hover/editable-img:opacity-100">
+      <button
+        type="button"
+        title="Upload replacement"
+        className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-[#0B1220]/90 px-2 py-1 text-[11px] font-semibold text-white shadow hover:bg-[#F97316]"
+        onClick={(e) => {
+          e.stopPropagation();
+          fileRef.current?.click();
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <ImagePlus size={12} /> Upload
+      </button>
+      <button
+        type="button"
+        title="Choose from library"
+        className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-[#0B1220]/90 px-2 py-1 text-[11px] font-semibold text-white shadow hover:bg-[#F97316]"
+        onClick={(e) => {
+          e.stopPropagation();
+          edit.onOpenMediaPicker?.(fieldKey);
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <Replace size={12} /> Library
+      </button>
+    </div>
+  ) : null;
+
   if (!src) {
     return (
       <div
         ref={wrapRef}
         className={`relative flex min-h-[160px] cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-[#F97316]/50 bg-[#111827]/80 px-4 py-8 text-center ${resizing ? "select-none" : ""}`}
         style={sizeStyle}
+        data-editable-image={fieldKey}
         onClick={(e) => {
           e.stopPropagation();
           fileRef.current?.click();
@@ -249,7 +294,7 @@ export function EditableImage({
       >
         <ImagePlus size={22} className="text-[#F97316]" />
         <p className="text-sm font-medium text-white">Add image</p>
-        <p className="text-xs text-[#64748B]">Click to upload · right-click for library</p>
+        <p className="text-xs text-[#64748B]">Click to upload · right-click for options</p>
         {fileInput}
         {menuNode}
       </div>
@@ -262,15 +307,18 @@ export function EditableImage({
     <div
       ref={wrapRef}
       className={`relative group/editable-img max-w-full ${fillParent ? "block h-full w-full" : "inline-block"} ${resizing ? "select-none" : ""}`}
+      data-editable-image={fieldKey}
       onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
       onContextMenu={openMenu}
     >
       <img src={src} alt={alt} className={className} style={sizeStyle} loading="lazy" draggable={false} />
       <div className="pointer-events-none absolute inset-0 ring-0 group-hover/editable-img:ring-2 group-hover/editable-img:ring-[#F97316]/70" />
+      {actions}
       <button
         type="button"
         title="Drag to resize"
-        className="absolute bottom-1 right-1 z-20 h-4 w-4 cursor-se-resize rounded-sm border border-white/80 bg-[#F97316] shadow opacity-0 group-hover/editable-img:opacity-100"
+        className="absolute bottom-1 right-1 z-30 h-5 w-5 cursor-se-resize rounded-sm border border-white/80 bg-[#F97316] shadow opacity-100 sm:opacity-0 sm:group-hover/editable-img:opacity-100"
         onPointerDown={onResizeStart}
       />
       {fileInput}
