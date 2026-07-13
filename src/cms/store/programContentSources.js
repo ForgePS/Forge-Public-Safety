@@ -8,6 +8,7 @@ import companyData from "../../../content/company.json";
 import contactData from "../../../content/contact.json";
 import resourcesData from "../../../content/resources.json";
 import footerData from "../../../content/footer.json";
+import productLinesData from "../../../content/product-lines.json";
 
 import rmsGlobal from "../../../content/programs/forge-rms/global.json";
 import rmsHome from "../../../content/programs/forge-rms/home.json";
@@ -51,6 +52,7 @@ const MARKETING_CONTENT = {
   contact: contactData,
   resources: resourcesData,
   footer: footerData,
+  productLines: productLinesData,
 };
 
 export const PROGRAM_CONTENT_SOURCES = {

@@ -1,11 +1,55 @@
 import DOMPurify from "dompurify";
 import { Link } from "react-router-dom";
 import { ArrowUpRight, ChevronDown, Star } from "lucide-react";
+import { useState } from "react";
 import { sectionStyle } from "../core/responsive.js";
 import CmsForm from "./CmsForm.jsx";
 
 function sanitize(html) {
   return DOMPurify.sanitize(html || "", { ADD_TAGS: ["iframe"], ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling"] });
+}
+
+function DisciplineCard({ line }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const href = line.href || "/solutions";
+  const isExternal = href.startsWith("http");
+  const CardWrap = isExternal ? "a" : Link;
+  const wrapProps = isExternal
+    ? { href, target: "_blank", rel: "noreferrer" }
+    : { to: href };
+
+  return (
+    <CardWrap
+      {...wrapProps}
+      className="group relative block overflow-hidden rounded-[28px] border border-[#1E293B] bg-[#111827] hover:border-[var(--cms-primary,#F97316)]/40 transition-colors"
+    >
+      <div className="aspect-[3/4] w-full overflow-hidden bg-gradient-to-b from-[#1E293B] to-[#0B1220]">
+        {line.image && !imageFailed ? (
+          <img
+            src={line.image}
+            alt={line.title || ""}
+            className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+            loading="eager"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <div className="flex h-full items-end p-6">
+            <p className="text-4xl font-black text-white/20 uppercase tracking-wider">{line.title}</p>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+      </div>
+      <div className="absolute inset-x-0 bottom-0 p-5">
+        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--cms-primary,#F97316)] mb-1">
+          {line.subtitle}
+        </p>
+        <h3 className="text-2xl font-black text-white">{line.title}</h3>
+        {line.description && (
+          <p className="mt-2 text-sm text-[#CBD5E1] leading-relaxed line-clamp-3">{line.description}</p>
+        )}
+      </div>
+    </CardWrap>
+  );
 }
 
 function ButtonEl({ btn, branding }) {
@@ -58,6 +102,37 @@ export function BlockRenderer({ block, branding, forms, collections }) {
             <div className="max-w-2xl">
               {c.eyebrow && <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4">{c.eyebrow}</p>}
               {c.title && <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6">{c.title}</h1>}
+              {c.lead && <p className="text-xl text-[#CBD5E1] mb-4 leading-relaxed">{c.lead}</p>}
+              {c.body && <p className="text-base text-[#94A3B8] mb-8 leading-relaxed">{c.body}</p>}
+              {c.buttons?.length > 0 && (
+                <div className="flex flex-wrap gap-4">
+                  {c.buttons.map((btn, i) => <ButtonEl key={i} btn={btn} branding={branding} />)}
+                </div>
+              )}
+              {c.bullets?.length > 0 && (
+                <ul className="mt-10 flex flex-wrap gap-6 text-sm font-medium text-[#94A3B8]">
+                  {c.bullets.map((item) => <li key={item}>{item}</li>)}
+                </ul>
+              )}
+            </div>
+          </div>
+        </section>
+      );
+
+    case "disciplineHero":
+      return (
+        <section className="relative overflow-hidden bg-[#0B1220]">
+          <div className="max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8 pt-10 pb-16 md:pt-14 md:pb-20">
+            {(c.lines || []).length > 0 && (
+              <div className="grid gap-5 md:grid-cols-3 mb-12 md:mb-16">
+                {(c.lines || []).map((line) => (
+                  <DisciplineCard key={line.id || line.title} line={line} />
+                ))}
+              </div>
+            )}
+            <div className="max-w-3xl">
+              {c.eyebrow && <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4">{c.eyebrow}</p>}
+              {c.title && <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6">{c.title}</h1>}
               {c.lead && <p className="text-xl text-[#CBD5E1] mb-4 leading-relaxed">{c.lead}</p>}
               {c.body && <p className="text-base text-[#94A3B8] mb-8 leading-relaxed">{c.body}</p>}
               {c.buttons?.length > 0 && (

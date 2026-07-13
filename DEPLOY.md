@@ -68,8 +68,12 @@ Wait for `Deploy complete!` then open:
 ## After first deploy
 
 1. Log in at `/admin`
-2. If the site is empty: **Settings → Restore default content**
-3. **Pages → Home** → Status: **Published** → **Save**
+2. Copy your three homepage people images into `public/assets/uploads/`:
+   - `product-line-firefighter.png`
+   - `product-line-ems.png`
+   - `product-line-public-safety.png`
+3. If the site is empty: **Settings → Restore default content**
+4. **Pages → Home** → Status: **Published** → **Save**
 
 ---
 

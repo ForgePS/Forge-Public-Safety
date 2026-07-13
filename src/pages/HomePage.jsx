@@ -3,21 +3,50 @@ import { ArrowUpRight } from "lucide-react";
 import CtaButton, { SectionHeading } from "../components/CtaButton.jsx";
 import { content, productHref } from "../data/loadContent.js";
 
+function ProductLineCard({ line }) {
+  return (
+    <Link
+      to={line.href || "/solutions"}
+      className="group relative block overflow-hidden rounded-[28px] border border-[#1E293B] bg-[#111827] hover:border-[#F97316]/40 transition-colors"
+    >
+      <div className="aspect-[3/4] w-full overflow-hidden bg-gradient-to-b from-[#1E293B] to-[#0B1220]">
+        {line.image ? (
+          <img
+            src={line.image}
+            alt={line.title}
+            className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+      </div>
+      <div className="absolute inset-x-0 bottom-0 p-5">
+        <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[#F97316] mb-1">{line.subtitle}</p>
+        <h3 className="text-2xl font-black text-white">{line.title}</h3>
+        <p className="mt-2 text-sm text-[#CBD5E1] leading-relaxed line-clamp-3">{line.description}</p>
+      </div>
+    </Link>
+  );
+}
+
 export default function HomePage() {
-  const { home, site } = content;
+  const { home, site, productLines } = content;
+  const lines = productLines?.lines || [];
 
   return (
     <>
       <section className="relative overflow-hidden bg-[#0B1220]">
-        <div className="absolute inset-0">
-          <img src="/assets/hero-firefighter.png" alt="" className="h-full w-full object-cover object-center opacity-90" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/20" />
-        </div>
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-10 pb-16 md:pt-14 md:pb-20">
+          {lines.length > 0 && (
+            <div className="grid gap-5 md:grid-cols-3 mb-12 md:mb-16">
+              {lines.map((line) => (
+                <ProductLineCard key={line.id} line={line} />
+              ))}
+            </div>
+          )}
 
-        <div className="relative max-w-7xl mx-auto px-6 lg:px-8 py-24 md:py-32">
-          <div className="max-w-2xl">
+          <div className="max-w-3xl">
             <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#F97316] mb-4">{home.heroEyebrow}</p>
-            <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6">{home.heroTitle}</h1>
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6">{home.heroTitle}</h1>
             <p className="text-xl text-[#CBD5E1] mb-4 leading-relaxed">{home.heroLead}</p>
             <p className="text-base text-[#94A3B8] mb-8 leading-relaxed">{home.heroBody}</p>
             <div className="flex flex-wrap gap-4">
