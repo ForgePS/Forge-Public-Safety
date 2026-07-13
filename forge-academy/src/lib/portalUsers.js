@@ -54,6 +54,7 @@ export function generateTempPassword(length = 12) {
  *   profileUrl?: string,
  *   organizationUnit?: string,
  *   staffSlug?: string,
+ *   departmentIds?: string[],
  * }} input
  */
 export async function createPortalUser(input) {
@@ -79,6 +80,7 @@ export async function createPortalUser(input) {
  *   profileUrl?: string,
  *   organizationUnit?: string,
  *   staffSlug?: string,
+ *   departmentIds?: string[],
  * }} input
  */
 export async function updatePortalUser(input) {

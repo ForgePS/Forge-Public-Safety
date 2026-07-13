@@ -3,6 +3,19 @@ import { db } from "./firebase.js";
 import { ROLES } from "./roles.js";
 import { getPortalRoleDefinition, isSystemRoleId } from "./portalRoleDefinitions.js";
 
+/** @param {string[]} [departmentIds] @param {string} [departmentId] */
+export function normalizeDepartmentIds(departmentIds, departmentId) {
+  const ids = Array.isArray(departmentIds)
+    ? departmentIds.map((item) => String(item ?? "").trim()).filter(Boolean)
+    : [];
+  const primary = String(departmentId ?? "").trim();
+  if (primary && !ids.includes(primary)) {
+    return [primary, ...ids];
+  }
+  if (ids.length > 0) return ids;
+  return primary ? [primary] : [];
+}
+
 /**
  * @typedef {Object} AppUserRecord
  * @property {string} uid
@@ -10,6 +23,7 @@ import { getPortalRoleDefinition, isSystemRoleId } from "./portalRoleDefinitions
  * @property {string} displayName
  * @property {import('./roles.js').Role} role
  * @property {string} [departmentId]
+ * @property {string[]} [departmentIds]
  * @property {string} [studentId]
  * @property {boolean} [disabled]
  * @property {string} [jobTitle]
@@ -50,7 +64,8 @@ async function fetchUserProfileFromSnap(uid, data) {
     email: data.email ?? "",
     displayName: data.displayName ?? "",
     role,
-    departmentId: data.departmentId,
+    departmentId: data.departmentId ?? "",
+    departmentIds: normalizeDepartmentIds(data.departmentIds, data.departmentId),
     studentId: data.studentId,
     disabled: Boolean(data.disabled),
     jobTitle: data.jobTitle ?? "",

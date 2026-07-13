@@ -33,7 +33,7 @@ const adminNavBase = [
 
   { group: "People", label: "Students", to: "/admin/students", icon: Users },
   { group: "People", label: "Departments", to: "/admin/departments", icon: Building2, module: "departments" },
-  { group: "People", label: "Instructors", to: "/admin/instructors", icon: GraduationCap, module: "instructors" },
+  { group: "People", label: "Staff", to: "/admin/instructors", icon: GraduationCap, module: "instructors" },
   { group: "People", label: "Portal Users", to: "/admin/users", icon: UserCog },
 
   { group: "Training", label: "Courses", to: "/admin/courses", icon: BookOpen, module: "classes" },

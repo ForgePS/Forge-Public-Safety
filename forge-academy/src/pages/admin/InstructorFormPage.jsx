@@ -40,8 +40,10 @@ import {
   instructorDisplayName,
   updateInstructor,
 } from "../../lib/instructors.js";
-import { ROLES } from "../../lib/roles.js";
-import { listUsersByRole } from "../../lib/users.js";
+import { listActiveDepartments } from "../../lib/departments.js";
+import DepartmentMultiSelect from "../../components/DepartmentMultiSelect.jsx";
+import { updatePortalUserProfileDirect } from "../../lib/portalUserAdmin.js";
+import { fetchUserProfile } from "../../lib/users.js";
 
 const emptyProfile = {
   userId: "",
@@ -80,6 +82,8 @@ export default function InstructorFormPage() {
   const { user } = useAuth();
 
   const [form, setForm] = useState(emptyProfile);
+  const [departmentIds, setDepartmentIds] = useState(/** @type {string[]} */ ([]));
+  const [departments, setDepartments] = useState([]);
   const [portalUsers, setPortalUsers] = useState([]);
   const [certifications, setCertifications] = useState([]);
   const [availability, setAvailability] = useState([]);
@@ -120,13 +124,15 @@ export default function InstructorFormPage() {
 
     async function loadOptions() {
       try {
-        const [users, classSessions] = await Promise.all([
+        const [users, classSessions, departmentRows] = await Promise.all([
           listUsersByRole(ROLES.INSTRUCTOR),
           listClassSessions(),
+          listActiveDepartments(),
         ]);
         if (!active) return;
         setPortalUsers(users);
         setClasses(classSessions);
+        setDepartments(departmentRows);
       } catch {
         // Non-blocking.
       }
@@ -163,6 +169,12 @@ export default function InstructorFormPage() {
           status: instructor.status,
           notes: instructor.notes,
         });
+        if (instructor.userId) {
+          const portalUser = await fetchUserProfile(instructor.userId);
+          setDepartmentIds(portalUser?.departmentIds ?? instructor.departmentIds ?? []);
+        } else {
+          setDepartmentIds(instructor.departmentIds ?? []);
+        }
         await reloadRelated();
       } catch (err) {
         if (active) {
@@ -183,11 +195,29 @@ export default function InstructorFormPage() {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
     setError(null);
+
+    if (name === "userId" && value) {
+      fetchUserProfile(value)
+        .then((portalUser) => {
+          if (portalUser?.departmentIds?.length) {
+            setDepartmentIds(portalUser.departmentIds);
+          }
+        })
+        .catch(() => {});
+    }
+  }
+
+  async function persistDepartmentAffiliations(userId) {
+    if (userId) {
+      await updatePortalUserProfileDirect(userId, { departmentIds });
+      return;
+    }
   }
 
   function buildProfilePayload() {
     return {
       ...form,
+      departmentIds,
       specialties: form.specialties
         .split(",")
         .map((item) => item.trim())
@@ -204,9 +234,11 @@ export default function InstructorFormPage() {
       const payload = buildProfilePayload();
       if (isNew) {
         const id = await createInstructor(payload);
+        await persistDepartmentAffiliations(form.userId);
         navigate(`/admin/instructors/${id}`);
       } else {
         await updateInstructor(instructorId, payload);
+        await persistDepartmentAffiliations(form.userId);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to save instructor.");
@@ -317,14 +349,14 @@ export default function InstructorFormPage() {
   return (
     <>
       <PageHeader
-        title={isNew ? "Add Instructor" : `${form.firstName} ${form.lastName}`.trim() || "Instructor"}
-        subtitle="Profile, credentials, availability, assignments, and evaluations"
+        title={isNew ? "Add Staff Member" : `${form.firstName} ${form.lastName}`.trim() || "Staff profile"}
+        subtitle="Profile, department affiliations, credentials, availability, assignments, and evaluations"
         actions={
           <Link
             to="/admin/instructors"
             className="app-btn-secondary px-4 py-2 text-xs"
           >
-            Back to instructors
+            Back to staff
           </Link>
         }
       />
@@ -336,7 +368,7 @@ export default function InstructorFormPage() {
           </p>
         ) : null}
 
-        <FormSection title="Instructor profile">
+        <FormSection title="Staff profile">
           <FormField label="First name" name="firstName" value={form.firstName} onChange={handleChange} required />
           <FormField label="Last name" name="lastName" value={form.lastName} onChange={handleChange} required />
           <FormField label="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
@@ -355,6 +387,18 @@ export default function InstructorFormPage() {
               })),
             ]}
           />
+          <div>
+            <p className="mb-2 text-sm font-medium text-[var(--color-afta-text)]">Department affiliation</p>
+            <p className="mb-3 text-xs text-[var(--color-afta-muted)]">
+              Select one or more fire departments this staff member is associated with.
+              {form.userId ? " Saved to the linked portal user profile." : " Stored on this staff profile."}
+            </p>
+            <DepartmentMultiSelect
+              departments={departments}
+              value={departmentIds}
+              onChange={setDepartmentIds}
+            />
+          </div>
           <FormField
             label="Specialties"
             name="specialties"

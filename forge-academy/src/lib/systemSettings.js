@@ -463,8 +463,8 @@ export const SYSTEM_SETTINGS_SECTIONS = /** @type {SettingsSectionDef[]} */ ([
   },
   {
     id: "instructors",
-    title: "Instructors",
-    description: "Instructor portal capabilities and proctor requirements.",
+    title: "Staff",
+    description: "Staff portal capabilities and proctor requirements.",
     fields: [
       { key: "moduleEnabled", label: "Enable instructor module", type: "boolean" },
       { key: "allowSelfServiceProfile", label: "Allow self-service profile edits", type: "boolean" },
