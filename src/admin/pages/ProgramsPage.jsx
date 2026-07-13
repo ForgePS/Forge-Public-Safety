@@ -169,8 +169,30 @@ export default function ProgramsPage() {
                 options={Object.entries(PROGRAM_TYPES).map(([value, label]) => ({ value, label }))}
               />
               <AdminTextarea label="Description" value={selected.description} onChange={(v) => updateField("description", v)} />
-              <AdminInput label="Live URL" value={selected.liveUrl} onChange={(v) => updateField("liveUrl", v)} placeholder="https://..." />
-              <AdminInput label="App URL" value={selected.appUrl} onChange={(v) => updateField("appUrl", v)} help="Link to the product admin (e.g. Academy LMS)" />
+              <AdminInput
+                label="Live URL"
+                value={selected.liveUrl}
+                onChange={(v) => updateField("liveUrl", v)}
+                placeholder="https://forge-website-b276c.web.app"
+                help="Public website URL (must start with https://). For the new CMS site use https://forge-website-b276c.web.app"
+              />
+              <AdminInput
+                label="App URL"
+                value={selected.appUrl}
+                onChange={(v) => updateField("appUrl", v)}
+                placeholder="https://..."
+                help="Optional product app login (Academy LMS, RMS app). Leave blank for the marketing website. Do not put the marketing site here."
+              />
+              {selected.liveUrl && !/^https?:\/\//i.test(String(selected.liveUrl).trim()) && (
+                <p className="text-xs text-yellow-400 -mt-2">
+                  Live URL is missing https:// — it will be added when you save, but enter the full address to avoid broken links.
+                </p>
+              )}
+              {selected.appUrl && /forge-website-b276c\.web\.app/i.test(String(selected.appUrl)) && (
+                <p className="text-xs text-yellow-400 -mt-2">
+                  App URL looks like the marketing hosting site. Clear this field for Forge Public Safety marketing, or use the real product admin URL.
+                </p>
+              )}
               <AdminInput label="Brand Color" type="color" value={selected.color || "#64748B"} onChange={(v) => updateField("color", v)} />
               <AdminSelect
                 label="Status"
