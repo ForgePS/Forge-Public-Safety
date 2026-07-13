@@ -1,136 +1,8 @@
 import { LOCAL_STORE_KEY } from "../core/constants.js";
 
-const MAX_VERSIONS = 20;
-const MAX_DATA_URL_CHARS = 400_000; // ~300KB — keep store under typical 5MB quota
-
-function readStore() {
-  try {
-    const raw = localStorage.getItem(LOCAL_STORE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function isQuotaError(err) {
-  return (
-    err?.name === "QuotaExceededError"
-    || err?.name === "NS_ERROR_DOM_QUOTA_REACHED"
-    || /quota|setitem/i.test(String(err?.message || err))
-  );
-}
-
-function stripHeavyDataUrls(value) {
-  if (typeof value === "string" && value.startsWith("data:image/") && value.length > MAX_DATA_URL_CHARS) {
-    return "";
-  }
-  if (Array.isArray(value)) return value.map(stripHeavyDataUrls);
-  if (value && typeof value === "object") {
-    const next = {};
-    Object.entries(value).forEach(([k, v]) => {
-      next[k] = stripHeavyDataUrls(v);
-    });
-    return next;
-  }
-  return value;
-}
-
-function pruneForQuota(data, pass = 0) {
-  const next = { ...data };
-
-  // Always cap versions first — they duplicate full page/media snapshots.
-  const versions = Array.isArray(next.versions) ? next.versions : [];
-  next.versions = versions.slice(0, pass === 0 ? MAX_VERSIONS : Math.min(5, MAX_VERSIONS));
-
-  if (pass >= 1) {
-    // Drop version payloads' nested data URLs / heavy fields
-    next.versions = next.versions.map((v) => ({
-      ...v,
-      data: v?.data ? stripHeavyDataUrls(v.data) : v?.data,
-    }));
-  }
-
-  if (pass >= 2) {
-    next.versions = [];
-    next.formSubmissions = [];
-  }
-
-  if (pass >= 3) {
-    // Purge oversized base64 media from the library (keep metadata)
-    next.media = (Array.isArray(next.media) ? next.media : []).map((item) => {
-      if (typeof item?.url === "string" && item.url.startsWith("data:image/") && item.url.length > 50_000) {
-        return {
-          ...item,
-          url: "",
-          note: "Removed from local storage to free space. Re-upload after connecting Firebase Storage.",
-        };
-      }
-      return item;
-    });
-    next.pages = stripHeavyDataUrls(next.pages);
-    next.branding = stripHeavyDataUrls(next.branding);
-    next.footers = stripHeavyDataUrls(next.footers);
-  }
-
-  return next;
-}
-
-function writeStore(data) {
-  let payload = {
-    ...data,
-    versions: Array.isArray(data.versions) ? data.versions.slice(0, MAX_VERSIONS) : [],
-  };
-
-  for (let pass = 0; pass <= 4; pass += 1) {
-    try {
-      localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(payload));
-      window.dispatchEvent(new CustomEvent("cms-store-changed"));
-      return payload;
-    } catch (err) {
-      if (!isQuotaError(err)) throw err;
-      if (pass >= 4) {
-        // Last resort: wipe CMS local store key only and write a minimal snapshot.
-        try {
-          localStorage.removeItem(LOCAL_STORE_KEY);
-          const minimal = stripHeavyDataUrls({
-            ...emptyStore(),
-            programs: payload.programs || [],
-            pages: payload.pages || [],
-            branding: payload.branding || [],
-            navigation: payload.navigation || [],
-            footers: payload.footers || [],
-            forms: payload.forms || [],
-            settings: payload.settings || [],
-            roles: payload.roles || [],
-            users: payload.users || [],
-            collections: payload.collections || [],
-            emailTemplates: payload.emailTemplates || [],
-            seoGlobal: payload.seoGlobal || [],
-            search: payload.search || [],
-            redirects: payload.redirects || [],
-            media: [],
-            versions: [],
-            formSubmissions: [],
-          });
-          localStorage.setItem(LOCAL_STORE_KEY, JSON.stringify(minimal));
-          window.dispatchEvent(new CustomEvent("cms-store-changed"));
-          window.dispatchEvent(new CustomEvent("cms-storage-compacted", {
-            detail: { message: "Browser storage was full. Cleared local media/history so editing can continue." },
-          }));
-          return minimal;
-        } catch (inner) {
-          const quotaErr = new Error(
-            "Browser storage is full (localStorage quota). Open Settings → Free browser storage, or Hard reset from deployed seed."
-          );
-          quotaErr.code = "STORAGE_QUOTA";
-          throw quotaErr;
-        }
-      }
-      payload = pruneForQuota(payload, pass);
-    }
-  }
-  return payload;
-}
+const MAX_VERSIONS = 10;
+const SAFE_STORE_CHARS = 3_500_000; // leave headroom under typical ~5MB quota
+const LEGACY_KEYS = ["forge_cms_data_v1", "forge_cms_data_v2_backup"];
 
 function emptyStore() {
   return {
@@ -156,6 +28,208 @@ function emptyStore() {
     seoGlobal: [],
     search: [],
   };
+}
+
+function isQuotaError(err) {
+  return (
+    err?.name === "QuotaExceededError"
+    || err?.code === 22
+    || err?.code === 1014
+    || err?.name === "NS_ERROR_DOM_QUOTA_REACHED"
+    || /quota|setitem|exceeded/i.test(String(err?.message || err))
+  );
+}
+
+/** Remove every data: URL from the tree (base64 images are the quota killer). */
+function stripAllDataUrls(value) {
+  if (typeof value === "string") {
+    if (value.startsWith("data:")) return "";
+    return value;
+  }
+  if (Array.isArray(value)) return value.map(stripAllDataUrls);
+  if (value && typeof value === "object") {
+    const next = Array.isArray(value) ? [] : {};
+    Object.entries(value).forEach(([k, v]) => {
+      next[k] = stripAllDataUrls(v);
+    });
+    return next;
+  }
+  return value;
+}
+
+function estimateSize(data) {
+  try {
+    return JSON.stringify(data).length;
+  } catch {
+    return Number.MAX_SAFE_INTEGER;
+  }
+}
+
+function slimMedia(media) {
+  return (Array.isArray(media) ? media : [])
+    .filter((item) => item && typeof item === "object")
+    .map((item) => {
+      const url = typeof item.url === "string" ? item.url : "";
+      if (url.startsWith("data:")) {
+        return {
+          id: item.id,
+          name: item.name || "image",
+          url: "",
+          type: item.type || "image",
+          alt: item.alt || "",
+          programId: item.programId,
+          note: "Inline image removed to free browser storage. Use /assets/... paths or Firebase Storage.",
+        };
+      }
+      return item;
+    })
+    .filter((item) => item.url || item.note);
+}
+
+function makeLeanStore(data) {
+  const base = { ...emptyStore(), ...(data || {}) };
+  return stripAllDataUrls({
+    ...base,
+    versions: [],
+    formSubmissions: [],
+    media: slimMedia(base.media),
+    savedSections: [],
+    popups: Array.isArray(base.popups) ? base.popups.slice(0, 20) : [],
+  });
+}
+
+function makeMinimalStore(data) {
+  const base = data || {};
+  return stripAllDataUrls({
+    ...emptyStore(),
+    programs: base.programs || [],
+    pages: base.pages || [],
+    branding: base.branding || [],
+    navigation: base.navigation || [],
+    footers: base.footers || [],
+    forms: base.forms || [],
+    settings: base.settings || [],
+    roles: base.roles || [],
+    users: base.users || [],
+    collections: base.collections || [],
+    emailTemplates: base.emailTemplates || [],
+    seoGlobal: base.seoGlobal || [],
+    search: base.search || [],
+    redirects: base.redirects || [],
+    media: [],
+    versions: [],
+    formSubmissions: [],
+  });
+}
+
+function clearRelatedKeys() {
+  try {
+    localStorage.removeItem(LOCAL_STORE_KEY);
+  } catch {
+    /* ignore */
+  }
+  LEGACY_KEYS.forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  });
+}
+
+function trySet(raw) {
+  localStorage.setItem(LOCAL_STORE_KEY, raw);
+  window.dispatchEvent(new CustomEvent("cms-store-changed"));
+}
+
+function writeStore(data) {
+  let payload = {
+    ...data,
+    versions: Array.isArray(data.versions) ? data.versions.slice(0, MAX_VERSIONS) : [],
+  };
+
+  // Preemptively slim if already near quota.
+  if (estimateSize(payload) > SAFE_STORE_CHARS) {
+    payload = makeLeanStore(payload);
+  }
+
+  const attempts = [
+    () => payload,
+    () => makeLeanStore(payload),
+    () => makeMinimalStore(payload),
+    () => makeMinimalStore({
+      programs: payload.programs,
+      pages: (payload.pages || []).map((page) => ({
+        ...page,
+        sections: (page.sections || []).slice(0, 8),
+      })),
+      branding: payload.branding,
+      navigation: payload.navigation,
+      footers: payload.footers,
+      forms: payload.forms,
+      settings: payload.settings,
+      roles: payload.roles,
+      users: payload.users,
+    }),
+    () => ({
+      ...emptyStore(),
+      programs: payload.programs || [],
+      pages: [],
+      branding: payload.branding || [],
+      navigation: payload.navigation || [],
+      roles: payload.roles || [],
+      users: payload.users || [],
+    }),
+  ];
+
+  let lastError = null;
+  for (let i = 0; i < attempts.length; i += 1) {
+    const next = attempts[i]();
+    const raw = JSON.stringify(next);
+    try {
+      trySet(raw);
+      if (i > 0) {
+        window.dispatchEvent(new CustomEvent("cms-storage-compacted", {
+          detail: {
+            message: "Browser storage was full. Removed inline images/history so saving can continue.",
+            pass: i,
+          },
+        }));
+      }
+      return next;
+    } catch (err) {
+      lastError = err;
+      if (!isQuotaError(err)) throw err;
+      // Free the existing oversized value before retrying a smaller write.
+      clearRelatedKeys();
+    }
+  }
+
+  const quotaErr = new Error(
+    "Browser storage is full. Open Settings → Free browser storage, then Hard reset from deployed seed."
+  );
+  quotaErr.code = "STORAGE_QUOTA";
+  quotaErr.cause = lastError;
+  throw quotaErr;
+}
+
+function readStore() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORE_KEY);
+    if (!raw) return null;
+    if (raw.length > SAFE_STORE_CHARS) {
+      // Auto-heal an already oversized store on read.
+      const parsed = JSON.parse(raw);
+      return writeStore(makeLeanStore(parsed));
+    }
+    return JSON.parse(raw);
+  } catch (err) {
+    if (isQuotaError(err)) {
+      clearRelatedKeys();
+      return emptyStore();
+    }
+    return null;
+  }
 }
 
 export function getLocalStore() {
@@ -185,21 +259,35 @@ export function getLocalItem(collection, id) {
 }
 
 export function upsertLocalItem(collection, item) {
-  return updateLocalCollection(collection, (items) => {
-    if (Array.isArray(item)) return item;
-    if (!Array.isArray(items)) {
-      if (items && typeof items === "object" && !Array.isArray(items) && items.id === item.id) {
-        return { ...items, ...item, updatedAt: new Date().toISOString() };
-      }
-      return item;
+  // Never persist giant data-URLs into the media collection.
+  let safeItem = item;
+  if (collection === "media" && item && !Array.isArray(item)) {
+    if (typeof item.url === "string" && item.url.startsWith("data:") && item.url.length > 80_000) {
+      throw new Error(
+        "Image is too large for browser storage. Use a file under 500 KB, or an /assets/... path."
+      );
     }
-    const index = items.findIndex((i) => i.id === item.id);
+  }
+  if (collection === "pages" && item && !Array.isArray(item)) {
+    // Never keep inline base64 in pages — it quickly exceeds localStorage quota.
+    safeItem = stripAllDataUrls(item);
+  }
+
+  return updateLocalCollection(collection, (items) => {
+    if (Array.isArray(safeItem)) return safeItem;
+    if (!Array.isArray(items)) {
+      if (items && typeof items === "object" && !Array.isArray(items) && items.id === safeItem.id) {
+        return { ...items, ...safeItem, updatedAt: new Date().toISOString() };
+      }
+      return safeItem;
+    }
+    const index = items.findIndex((i) => i.id === safeItem.id);
     if (index >= 0) {
       const next = [...items];
-      next[index] = { ...items[index], ...item, updatedAt: new Date().toISOString() };
+      next[index] = { ...items[index], ...safeItem, updatedAt: new Date().toISOString() };
       return next;
     }
-    return [...items, { ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }];
+    return [...items, { ...safeItem, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }];
   });
 }
 
@@ -211,16 +299,26 @@ export function deleteLocalItem(collection, id) {
 }
 
 export function addLocalVersion(entry) {
-  // Never persist giant base64 payloads inside version history.
-  const safeEntry = stripHeavyDataUrls(entry);
-  return updateLocalCollection("versions", (versions) => [
+  // Version history is optional in local mode; keep it tiny.
+  const safeEntry = stripAllDataUrls(entry);
+  const store = getLocalStore();
+  const versions = [
     {
       id: `ver_${Date.now()}`,
       ...safeEntry,
       createdAt: new Date().toISOString(),
     },
-    ...(versions || []).slice(0, MAX_VERSIONS - 1),
-  ]);
+    ...(store.versions || []).slice(0, MAX_VERSIONS - 1),
+  ];
+  // Prefer a direct write without cloning the whole media payload again if possible.
+  try {
+    return updateLocalCollection("versions", () => versions);
+  } catch (err) {
+    if (!isQuotaError(err)) throw err;
+    // Give up on versions rather than breaking saves.
+    writeStore({ ...store, versions: [] });
+    return [];
+  }
 }
 
 export function isLocalStoreSeeded() {
@@ -229,17 +327,52 @@ export function isLocalStoreSeeded() {
 }
 
 export function clearLocalStore() {
-  localStorage.removeItem(LOCAL_STORE_KEY);
+  clearRelatedKeys();
 }
 
-/** Drop history / heavy local uploads to free space. */
+/** Drop history / inline uploads to free space. Safe to run anytime. */
 export function compactLocalStore() {
-  const store = getLocalStore();
-  const compacted = pruneForQuota({
-    ...store,
-    versions: [],
-    formSubmissions: [],
-  }, 3);
-  writeStore(compacted);
-  return compacted;
+  let existing = emptyStore();
+  try {
+    const raw = localStorage.getItem(LOCAL_STORE_KEY);
+    if (raw) existing = JSON.parse(raw);
+  } catch {
+    existing = emptyStore();
+  }
+  clearRelatedKeys();
+  const written = writeStore(makeLeanStore(existing));
+  window.dispatchEvent(new CustomEvent("cms-storage-compacted", {
+    detail: { message: "Freed browser storage by removing inline images and history." },
+  }));
+  return written;
+}
+
+/** Nuclear option used by Settings when quota is already exceeded. */
+export function emergencyClearCmsLocalStorage() {
+  clearRelatedKeys();
+  // Also sweep any other large CMS-ish keys.
+  try {
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (/forge_cms|cms_seed|cms-store/i.test(key)) doomed.push(key);
+    }
+    doomed.forEach((key) => {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        /* ignore */
+      }
+    });
+  } catch {
+    /* ignore */
+  }
+  const empty = emptyStore();
+  try {
+    trySet(JSON.stringify(empty));
+  } catch {
+    // If even empty fails, site has critical quota issues outside our key.
+  }
+  return empty;
 }

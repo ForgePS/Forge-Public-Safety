@@ -139,6 +139,23 @@ export function CmsProvider({ children }) {
       }
 
       const hasExistingStore = typeof window !== "undefined" && Boolean(localStorage.getItem(LOCAL_STORE_KEY));
+      // Heal oversized local CMS store before loading (common cause of setItem quota errors).
+      if (typeof window !== "undefined" && isAdminMode) {
+        try {
+          const raw = localStorage.getItem(LOCAL_STORE_KEY);
+          if (raw && raw.length > 3_500_000) {
+            const { compactLocalStore } = await import("../store/localStore.js");
+            compactLocalStore();
+          }
+        } catch {
+          try {
+            const { emergencyClearCmsLocalStorage } = await import("../store/localStore.js");
+            emergencyClearCmsLocalStorage();
+          } catch {
+            /* ignore */
+          }
+        }
+      }
       if (!cmsStore.isSeeded() && !hasExistingStore) {
         seedLocalStore();
         clearSeedCache();

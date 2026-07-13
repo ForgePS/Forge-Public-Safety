@@ -9,6 +9,7 @@ import {
   isLocalStoreSeeded,
   setLocalStore,
   compactLocalStore,
+  emergencyClearCmsLocalStorage,
 } from "./localStore.js";
 import {
   isFirebaseConfigured,
@@ -233,4 +234,4 @@ export function migrateLegacyStore() {
   }
 }
 
-export { useFirebase as isUsingFirebase, compactLocalStore };
+export { useFirebase as isUsingFirebase, compactLocalStore, emergencyClearCmsLocalStorage };
