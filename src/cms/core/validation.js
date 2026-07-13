@@ -1,14 +1,32 @@
 import { PAGE_STATUS } from "./constants.js";
 import { getBlockDef } from "../blocks/registry.js";
 
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Normalize to lowercase hyphenated slug. Converts slashes/underscores to hyphens. */
+export function sanitizeSlug(input) {
+  return String(input || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[\/_]+/g, "-")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function isValidSlug(slug) {
+  if (!slug) return false;
+  if (slug === "/" || slug === "home") return true;
+  return SLUG_PATTERN.test(slug);
+}
+
 export function validatePage(page) {
   const errors = [];
   if (!page.title?.trim()) errors.push("Page title is required");
   if (!page.slug?.trim()) errors.push("Page slug is required");
-  if (page.slug && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(page.slug) && page.slug !== "/") {
-    if (page.slug !== "home" && !page.slug.startsWith("/")) {
-      errors.push("Slug must be lowercase with hyphens only");
-    }
+  else if (!isValidSlug(page.slug)) {
+    errors.push("Slug must be lowercase with hyphens only");
   }
   if (!Object.values(PAGE_STATUS).includes(page.status)) {
     errors.push("Invalid page status");
@@ -43,16 +61,6 @@ export function validateBlock(block) {
     }
   });
   return errors;
-}
-
-export function sanitizeSlug(input) {
-  return input
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
 }
 
 export function validateForm(form) {
