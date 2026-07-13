@@ -18,7 +18,7 @@ export const DEFAULT_PROGRAMS = [
     description: "Main company marketing site — forgepublicsafety.com",
     domains: ["forgepublicsafety.com", "www.forgepublicsafety.com"],
     previewDomains: ["forge-website-b276c.web.app", "localhost"],
-    liveUrl: "https://forgepublicsafety.com",
+    liveUrl: "https://forge-website-b276c.web.app",
     status: "active",
     color: "#F97316",
     createdAt: new Date().toISOString(),
