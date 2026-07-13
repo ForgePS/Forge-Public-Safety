@@ -8,6 +8,7 @@ import {
   addLocalVersion,
   isLocalStoreSeeded,
   setLocalStore,
+  compactLocalStore,
 } from "./localStore.js";
 import {
   isFirebaseConfigured,
@@ -109,7 +110,7 @@ export async function getPublishedPages(programId = DEFAULT_PROGRAM_ID) {
 
 const GLOBAL_KEYS = new Set(["programs", "roles", "users"]);
 
-export async function save(key, item, userId = "system", programId = null) {
+export async function save(key, item, userId = "system", programId = null, options = {}) {
   const pid = programId || item.programId || DEFAULT_PROGRAM_ID;
   const base = {
     ...item,
@@ -135,7 +136,11 @@ export async function save(key, item, userId = "system", programId = null) {
     upsertLocalItem(key, payload);
   }
 
-  await saveVersion(key, payload.id, payload, userId, undefined, pid);
+  // Skip version history for media and explicit lightweight writes — data URLs blow the quota.
+  const skipVersion = options.version === false || key === "media";
+  if (!skipVersion) {
+    await saveVersion(key, payload.id, payload, userId, undefined, pid);
+  }
   return payload;
 }
 
@@ -228,4 +233,4 @@ export function migrateLegacyStore() {
   }
 }
 
-export { useFirebase as isUsingFirebase };
+export { useFirebase as isUsingFirebase, compactLocalStore };

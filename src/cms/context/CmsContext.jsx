@@ -183,7 +183,7 @@ export function CmsProvider({ children }) {
             if (nextSlug && nextSlug !== page.slug) {
               const updated = { ...page, slug: nextSlug };
               try {
-                await cmsStore.save("pages", updated, "system", pid);
+                await cmsStore.save("pages", updated, "system", pid, { version: false });
                 fixed.push(updated);
                 continue;
               } catch (err) {

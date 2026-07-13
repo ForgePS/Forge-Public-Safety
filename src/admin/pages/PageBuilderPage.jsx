@@ -206,7 +206,22 @@ export default function PageBuilderPage() {
       setToast(slug !== page.slug ? `Page saved (slug fixed to ${slug})` : "Page saved successfully");
       if (slug !== page.slug) setPage(toSave);
     } catch (err) {
-      setToast(`Error: ${err.message}`);
+      const msg = err?.message || "Save failed";
+      if (err?.code === "STORAGE_QUOTA" || /quota|setitem|storage/i.test(msg)) {
+        try {
+          const { compactLocalStore } = await import("../../cms/store/localStore.js");
+          compactLocalStore();
+          await store.save("pages", toSave);
+          dirtyRef.current = false;
+          await refresh();
+          setToast("Storage was full — cleared history and saved. Re-upload large images if any are missing.");
+          if (slug !== page.slug) setPage(toSave);
+        } catch (retryErr) {
+          setToast(retryErr?.message || msg);
+        }
+      } else {
+        setToast(`Error: ${msg}`);
+      }
     } finally {
       setSaving(false);
     }

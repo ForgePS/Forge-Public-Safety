@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useCms } from "../../cms/context/CmsContext.jsx";
 import { restoreProgramWebsite, hardResetSiteFromDeployedSeed } from "../../cms/store/programImport.js";
+import { compactLocalStore } from "../../cms/store/localStore.js";
 import { DEFAULT_PROGRAM_ID } from "../../cms/core/programs.js";
 import AdminPageHeader, { AdminInput, AdminTextarea, AdminCard, SaveBar, Toast, AdminButton } from "../components/AdminPageHeader.jsx";
 
@@ -80,6 +81,20 @@ export default function SettingsPage() {
             </AdminButton>
             <AdminButton variant="secondary" onClick={restoreWebsite} disabled={restoring}>
               {restoring ? "Working…" : `Restore ${program?.name || "this program"} only`}
+            </AdminButton>
+            <AdminButton
+              variant="secondary"
+              onClick={() => {
+                try {
+                  compactLocalStore();
+                  refresh();
+                  showToast("Freed browser storage (cleared draft media & history)");
+                } catch (err) {
+                  showToast(err.message || "Could not free storage", "error");
+                }
+              }}
+            >
+              Free browser storage
             </AdminButton>
             {programId !== DEFAULT_PROGRAM_ID && (
               <AdminButton variant="secondary" onClick={() => setProgramId(DEFAULT_PROGRAM_ID)}>

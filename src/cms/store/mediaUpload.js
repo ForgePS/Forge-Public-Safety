@@ -10,7 +10,7 @@ export const ACCEPTED_IMAGE_TYPES = [
 ];
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-export const MAX_LOCAL_BYTES = 2 * 1024 * 1024;
+export const MAX_LOCAL_BYTES = 500 * 1024; // Keep localStorage uploads small to avoid quota errors
 
 function sanitizeFilename(name) {
   return (name || "image").replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -34,7 +34,7 @@ export function validateImageFile(file) {
     return "Image must be smaller than 10 MB";
   }
   if (!isFirebaseConfigured() && file.size > MAX_LOCAL_BYTES) {
-    return "Local dev limit is 2 MB per image. Deploy with Firebase Storage for larger files.";
+    return "Local browser storage limit is 500 KB per image. Use smaller images, or configure Firebase Storage for larger uploads.";
   }
   return null;
 }
