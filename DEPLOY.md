@@ -1,8 +1,10 @@
 # Deploy Forge CMS Website
 
-Project: **rms-dashboard-7562e**  
-Hosting site: **forgepublicsafety-com**  
-Live URL: https://forgepublicsafety.com
+**New CMS site (deploy here):** https://forge-website-b276c.web.app  
+Firebase project: **forge-website-b276c**  
+Hosting site: **forge-website-b276c**
+
+> **Do not deploy to the old site.** The legacy marketing site at forgepublicsafety.com uses a different Firebase project (`rms-dashboard-7562e`). This repo builds the **new Forge CMS** website.
 
 ## Deploy your website (use this)
 
@@ -13,16 +15,16 @@ npm install
 npm run deploy
 ```
 
-This deploys to **https://forgepublicsafety.com** (Firebase project `rms-dashboard-7562e`, site `forgepublicsafety-com`).
+This deploys to **https://forge-website-b276c.web.app**.
 
-Confirm your Firebase login matches that project:
+Confirm your Firebase login matches the new project:
 
 ```powershell
 npx firebase-tools projects:list
-npx firebase-tools use rms-dashboard-7562e
+npx firebase-tools use forge-website-b276c
 ```
 
-Each build bundles default website content into `/cms-seed.json` so **https://forgepublicsafety.com** shows the marketing site even before anyone visits Admin.
+Each build bundles default website content into `/cms-seed.json` so **https://forge-website-b276c.web.app** shows the marketing site even before anyone visits Admin.
 
 If the live site is blank, pull the latest code and redeploy:
 
@@ -48,16 +50,18 @@ Running `firebase deploy` with no flags tries to deploy Cloud Functions and may 
 ## Windows PowerShell (step by step)
 
 ```powershell
-cd C:\Users\jerem\Projects\forge-cms-site
-git pull
+cd C:\Users\jerem\Projects\forgepublicsafety-website
+git pull origin cursor/multi-program-cms-hub-1b94
 npm install
+npx firebase-tools login --reauth
+npx firebase-tools use forge-website-b276c
 npm run deploy
 ```
 
 Wait for `Deploy complete!` then open:
 
-- **Website:** https://forgepublicsafety.com
-- **Admin:** https://forgepublicsafety.com/admin
+- **Website:** https://forge-website-b276c.web.app
+- **Admin:** https://forge-website-b276c.web.app/admin
 
 ---
 
@@ -93,9 +97,10 @@ Open **http://localhost:5173** (port 5173, not 80).
 
 | Problem | Fix |
 |---------|-----|
-| `Assertion failed: resolving hosting target...` | Pull latest code (adds `"site": "forgepublicsafety-com"` to `firebase.json`). Then run `firebase login --reauth` and retry `npm run deploy`. |
+| `Assertion failed: resolving hosting target...` | Pull latest code, run `npx firebase-tools login --reauth`, then `npx firebase-tools use forge-website-b276c`, retry `npm run deploy` |
+| `could not find site "forgepublicsafety-com"` | You are on old config — pull latest code; new site is `forge-website-b276c` |
 | Functions timeout on deploy | Use `npm run deploy` (not `firebase deploy`) |
 | Blank website after deploy | Admin → Settings → Restore default content |
 | Still see old TinaCMS | Pull latest code, `npm run deploy` again |
 | `firebase` not found | Use `npm run deploy` (uses `npx firebase-tools` automatically) |
-| `firebase login:ci` / auth errors | Run `firebase login --reauth` in PowerShell, then deploy again |
+| `firebase login:ci` / auth errors | Run `npx firebase-tools login --reauth` in PowerShell, then deploy again |

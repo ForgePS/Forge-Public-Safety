@@ -38,17 +38,17 @@ npm run build
 
 ## Deploy to Firebase Hosting
 
-This project is configured for Firebase project **`rms-dashboard-7562e`**, hosting site **`forgepublicsafety-com`**.
+This project is configured for Firebase project **`forge-website-b276c`** (the **new Forge CMS** site).
+
+> The legacy site at forgepublicsafety.com is a separate Firebase project — do not deploy this repo there.
 
 ```powershell
 npm run build
 firebase deploy --only hosting
 ```
 
-Live site: **https://forgepublicsafety.com**  
-CMS admin: **https://forgepublicsafety.com/admin**
-
-Preview (legacy Firebase site): **https://forge-website-b276c.web.app**
+Live site (new CMS): **https://forge-website-b276c.web.app**  
+CMS admin: **https://forge-website-b276c.web.app/admin**
 
 ### Point forgepublicsafety.com to Firebase
 
