@@ -1,29 +1,28 @@
-# Deploy Forge marketing website
+# Deploy — Website style update (correct marketing site)
 
-**Folder on your PC:** `C:\Users\jerem\Projects\forgepublicsafety-website`  
-**Live URL:** https://forge-website-b276c.web.app
+This branch restores the **Website style update** design:
+- Rugged/tactical Forge look (chrome + orange + black)
+- Team hero (`hero-team.png` — firefighter, EMS, incident command)
+- Product lines: `/products/rms`, `/products/industrial-safety`, `/products/academy`
 
-The public marketing site now uses the **real ForgePS page structure** (Home, Products, Solutions, Resources, Company, Contact) — same layout/wiring as ForgePS-Website — not the generic CMS block template. Admin CMS stays at `/admin`.
+**Folder:** `C:\Users\jerem\Projects\forgepublicsafety-website`  
+**Live:** https://forge-website-b276c.web.app
 
-## Deploy (PowerShell)
+## Deploy
 
 ```powershell
 cd C:\Users\jerem\Projects\forgepublicsafety-website
-
-git merge --abort 2>$null
 git fetch origin
 git checkout -B cursor/multi-program-cms-hub-1b94 origin/cursor/multi-program-cms-hub-1b94
 git reset --hard origin/cursor/multi-program-cms-hub-1b94
 git clean -fd
-
 npm install
 npx firebase-tools use forge-website-b276c
 npm run deploy
 ```
 
-Then open https://forge-website-b276c.web.app — you should see Solutions / Products / Resources / Company, Request Demo, 3-person hero, and Products → Forge RMS live link.
+Then open https://forge-website-b276c.web.app — not `/cms`, not Restore/Import.
 
-**Do not use Import or Restore to “fix” the marketing homepage.** That CMS seed path is no longer what the public marketing host renders.
+## Optional: your real product emblems
 
-Verify the hero file is a real image:  
-https://forge-website-b276c.web.app/assets/hero-three-responders.png
+If you still have `forge-rms.png`, `forge-industrial-safety.png`, and `forge-academy.png` from the style-update chat, copy them into `public/assets/uploads/` and redeploy (placeholders ship until then).

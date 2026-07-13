@@ -22,7 +22,7 @@ function PublicSite() {
     [location.pathname]
   );
 
-  // Main marketing host uses the real ForgePS page structure (Home/Products/…).
+  // Main marketing host: restored “Website style update” rugged site.
   // Other programs stay on the CMS DynamicPage renderer.
   if (program.id === DEFAULT_PROGRAM_ID) {
     return <MarketingSite />;

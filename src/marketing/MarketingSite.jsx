@@ -3,6 +3,7 @@ import { MarketingContentProvider } from "../data/ContentContext.jsx";
 import Layout from "../components/Layout.jsx";
 import HomePage from "../pages/HomePage.jsx";
 import ProductsPage from "../pages/ProductsPage.jsx";
+import ProductLinePage from "../pages/ProductLinePage.jsx";
 import SolutionsPage from "../pages/SolutionsPage.jsx";
 import ContactPage from "../pages/ContactPage.jsx";
 import CompanyPage from "../pages/CompanyPage.jsx";
@@ -10,7 +11,7 @@ import ResourcesPage from "../pages/ResourcesPage.jsx";
 import NotFoundPage from "../pages/NotFoundPage.jsx";
 import { PrivacyPage, SecurityPage, TermsPage } from "../pages/LegalPages.jsx";
 
-/** Dedicated ForgePS marketing site (same structure as ForgePS-Website). */
+/** Restored from “Website style update” chat — rugged Forge marketing site. */
 export default function MarketingSite() {
   return (
     <MarketingContentProvider>
@@ -18,6 +19,7 @@ export default function MarketingSite() {
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="products" element={<ProductsPage />} />
+          <Route path="products/:slug" element={<ProductLinePage />} />
           <Route path="solutions" element={<SolutionsPage />} />
           <Route path="resources" element={<ResourcesPage />} />
           <Route path="company" element={<CompanyPage />} />
