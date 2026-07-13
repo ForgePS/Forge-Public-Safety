@@ -62,7 +62,7 @@ function disciplineHeroSection(content, data) {
   };
 }
 
-function heroSection(content, data, bgImage = "/assets/hero-firefighter.png") {
+function heroSection(content, data, bgImage = "/assets/uploads/hero-three-responders.png") {
   const global = content.global;
   return {
     id: createSectionId(),
@@ -152,7 +152,6 @@ function buildHomePage(content, programId) {
   const global = content.global;
   const home = content.home.home;
   const addonModules = content.addonModules?.addOnModules || [];
-  const productModules = content.productModules?.productModules || [];
 
   return {
     id: createPageId(),
@@ -191,14 +190,7 @@ function buildHomePage(content, programId) {
         home.productsEyebrow,
         home.productsTitle,
         home.productsDescription,
-        productModules.map((p) => ({
-          id: p.id,
-          title: p.name,
-          subtitle: p.subtitle,
-          description: p.description,
-          link: p.liveLink ? (global.site.rmsUrl || "/contact") : "/contact",
-          linkLabel: p.liveLink ? `Explore ${p.name}` : global.navigation.ctaLabel,
-        })),
+        productModuleCards(content, { liveLabelMode: "explore" }),
         3,
         "#0B1220"
       ),
@@ -235,10 +227,27 @@ function buildHomePage(content, programId) {
   };
 }
 
+function productModuleCards(content, { liveLabelMode = "explore" } = {}) {
+  const global = content.global;
+  const productModules = content.productModules?.productModules || [];
+  const explorePrefix = global.ui?.exploreProductPrefix || "Explore";
+  const openLiveLabel = global.ui?.openLivePlatformLabel || "Open live platform";
+  const ctaLabel = global.navigation?.ctaLabel || "Request Demo";
+  return productModules.map((p) => ({
+    id: p.id,
+    title: p.name,
+    subtitle: p.subtitle,
+    description: p.description,
+    link: p.liveLink ? (global.site.rmsUrl || "/contact") : "/contact",
+    linkLabel: p.liveLink
+      ? (liveLabelMode === "open" ? openLiveLabel : `${explorePrefix} ${p.name}`)
+      : ctaLabel,
+  }));
+}
+
 function buildProductsPage(content, programId) {
   const global = content.global;
   const page = content.productsPage?.products || {};
-  const productModules = content.productModules?.productModules || [];
   const addonModules = content.addonModules?.addOnModules || [];
   const baseFeatures = content.productsPage?.basePackageFeatures || [];
 
@@ -252,15 +261,17 @@ function buildProductsPage(content, programId) {
     seo: { ...DEFAULT_SEO, title: `Products — ${global.site.name}`, description: page.heroDescription || "" },
     sections: [
       headingSection(page.heroEyebrow || "Products", page.heroTitle || "Products", page.heroDescription || ""),
+      ctaSection(content, "", "", [
+        { label: global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
+        { label: page.heroSecondaryLink || "Talk to our team about your agency", href: "/contact", style: "ghost", newTab: false },
+      ], "", "#0B1220"),
       cardGridSection(page.baseEyebrow, page.baseTitle, page.baseDescription, baseFeatures.map((f) => ({ title: f, description: "" })), 2, "#000000"),
-      cardGridSection("", page.coreTitle || "Core Products", page.coreDescription || "", productModules.map((p) => ({
-        id: p.id, title: p.name, subtitle: p.subtitle, description: p.description,
-      })), 3, "#0B1220"),
       cardGridSection(page.addonsEyebrow, page.addonsTitle, page.addonsDescription, addonModules.map((m) => ({
         title: m.name, subtitle: m.subtitle, description: m.description, badge: "Module",
-      })), 3, "#000000"),
-      ctaSection(content, "Ready to get started?", page.heroSecondaryLink || "", [
-        { label: global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
+      })), 3, "#0B1220"),
+      cardGridSection("", page.coreTitle || "Core Products", page.coreDescription || "", productModuleCards(content, { liveLabelMode: "open" }), 2, "#000000"),
+      ctaSection(content, "Ready to get started?", "", [
+        { label: global.ui?.requestDemoLabel || global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
       ]),
     ],
   };
@@ -492,6 +503,13 @@ function buildFooter(content, program) {
     })),
   }));
 
+  const legal = content.footer?.footerLegal?.links || [
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
+    { label: "Security", href: "/security" },
+  ];
+  const suffix = content.footer?.footerLegal?.copyrightSuffix || "All rights reserved.";
+
   return [{
     id: program.id,
     programId: program.id,
@@ -499,12 +517,12 @@ function buildFooter(content, program) {
     logo: content.media?.images?.logo || "/assets/uploads/forge-logo-hero.png",
     blurb: global.site.footerBlurb,
     columns,
-    copyright: `© ${new Date().getFullYear()} ${global.site.name}. All rights reserved.`,
-    legalLinks: [
-      { id: createId("link"), label: "Privacy Policy", href: "/privacy" },
-      { id: createId("link"), label: "Terms of Service", href: "/terms" },
-      { id: createId("link"), label: "Security", href: "/security" },
-    ],
+    copyright: `© ${new Date().getFullYear()} ${global.site.name}. ${suffix}`,
+    legalLinks: legal.map((l) => ({
+      id: createId("link"),
+      label: l.label,
+      href: l.href,
+    })),
   }];
 }
 

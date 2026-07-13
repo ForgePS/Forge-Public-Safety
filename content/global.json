@@ -17,5 +17,13 @@
       { "label": "Company", "href": "/company" }
     ],
     "ctaLabel": "Request Demo"
+  },
+  "ui": {
+    "learnMoreLabel": "Learn More",
+    "requestDemoLabel": "Request a Demo",
+    "exploreRmsLabel": "Explore Forge RMS",
+    "moduleTagLabel": "Module",
+    "exploreProductPrefix": "Explore",
+    "openLivePlatformLabel": "Open live platform"
   }
 }
