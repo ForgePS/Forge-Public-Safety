@@ -1,11 +1,11 @@
 {
   "theme": {
     "typography": {
-      "headingFont": "system",
-      "bodyFont": "system",
+      "headingFont": "Oswald",
+      "bodyFont": "Inter",
       "textScale": "100%",
-      "headingWeight": "700",
-      "headingCase": "none"
+      "headingWeight": "600",
+      "headingCase": "uppercase"
     },
     "colors": {
       "accent": "#f97316",

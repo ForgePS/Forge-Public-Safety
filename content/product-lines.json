@@ -1,0 +1,310 @@
+{
+  "sharedPlatform": {
+    "eyebrow": "One platform",
+    "title": "Shared Platform. Every Product.",
+    "description": "Every Forge product runs on the same foundation — so your data, users, and workflows stay connected as you grow.",
+    "features": [
+      "Multi-tenant login",
+      "Role-based permissions",
+      "Organization settings",
+      "User management",
+      "Document storage",
+      "Custom forms",
+      "Digital signatures",
+      "Notifications",
+      "Audit logs",
+      "Reporting",
+      "Mobile responsive design",
+      "QR code support",
+      "Export tools",
+      "Future API integrations"
+    ]
+  },
+  "productLinesOverview": {
+    "heroEyebrow": "Product lines",
+    "heroTitle": "Three Products. One Platform.",
+    "heroDescription": "Forge Public Safety is built for departments, safety teams, and training organizations that need practical software without unnecessary enterprise complexity. Simple to use. Modular by need. Affordable for small and mid-size organizations."
+  },
+  "productLines": {
+    "rms": {
+      "slug": "rms",
+      "name": "Forge RMS",
+      "emblem": "/assets/uploads/forge-rms.png",
+      "hero": {
+        "eyebrow": "Fire Department RMS",
+        "title": "Forge RMS",
+        "lead": "A clean, affordable records management system built for fire departments — without the bloat of large enterprise platforms.",
+        "body": "Personnel, training, certifications, scheduling, apparatus, inventory, incident reporting, and NERIS submission in one simple system your crews will actually use."
+      },
+      "whoForTitle": "Who it's built for",
+      "whoFor": [
+        "Small and mid-size fire departments",
+        "Combination and volunteer departments",
+        "Departments replacing spreadsheets or clunky legacy RMS",
+        "Agencies that need NERIS-ready reporting without enterprise cost"
+      ],
+      "core": {
+        "eyebrow": "Base package",
+        "title": "Everything Starts With the Base Package",
+        "description": "Every Forge RMS account includes the core records management tools your department needs from day one — personnel, training, apparatus, incidents, and NERIS reporting. Build from here with the add-on modules you need.",
+        "features": [
+          "Dashboard",
+          "Personnel records",
+          "Training records",
+          "Certification tracking",
+          "Scheduling",
+          "Time sheets",
+          "Daily log",
+          "Apparatus records",
+          "Asset tracking",
+          "Maintenance",
+          "Hose testing",
+          "Inventory management",
+          "Incident reporting",
+          "NERIS submission",
+          "Documents",
+          "Department messaging",
+          "Analytics",
+          "System administration"
+        ]
+      },
+      "modulesEyebrow": "Add-on modules",
+      "modulesTitle": "Add-On Module Packages",
+      "modulesDescription": "Extend the base package with the add-on modules that match your mission. Each one bundles the records, workflows, and reporting your department needs — turn on only what applies.",
+      "modules": [
+        {
+          "name": "Operations Module",
+          "description": "Supports field readiness, pre-incident planning, and response preparation.",
+          "features": ["Preplans", "Hydrants", "Occupancies", "Mapping", "Knox Box tracking", "Target hazards", "Site notes", "Response notes", "Critical infrastructure records"]
+        },
+        {
+          "name": "Prevention Module",
+          "description": "Supports fire inspections, investigations, and code enforcement workflows.",
+          "features": ["Fire inspections", "Code enforcement", "Investigations", "Business contacts", "Permits", "Inspection history", "Violation tracking", "Reinspection scheduling", "Occupancy files"]
+        },
+        {
+          "name": "EMS Module",
+          "description": "Supports EMS operations, staffing, supply tracking, and quality assurance.",
+          "features": ["EMS staffing", "EMS QA/QI", "Medication inventory", "Unit utilization", "EMS supply inventory", "EMS training records", "EMS compliance tracking"]
+        },
+        {
+          "name": "Command Module",
+          "description": "Gives fire department leadership visibility into operations, staffing, and compliance.",
+          "features": ["Dashboards", "Analytics", "Staffing reports", "Budget reports", "ISO support", "Training compliance reports", "Certification expiration reports", "Incident trends", "Apparatus utilization", "Department readiness overview"]
+        },
+        {
+          "name": "Mobile Module",
+          "description": "Puts core field workflows in the hands of crews on any mobile device.",
+          "features": ["Tablet inspections", "Mobile preplans", "Training sign-offs", "Daily truck checks", "Mobile incident reports", "NERIS reports", "QR code equipment checks", "Mobile inventory updates"]
+        }
+      ],
+      "spotlight": {
+        "eyebrow": "Why Forge RMS",
+        "title": "The Forge RMS Advantage",
+        "description": "Forge RMS doesn't win on feature count. It wins by being easier to use, faster to train on, more affordable, and built for how departments actually work.",
+        "points": [
+          "Easier to use and faster to train on",
+          "More affordable than enterprise RMS",
+          "Built for small and mid-size departments",
+          "Modular instead of bloated",
+          "Focused on real fire department workflows"
+        ],
+        "quote": "A battalion chief should be able to run a report, approve training, view staffing, pull an inspection, and check apparatus status — without digging through ten menus."
+      }
+    },
+    "industrial-safety": {
+      "slug": "industrial-safety",
+      "name": "Forge Industrial Safety",
+      "emblem": "/assets/uploads/forge-industrial-safety.png",
+      "hero": {
+        "eyebrow": "EHS Management Software",
+        "title": "Forge Industrial Safety",
+        "lead": "Safety management software made simple. Mobilize your safety program, save your teams time, and eliminate paper.",
+        "body": "Since 2011, Forge Safety has helped safety professionals inspect, train, identify hazards, record observations, report incidents, and scan assets — from anywhere, on any device, with preloaded OSHA checklists built in."
+      },
+      "whoForTitle": "Who it's built for",
+      "whoFor": [
+        "Factories, warehouses, and distribution centers",
+        "Municipalities and utilities",
+        "Construction and contracting companies",
+        "Manufacturing and industrial employers",
+        "EHS directors and safety professionals"
+      ],
+      "core": {
+        "eyebrow": "Base package",
+        "title": "Everything Starts With the Base Package",
+        "description": "Every Forge Industrial Safety account includes the core EHS apps — a truly paperless, digitized platform that captures safety data in the field and turns it into real-time safety intelligence. Build from here with the add-on modules you need.",
+        "features": [
+          "Inspections",
+          "Training",
+          "JSAs",
+          "Observations",
+          "Incidents",
+          "Scan",
+          "Forms"
+        ]
+      },
+      "modulesEyebrow": "Add-on modules",
+      "modulesTitle": "Add-On Module Packages",
+      "modulesDescription": "Extend the base package with the add-on modules that match your operation. Each one bundles the records, workflows, and compliance tracking your team needs — turn on only what applies.",
+      "modules": [
+        {
+          "name": "Safety Training Module",
+          "description": "Tracks required safety training, renewals, sign-offs, and employee compliance.",
+          "features": ["Employee training records", "Certification tracking", "Expiration alerts", "Training assignments", "Digital sign-offs", "Toolbox talks", "Safety meeting attendance", "Training history", "Supervisor approval workflow"]
+        },
+        {
+          "name": "Inspection & Audit Module",
+          "description": "Supports routine safety inspections, workplace audits, and corrective action tracking.",
+          "features": ["Custom inspection forms", "Facility safety inspections", "Equipment inspections", "Jobsite audits", "Corrective actions", "Deficiency tracking", "Photo uploads", "Supervisor review", "Reinspection scheduling", "Compliance history"]
+        },
+        {
+          "name": "Equipment & Asset Module",
+          "description": "Tracks safety equipment, operational assets, and inspection requirements.",
+          "features": ["Equipment inventory", "QR code asset tracking", "Inspection history", "Maintenance notes", "Assigned users", "Location tracking", "Defect reports", "Replacement schedules", "PPE tracking", "Tool and equipment logs"]
+        },
+        {
+          "name": "QR Scan Module",
+          "description": "Connects QR codes to equipment, machinery, inspections, checklists, and safety records.",
+          "features": ["QR code generation", "Machine-specific inspection forms", "Daily checks", "Weekly checks", "Monthly checks", "Equipment history", "Issue reporting", "Corrective action assignment", "Mobile scan workflow", "Audit trail"]
+        },
+        {
+          "name": "OSHA & Incident Module",
+          "description": "Supports internal incident documentation and OSHA-related tracking.",
+          "features": ["Injury reports", "Near-miss reports", "Property damage reports", "Incident investigation", "Witness statements", "Corrective actions", "Root cause documentation", "OSHA log support", "Lost time tracking", "Safety trend reports"]
+        },
+        {
+          "name": "Permit & High-Risk Work Module",
+          "description": "Supports controlled work activities and high-risk job documentation.",
+          "features": ["Hot work permits", "Confined space permits", "Lockout/tagout records", "Job hazard analysis", "Pre-task planning", "Supervisor approvals", "Expiration tracking", "Required controls", "Worker sign-offs", "Permit history"]
+        },
+        {
+          "name": "SDS / HazCom Module",
+          "description": "Tracks chemical safety information and hazard communication requirements.",
+          "features": ["SDS library", "Chemical inventory", "Hazard classifications", "Storage locations", "Employee access", "Review dates", "PPE requirements", "Spill response notes", "HazCom documentation"]
+        },
+        {
+          "name": "Contractor Safety Module",
+          "description": "Manages outside contractors, required documentation, and site safety compliance.",
+          "features": ["Contractor company records", "Contractor employee records", "Required documents", "Insurance tracking", "Orientation tracking", "Site access status", "Safety violations", "Contractor training records", "Expiration alerts"]
+        },
+        {
+          "name": "Industrial Command Module",
+          "description": "Gives safety leadership visibility into safety performance and compliance.",
+          "features": ["Safety dashboards", "Open corrective actions", "Training compliance", "Inspection completion rates", "Incident trends", "Equipment status", "High-risk work reports", "OSHA summary reports", "Department/location comparisons"]
+        }
+      ],
+      "spotlight": {
+        "eyebrow": "The Forge Safety difference",
+        "title": "Trusted Since 2011",
+        "description": "A comprehensive solution to improve safety compliance and engage your employees — capture data digitally, find trends fast, and build safety intelligence from anywhere, anytime.",
+        "points": [
+          "Minimize risks and increase OSHA compliance",
+          "Reduce paperwork with electronic filing",
+          "Streamline the inspection process",
+          "Trend and analyze data to drive safety improvement",
+          "Get immediate feedback with real-time data"
+        ],
+        "quote": "Forge Safety saved us potentially thousands of dollars in OSHA penalties, due to the detailed information and the increase in inspections supporting our defense.",
+        "quoteAuthor": "Travis Scott, Scott and Murphy, Inc."
+      }
+    },
+    "academy": {
+      "slug": "academy",
+      "name": "Forge Academy",
+      "emblem": "/assets/uploads/forge-academy.png",
+      "hero": {
+        "eyebrow": "Training Academy Operations",
+        "title": "Forge Academy",
+        "lead": "Built for fire academies, EMS education programs, industrial safety training centers, and department training divisions.",
+        "body": "Manage students, instructors, classes, skills, testing, certificates, and training records in one clean system."
+      },
+      "whoForTitle": "Who it's built for",
+      "whoFor": [
+        "Fire academies and training divisions",
+        "EMS education programs",
+        "Industrial safety training centers",
+        "Department-based training programs"
+      ],
+      "core": {
+        "eyebrow": "Base package",
+        "title": "Everything Starts With the Base Package",
+        "description": "Every Forge Academy account includes the core tools to run students, courses, and training records from day one. Build from here with the add-on modules you need.",
+        "features": [
+          "Student records",
+          "Instructor records",
+          "Course catalog",
+          "Class scheduling",
+          "Registration tracking",
+          "Attendance",
+          "Skills records",
+          "Testing records",
+          "Certificates",
+          "Training history"
+        ]
+      },
+      "modulesEyebrow": "Add-on modules",
+      "modulesTitle": "Add-On Module Packages",
+      "modulesDescription": "Extend the base package with the add-on modules that match your program. Each one bundles the records, workflows, and reporting your academy needs — turn on only what applies.",
+      "modules": [
+        {
+          "name": "Course Management Module",
+          "description": "Manages course catalogs, class rosters, registration, and completion tracking.",
+          "features": ["Course catalog", "Class creation", "Class rosters", "Student registration", "Waitlists", "Prerequisites", "Course hours", "Required documents", "Completion tracking", "Class history"]
+        },
+        {
+          "name": "Student Records Module",
+          "description": "Tracks each student from enrollment through skills, testing, and certification.",
+          "features": ["Student profiles", "Contact information", "Agency affiliation", "Enrollment history", "Attendance history", "Skill sheets", "Test scores", "Certificates", "Course progress", "Disciplinary notes"]
+        },
+        {
+          "name": "Instructor Module",
+          "description": "Manages instructor profiles, assignments, evaluations, and skill sign-offs.",
+          "features": ["Instructor profiles", "Instructor certifications", "Course assignments", "Class schedules", "Student evaluations", "Skill sign-offs", "Attendance approvals", "Instructor notes", "Instructor availability"]
+        },
+        {
+          "name": "Skills Validation Module",
+          "description": "Supports practical skill evaluations, sign-offs, and remediation tracking.",
+          "features": ["Skill sheets", "Skill stations", "Evaluator sign-offs", "Pass/fail tracking", "Remediation tracking", "Attempt history", "Practical exam records", "Student progress dashboards", "Mobile skill sign-offs"]
+        },
+        {
+          "name": "Testing Module",
+          "description": "Tracks written and practical testing, scores, and completion rules.",
+          "features": ["Written test records", "Practical test records", "Test attempts", "Pass/fail status", "Remediation requirements", "Score history", "Completion rules", "Instructor review", "Final course approval"]
+        },
+        {
+          "name": "Certificate Module",
+          "description": "Generates, stores, and tracks certificates with renewal and verification.",
+          "features": ["Certificate generation", "Certificate templates", "Certificate numbers", "Issue dates", "Expiration dates", "Digital storage", "Printable certificates", "Verification records", "Renewal tracking"]
+        },
+        {
+          "name": "Academy Scheduling Module",
+          "description": "Coordinates class calendars, instructors, rooms, props, and training grounds.",
+          "features": ["Class calendar", "Instructor scheduling", "Room scheduling", "Training ground scheduling", "Prop scheduling", "Conflict alerts", "Course date management", "Student calendar view", "Agency calendar view"]
+        },
+        {
+          "name": "Agency / Department Portal",
+          "description": "Gives sponsoring agencies access to rosters, training history, and certificates.",
+          "features": ["Agency login", "Student sponsorship tracking", "Department roster", "Training history", "Certificate access", "Upcoming classes", "Enrollment requests", "Completion reports", "Exportable records"]
+        },
+        {
+          "name": "Academy Command Module",
+          "description": "Gives academy leadership visibility into enrollment, performance, and reporting.",
+          "features": ["Enrollment dashboards", "Course completion reports", "Instructor workload", "Student performance trends", "Certificate reports", "Attendance reports", "Revenue reports", "Agency participation reports", "Class demand reports"]
+        }
+      ],
+      "spotlight": {
+        "eyebrow": "Built for training organizations",
+        "title": "Agency Portals & Certificate Tracking",
+        "description": "Give sponsoring departments and agencies their own login to view rosters, training history, and certificates — while your academy manages skills, testing, and completion in one place.",
+        "points": [
+          "Agency logins to view sponsored students and records",
+          "Automated certificate generation, storage, and renewals",
+          "Skill sheets and practical sign-offs from any device",
+          "Written and practical testing with completion rules",
+          "Enrollment and performance dashboards for leadership"
+        ]
+      }
+    }
+  }
+}
