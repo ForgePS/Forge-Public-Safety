@@ -1,7 +1,8 @@
 # Deploy Forge CMS Website
 
-Project: **forge-website-b276c**  
-Live URL: https://forge-website-b276c.web.app
+Project: **rms-dashboard-7562e**  
+Hosting site: **forgepublicsafety-com**  
+Live URL: https://forgepublicsafety.com
 
 ## Deploy your website (use this)
 
@@ -12,9 +13,16 @@ npm install
 npm run deploy
 ```
 
-This deploys **hosting + Firestore rules + Storage rules** only. Your site will go live.
+This deploys to **https://forgepublicsafety.com** (Firebase project `rms-dashboard-7562e`, site `forgepublicsafety-com`).
 
-Each build bundles default website content into `/cms-seed.json` so **https://forge-website-b276c.web.app** shows the marketing site even before anyone visits Admin.
+Confirm your Firebase login matches that project:
+
+```powershell
+npx firebase-tools projects:list
+npx firebase-tools use rms-dashboard-7562e
+```
+
+Each build bundles default website content into `/cms-seed.json` so **https://forgepublicsafety.com** shows the marketing site even before anyone visits Admin.
 
 If the live site is blank, pull the latest code and redeploy:
 
@@ -48,8 +56,8 @@ npm run deploy
 
 Wait for `Deploy complete!` then open:
 
-- **Website:** https://forge-website-b276c.web.app
-- **Admin:** https://forge-website-b276c.web.app/admin
+- **Website:** https://forgepublicsafety.com
+- **Admin:** https://forgepublicsafety.com/admin
 
 ---
 
@@ -85,7 +93,7 @@ Open **http://localhost:5173** (port 5173, not 80).
 
 | Problem | Fix |
 |---------|-----|
-| `Assertion failed: resolving hosting target...` | Pull latest code (adds `"site": "forge-website-b276c"` to `firebase.json`). Then run `firebase login --reauth` and retry `npm run deploy`. |
+| `Assertion failed: resolving hosting target...` | Pull latest code (adds `"site": "forgepublicsafety-com"` to `firebase.json`). Then run `firebase login --reauth` and retry `npm run deploy`. |
 | Functions timeout on deploy | Use `npm run deploy` (not `firebase deploy`) |
 | Blank website after deploy | Admin → Settings → Restore default content |
 | Still see old TinaCMS | Pull latest code, `npm run deploy` again |
