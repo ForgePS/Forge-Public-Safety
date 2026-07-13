@@ -1,9 +1,10 @@
 import { Monitor, Tablet, Smartphone, Radio } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { PageRenderer } from "../../cms/renderer/BlockRenderer.jsx";
 import DynamicHeader from "../../cms/components/DynamicHeader.jsx";
 import DynamicFooter from "../../cms/components/DynamicFooter.jsx";
 import { brandingStylesFromBranding } from "../../cms/core/brandingStyles.js";
+import MediaPickerModal from "./MediaPickerModal.jsx";
 
 const BREAKPOINTS = [
   { id: "desktop", icon: Monitor, width: "100%", label: "Desktop" },
@@ -25,10 +26,24 @@ export default function LiveSitePreview({
   className = "",
   showChrome = true,
   label = "Live Preview",
+  liveEdit = null,
 }) {
   const [breakpoint, setBreakpoint] = useState("desktop");
+  const [mediaTarget, setMediaTarget] = useState(null);
   const bp = BREAKPOINTS.find((b) => b.id === breakpoint) || BREAKPOINTS[0];
   const styles = brandingStylesFromBranding(branding);
+
+  const getBlockEditApi = useCallback((sectionId, blockId) => {
+    if (!liveEdit) return null;
+    return {
+      store: liveEdit.store,
+      programId: liveEdit.programId,
+      onToast: liveEdit.onToast,
+      onContentChange: (key, value) => liveEdit.onContentChange(sectionId, blockId, key, value),
+      onContentPatch: (patch) => liveEdit.onContentPatch?.(sectionId, blockId, patch),
+      onOpenMediaPicker: (fieldKey) => setMediaTarget({ sectionId, blockId, fieldKey }),
+    };
+  }, [liveEdit]);
 
   return (
     <div className={`flex flex-col h-full bg-[#0B1220] ${className}`}>
@@ -40,7 +55,9 @@ export default function LiveSitePreview({
           </span>
           <Radio size={14} className="text-green-400" />
           <span className="text-xs font-semibold text-white">{label}</span>
-          <span className="text-[10px] text-[#64748B] uppercase tracking-wider">Updates as you edit</span>
+          <span className="text-[10px] text-[#64748B] uppercase tracking-wider">
+            {liveEdit ? "Click text to edit · drag image corner to resize · right-click image to replace" : "Updates as you edit"}
+          </span>
         </div>
         <div className="flex rounded-lg border border-[#1E293B] overflow-hidden">
           {BREAKPOINTS.map(({ id, icon: Icon }) => (
@@ -77,6 +94,7 @@ export default function LiveSitePreview({
                   highlight={highlight}
                   onSectionClick={onSectionClick}
                   onSectionHover={onSectionHover}
+                  getBlockEditApi={liveEdit ? getBlockEditApi : null}
                 />
               ) : children}
             </main>
@@ -90,12 +108,23 @@ export default function LiveSitePreview({
           </div>
         </div>
       </div>
+
+      {mediaTarget && (
+        <MediaPickerModal
+          onClose={() => setMediaTarget(null)}
+          onSelect={(url) => {
+            liveEdit?.onContentChange(mediaTarget.sectionId, mediaTarget.blockId, mediaTarget.fieldKey, url);
+            setMediaTarget(null);
+            liveEdit?.onToast?.("Image replaced");
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function InteractivePage({ page, branding, forms, collections, highlight, onSectionClick, onSectionHover }) {
-  if (!onSectionClick) {
+function InteractivePage({ page, branding, forms, collections, highlight, onSectionClick, onSectionHover, getBlockEditApi }) {
+  if (!onSectionClick && !getBlockEditApi) {
     return <PageRenderer page={page} branding={branding} forms={forms} collections={collections} />;
   }
 
@@ -108,7 +137,11 @@ function InteractivePage({ page, branding, forms, collections, highlight, onSect
           <div
             key={section.id}
             className={`relative group transition-all ${isSelected ? "ring-2 ring-[#F97316] ring-inset" : "hover:ring-2 hover:ring-[#F97316]/40 hover:ring-inset"}`}
-            onClick={(e) => { e.stopPropagation(); onSectionClick(section.id); }}
+            onClick={(e) => {
+              if (!onSectionClick) return;
+              e.stopPropagation();
+              onSectionClick(section.id);
+            }}
             onMouseEnter={() => onSectionHover?.(section.id)}
             onMouseLeave={() => onSectionHover?.(null)}
           >
@@ -122,6 +155,7 @@ function InteractivePage({ page, branding, forms, collections, highlight, onSect
               branding={branding}
               forms={forms}
               collections={collections}
+              getBlockEditApi={getBlockEditApi}
             />
           </div>
         );

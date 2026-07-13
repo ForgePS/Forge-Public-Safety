@@ -29,6 +29,8 @@ export const BLOCK_TYPES = {
       { key: "body", label: "Body Text", type: "textarea" },
       { key: "bullets", label: "Bullet Points", type: "list" },
       { key: "backgroundImage", label: "Background Image", type: "media" },
+      { key: "imageWidth", label: "Image Width (optional)", type: "text" },
+      { key: "imageHeight", label: "Image Height (optional)", type: "text" },
       { key: "buttons", label: "Buttons", type: "buttons" },
     ],
     defaultContent: {
@@ -84,9 +86,11 @@ export const BLOCK_TYPES = {
       { key: "src", label: "Image", type: "media", required: true },
       { key: "alt", label: "Alt Text", type: "text", required: true },
       { key: "caption", label: "Caption", type: "text" },
+      { key: "imageWidth", label: "Width (optional)", type: "text" },
+      { key: "imageHeight", label: "Height (optional)", type: "text" },
       { key: "link", label: "Link URL", type: "link" },
     ],
-    defaultContent: { src: "", alt: "", caption: "", link: "" },
+    defaultContent: { src: "", alt: "", caption: "", link: "", imageWidth: "", imageHeight: "" },
   },
   imageText: {
     label: "Image & Text",
@@ -95,6 +99,8 @@ export const BLOCK_TYPES = {
     fields: [
       { key: "image", label: "Image", type: "media" },
       { key: "imageAlt", label: "Image Alt Text", type: "text" },
+      { key: "imageWidth", label: "Width (optional)", type: "text" },
+      { key: "imageHeight", label: "Height (optional)", type: "text" },
       { key: "imagePosition", label: "Image Position", type: "select", options: ["left", "right"] },
       { key: "eyebrow", label: "Eyebrow", type: "text" },
       { key: "title", label: "Title", type: "text" },
@@ -102,7 +108,7 @@ export const BLOCK_TYPES = {
       { key: "buttons", label: "Buttons", type: "buttons" },
     ],
     defaultContent: {
-      image: "", imageAlt: "", imagePosition: "left",
+      image: "", imageAlt: "", imagePosition: "left", imageWidth: "", imageHeight: "",
       eyebrow: "", title: "", content: "<p>Content here.</p>", buttons: [],
     },
   },

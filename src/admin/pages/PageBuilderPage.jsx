@@ -140,6 +140,16 @@ export default function PageBuilderPage() {
     }));
   };
 
+  const updateBlockContentPatch = (sectionId, blockId, patch) => {
+    updatePage((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => s.id === sectionId ? {
+        ...s,
+        blocks: s.blocks.map((b) => b.id === blockId ? { ...b, content: { ...b.content, ...patch } } : b),
+      } : s),
+    }));
+  };
+
   const updateSectionSettings = (sectionId, settings) => {
     updatePage((prev) => ({
       ...prev,
@@ -327,7 +337,24 @@ export default function PageBuilderPage() {
         setSelectedBlock(section?.blocks?.[0]?.id);
       }}
       onSectionHover={setHoveredSection}
-      label="Live Preview"
+      label="Live View"
+      liveEdit={{
+        store,
+        programId: page.programId,
+        onToast: (message, type = "success") => setToast(message),
+        onContentChange: (sectionId, blockId, key, value) => {
+          setSelectedSection(sectionId);
+          setSelectedBlock(blockId);
+          setTab("content");
+          updateBlockContent(sectionId, blockId, key, value);
+        },
+        onContentPatch: (sectionId, blockId, patch) => {
+          setSelectedSection(sectionId);
+          setSelectedBlock(blockId);
+          setTab("content");
+          updateBlockContentPatch(sectionId, blockId, patch);
+        },
+      }}
     />
   );
 
