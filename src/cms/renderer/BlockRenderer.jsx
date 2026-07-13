@@ -5,9 +5,54 @@ import { useState } from "react";
 import { sectionStyle } from "../core/responsive.js";
 import { normalizeHref, isExternalHref } from "../core/urls.js";
 import CmsForm from "./CmsForm.jsx";
+import { EditableImage, EditableText, PreviewEditProvider, usePreviewEdit } from "../preview/PreviewEditControls.jsx";
 
 function sanitize(html) {
   return DOMPurify.sanitize(html || "", { ADD_TAGS: ["iframe"], ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "scrolling"] });
+}
+
+function Text({ as = "p", value, fieldKey, className, style, multiline = false, html = false }) {
+  const edit = usePreviewEdit();
+  if (!value && !edit) return null;
+  if (!edit) {
+    if (html) {
+      const Tag = as;
+      return <Tag className={className} style={style} dangerouslySetInnerHTML={{ __html: sanitize(value) }} />;
+    }
+    const Tag = as;
+    return value ? <Tag className={className} style={style}>{value}</Tag> : null;
+  }
+  return (
+    <EditableText
+      as={as}
+      value={html ? sanitize(value || "") : (value || "")}
+      fieldKey={fieldKey}
+      className={className}
+      style={style}
+      multiline={multiline}
+      html={html}
+    />
+  );
+}
+
+function Media({ src, alt, className, style, fieldKey, width, height, objectFit }) {
+  const edit = usePreviewEdit();
+  if (!src && !edit) return null;
+  if (!edit) {
+    return src ? <img src={src} alt={alt || ""} className={className} style={style} loading="lazy" /> : null;
+  }
+  return (
+    <EditableImage
+      src={src}
+      alt={alt}
+      className={className}
+      style={style}
+      fieldKey={fieldKey}
+      width={width}
+      height={height}
+      objectFit={objectFit}
+    />
+  );
 }
 
 function DisciplineCard({ line }) {
@@ -79,14 +124,15 @@ function SectionHeading({ eyebrow, title, description, align = "left" }) {
   const alignCls = align === "center" ? "text-center mx-auto" : align === "right" ? "text-right ml-auto" : "";
   return (
     <div className={`max-w-3xl ${alignCls}`}>
-      {eyebrow && <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4">{eyebrow}</p>}
-      {title && <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight mb-4">{title}</h2>}
-      {description && <p className="text-lg text-[var(--cms-text-muted,#94A3B8)] leading-relaxed">{description}</p>}
+      <Text as="p" fieldKey="eyebrow" value={eyebrow} className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4" />
+      <Text as="h2" fieldKey="title" value={title} className="text-4xl md:text-5xl font-black tracking-tight text-white leading-tight mb-4" />
+      <Text as="p" fieldKey="description" value={description} className="text-lg text-[var(--cms-text-muted,#94A3B8)] leading-relaxed" multiline />
     </div>
   );
 }
 
 export function BlockRenderer({ block, branding, forms, collections }) {
+  const previewEdit = usePreviewEdit();
   if (block.hidden) return null;
   const c = block.content || {};
 
@@ -94,18 +140,26 @@ export function BlockRenderer({ block, branding, forms, collections }) {
     case "hero":
       return (
         <section className="relative overflow-hidden">
-          {c.backgroundImage && (
+          {(c.backgroundImage || previewEdit) && (
             <div className="absolute inset-0">
-              <img src={c.backgroundImage} alt="" className="h-full w-full object-cover object-center opacity-95" loading="eager" />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent" />
+              <Media
+                src={c.backgroundImage}
+                alt=""
+                fieldKey="backgroundImage"
+                className="h-full w-full object-cover object-center opacity-95"
+                objectFit="cover"
+                width={c.imageWidth}
+                height={c.imageHeight}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/50 to-transparent pointer-events-none" />
             </div>
           )}
           <div className="relative max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8 py-24 md:py-32">
             <div className="max-w-2xl">
-              {c.eyebrow && <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4">{c.eyebrow}</p>}
-              {c.title && <h1 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6">{c.title}</h1>}
-              {c.lead && <p className="text-xl text-[#CBD5E1] mb-4 leading-relaxed">{c.lead}</p>}
-              {c.body && <p className="text-base text-[#94A3B8] mb-8 leading-relaxed">{c.body}</p>}
+              <Text as="p" fieldKey="eyebrow" value={c.eyebrow} className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4" />
+              <Text as="h1" fieldKey="title" value={c.title} className="text-5xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6" />
+              <Text as="p" fieldKey="lead" value={c.lead} className="text-xl text-[#CBD5E1] mb-4 leading-relaxed" multiline />
+              <Text as="p" fieldKey="body" value={c.body} className="text-base text-[#94A3B8] mb-8 leading-relaxed" multiline />
               {c.buttons?.length > 0 && (
                 <div className="flex flex-wrap gap-4">
                   {c.buttons.map((btn, i) => <ButtonEl key={i} btn={btn} branding={branding} />)}
@@ -133,10 +187,10 @@ export function BlockRenderer({ block, branding, forms, collections }) {
               </div>
             )}
             <div className="max-w-3xl">
-              {c.eyebrow && <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4">{c.eyebrow}</p>}
-              {c.title && <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6">{c.title}</h1>}
-              {c.lead && <p className="text-xl text-[#CBD5E1] mb-4 leading-relaxed">{c.lead}</p>}
-              {c.body && <p className="text-base text-[#94A3B8] mb-8 leading-relaxed">{c.body}</p>}
+              <Text as="p" fieldKey="eyebrow" value={c.eyebrow} className="text-xs font-semibold tracking-[0.2em] uppercase text-[var(--cms-primary,#F97316)] mb-4" />
+              <Text as="h1" fieldKey="title" value={c.title} className="text-4xl md:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6" />
+              <Text as="p" fieldKey="lead" value={c.lead} className="text-xl text-[#CBD5E1] mb-4 leading-relaxed" multiline />
+              <Text as="p" fieldKey="body" value={c.body} className="text-base text-[#94A3B8] mb-8 leading-relaxed" multiline />
               {c.buttons?.length > 0 && (
                 <div className="flex flex-wrap gap-4">
                   {c.buttons.map((btn, i) => <ButtonEl key={i} btn={btn} branding={branding} />)}
@@ -163,7 +217,14 @@ export function BlockRenderer({ block, branding, forms, collections }) {
       return (
         <div className="max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8">
           <SectionHeading eyebrow={c.eyebrow} title={c.title} align={c.align} />
-          <div className="prose prose-invert max-w-3xl mt-6 text-[#94A3B8] leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitize(c.content) }} />
+          <Text
+            as="div"
+            fieldKey="content"
+            value={c.content}
+            className="prose prose-invert max-w-3xl mt-6 text-[#94A3B8] leading-relaxed"
+            multiline
+            html
+          />
         </div>
       );
 
@@ -172,25 +233,29 @@ export function BlockRenderer({ block, branding, forms, collections }) {
         <figure className="max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8">
           {c.link ? (
             <a href={normalizeHref(c.link)} target={isExternalHref(c.link) ? "_blank" : undefined} rel={isExternalHref(c.link) ? "noreferrer" : undefined}>
-              {c.src && <img src={c.src} alt={c.alt || ""} className="rounded-2xl w-full" loading="lazy" />}
+              <Media src={c.src} alt={c.alt || ""} fieldKey="src" className="rounded-2xl w-full" width={c.imageWidth} height={c.imageHeight} />
             </a>
           ) : (
-            c.src && <img src={c.src} alt={c.alt || ""} className="rounded-2xl w-full" loading="lazy" />
+            <Media src={c.src} alt={c.alt || ""} fieldKey="src" className="rounded-2xl w-full" width={c.imageWidth} height={c.imageHeight} />
           )}
-          {c.caption && <figcaption className="mt-2 text-sm text-[#64748B] text-center">{c.caption}</figcaption>}
+          <Text as="figcaption" fieldKey="caption" value={c.caption} className="mt-2 text-sm text-[#64748B] text-center" />
         </figure>
       );
 
     case "imageText":
       return (
         <div className="max-w-[var(--cms-container-width,1280px)] mx-auto px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
-          {c.imagePosition !== "right" && c.image && <img src={c.image} alt={c.imageAlt || ""} className="rounded-2xl w-full" loading="lazy" />}
+          {c.imagePosition !== "right" && (
+            <Media src={c.image} alt={c.imageAlt || ""} fieldKey="image" className="rounded-2xl w-full" width={c.imageWidth} height={c.imageHeight} />
+          )}
           <div>
             <SectionHeading eyebrow={c.eyebrow} title={c.title} />
-            <div className="prose prose-invert mt-4 text-[#94A3B8]" dangerouslySetInnerHTML={{ __html: sanitize(c.content) }} />
+            <Text as="div" fieldKey="content" value={c.content} className="prose prose-invert mt-4 text-[#94A3B8]" multiline html />
             {c.buttons?.length > 0 && <div className="mt-6 flex gap-4">{c.buttons.map((btn, i) => <ButtonEl key={i} btn={btn} branding={branding} />)}</div>}
           </div>
-          {c.imagePosition === "right" && c.image && <img src={c.image} alt={c.imageAlt || ""} className="rounded-2xl w-full" loading="lazy" />}
+          {c.imagePosition === "right" && (
+            <Media src={c.image} alt={c.imageAlt || ""} fieldKey="image" className="rounded-2xl w-full" width={c.imageWidth} height={c.imageHeight} />
+          )}
         </div>
       );
 
@@ -405,7 +470,7 @@ export function BlockRenderer({ block, branding, forms, collections }) {
   }
 }
 
-export function SectionRenderer({ section, branding, forms, collections }) {
+export function SectionRenderer({ section, branding, forms, collections, getBlockEditApi }) {
   if (section.hidden) return null;
   const style = sectionStyle(section.settings || {});
   const className = section.settings?.customClass || "";
@@ -413,19 +478,33 @@ export function SectionRenderer({ section, branding, forms, collections }) {
 
   return (
     <div className={className} id={id} style={style}>
-      {(section.blocks || []).map((block) => (
-        <BlockRenderer key={block.id} block={block} branding={branding} forms={forms} collections={collections} />
-      ))}
+      {(section.blocks || []).map((block) => {
+        const editApi = getBlockEditApi?.(section.id, block.id) || null;
+        const node = <BlockRenderer key={block.id} block={block} branding={branding} forms={forms} collections={collections} />;
+        if (!editApi) return node;
+        return (
+          <PreviewEditProvider key={block.id} value={editApi}>
+            <BlockRenderer block={block} branding={branding} forms={forms} collections={collections} />
+          </PreviewEditProvider>
+        );
+      })}
     </div>
   );
 }
 
-export function PageRenderer({ page, branding, forms, collections }) {
+export function PageRenderer({ page, branding, forms, collections, getBlockEditApi }) {
   if (!page) return null;
   return (
     <>
       {(page.sections || []).map((section) => (
-        <SectionRenderer key={section.id} section={section} branding={branding} forms={forms} collections={collections} />
+        <SectionRenderer
+          key={section.id}
+          section={section}
+          branding={branding}
+          forms={forms}
+          collections={collections}
+          getBlockEditApi={getBlockEditApi}
+        />
       ))}
     </>
   );
