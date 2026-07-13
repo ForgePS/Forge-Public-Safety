@@ -68,6 +68,7 @@ export default function ProgramsPage() {
   const handleImported = async (result) => {
     if (result?.programId) setProgramId(result.programId);
     await refresh();
+    setToast(`Imported ${result.pagesImported} pages into ${result.programId}`);
   };
 
   const deleteProgram = async (program) => {
@@ -127,16 +128,14 @@ export default function ProgramsPage() {
                 {p.id === programId ? "Currently editing" : "Switch to this program"}
               </button>
               <div className="flex items-center gap-2">
-                {(hasBundledContent(p.id) || p.id !== "forge-marketing") && (
-                  <button
-                    type="button"
-                    title="Import site content"
-                    onClick={(e) => { e.stopPropagation(); setImportProgram(p); }}
-                    className="p-1.5 text-[#64748B] hover:text-[#F97316]"
-                  >
-                    <Download size={14} />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  title="Import / Export content"
+                  onClick={(e) => { e.stopPropagation(); setImportProgram(p); }}
+                  className="p-1.5 text-[#64748B] hover:text-[#F97316]"
+                >
+                  <Download size={14} />
+                </button>
                 {p.liveUrl && (
                   <a href={p.liveUrl} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="p-1.5 text-[#64748B] hover:text-white">
                     <ExternalLink size={14} />

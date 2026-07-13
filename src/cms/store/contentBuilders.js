@@ -54,7 +54,7 @@ function disciplineHeroSection(content, data) {
         bullets: data.bullets || data.heroBullets || [],
         lines,
         buttons: data.buttons || [
-          { label: global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
+          { label: global.navigation?.ctaLabel || "Request Demo", href: "/contact", style: "primary", newTab: false },
           { label: "Learn More", href: "/products", style: "outline", newTab: false },
         ],
       },
@@ -88,7 +88,7 @@ function heroSection(content, data, bgImage = "/assets/hero-firefighter.png") {
         bullets: data.bullets || data.heroBullets || [],
         backgroundImage: bgImage,
         buttons: data.buttons || [
-          { label: global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
+          { label: global.navigation?.ctaLabel || "Request Demo", href: "/contact", style: "primary", newTab: false },
           { label: "Learn More", href: "/products", style: "outline", newTab: false },
         ],
       },
@@ -321,7 +321,12 @@ function buildCompanyPage(content, programId) {
 
 function buildContactPage(content, programId) {
   const global = content.global;
-  const contact = content.contact.contact;
+  const contact = content.contact?.contact || {
+    title: "Contact Us",
+    description: "Request a demo or ask a question.",
+    email: global.site.demoEmail,
+    fields: [],
+  };
   return {
     id: createPageId(),
     programId,
@@ -448,11 +453,12 @@ function buildBranding(content, program) {
 
 function buildNavigation(content, program) {
   const global = content.global;
+  const main = global.navigation?.main || [];
   return {
     id: program.id,
     programId: program.id,
     ...DEFAULT_NAVIGATION,
-    mainMenu: global.navigation.main.map((item) => ({
+    mainMenu: main.map((item) => ({
       id: createId("nav"),
       label: item.label,
       href: item.href,
@@ -463,7 +469,7 @@ function buildNavigation(content, program) {
     })),
     headerButtons: [{
       id: createId("btn"),
-      label: global.navigation.ctaLabel,
+      label: global.navigation?.ctaLabel || "Request Demo",
       href: program.appUrl || "/contact",
       style: "primary",
       newTab: Boolean(program.appUrl),
@@ -473,15 +479,16 @@ function buildNavigation(content, program) {
 
 function buildFooter(content, program) {
   const global = content.global;
-  const columns = Object.entries(content.footer.footerColumns).map(([title, links]) => ({
+  const footerColumns = content.footer?.footerColumns || {};
+  const columns = Object.entries(footerColumns).map(([title, links]) => ({
     id: createId("col"),
     title,
     type: "menu",
-    links: links.map((l) => ({
+    links: (links || []).map((l) => ({
       id: createId("link"),
       label: l.label,
       href: l.href,
-      newTab: l.href.startsWith("http"),
+      newTab: Boolean(l.href?.startsWith("http")),
     })),
   }));
 
@@ -489,7 +496,7 @@ function buildFooter(content, program) {
     id: program.id,
     programId: program.id,
     name: `${program.name} Footer`,
-    logo: "/assets/forge-logo.png",
+    logo: content.media?.images?.logo || "/assets/uploads/forge-logo-hero.png",
     blurb: global.site.footerBlurb,
     columns,
     copyright: `© ${new Date().getFullYear()} ${global.site.name}. All rights reserved.`,
