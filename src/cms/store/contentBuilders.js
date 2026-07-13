@@ -248,8 +248,17 @@ function productModuleCards(content, { liveLabelMode = "explore" } = {}) {
 function buildProductsPage(content, programId) {
   const global = content.global;
   const page = content.productsPage?.products || {};
+  const overview = content.productLines?.productLinesOverview || {};
   const addonModules = content.addonModules?.addOnModules || [];
   const baseFeatures = content.productsPage?.basePackageFeatures || [];
+  const lines = Object.values(getProductLinesMap(content));
+  const lineCards = lines.map((line) => ({
+    title: line.name,
+    subtitle: line.hero?.eyebrow || "",
+    description: line.hero?.lead || "",
+    link: `/products/${line.slug}`,
+    linkLabel: `Explore ${line.name}`,
+  }));
 
   return {
     id: createPageId(),
@@ -258,19 +267,36 @@ function buildProductsPage(content, programId) {
     title: "Products",
     slug: "products",
     status: "published",
-    seo: { ...DEFAULT_SEO, title: `Products — ${global.site.name}`, description: page.heroDescription || "" },
+    seo: {
+      ...DEFAULT_SEO,
+      title: `Products — ${global.site.name}`,
+      description: overview.heroDescription || page.heroDescription || "",
+    },
     sections: [
-      headingSection(page.heroEyebrow || "Products", page.heroTitle || "Products", page.heroDescription || ""),
-      ctaSection(content, "", "", [
-        { label: global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
-        { label: page.heroSecondaryLink || "Talk to our team about your agency", href: "/contact", style: "ghost", newTab: false },
-      ], "", "#0B1220"),
-      cardGridSection(page.baseEyebrow, page.baseTitle, page.baseDescription, baseFeatures.map((f) => ({ title: f, description: "" })), 2, "#000000"),
-      cardGridSection(page.addonsEyebrow, page.addonsTitle, page.addonsDescription, addonModules.map((m) => ({
-        title: m.name, subtitle: m.subtitle, description: m.description, badge: "Module",
-      })), 3, "#0B1220"),
-      cardGridSection("", page.coreTitle || "Core Products", page.coreDescription || "", productModuleCards(content, { liveLabelMode: "open" }), 2, "#000000"),
-      ctaSection(content, "Ready to get started?", "", [
+      headingSection(
+        overview.heroEyebrow || page.heroEyebrow || "Products",
+        overview.heroTitle || page.heroTitle || "Products",
+        overview.heroDescription || page.heroDescription || ""
+      ),
+      ...(lineCards.length
+        ? [cardGridSection("Product lines", "Choose Your Forge", "", lineCards, 3, "#000000")]
+        : []),
+      ...(content.productLines?.sharedPlatform
+        ? [cardGridSection(
+          content.productLines.sharedPlatform.eyebrow,
+          content.productLines.sharedPlatform.title,
+          content.productLines.sharedPlatform.description,
+          (content.productLines.sharedPlatform.features || []).map((feature) => ({ title: feature, description: "" })),
+          3,
+          "#0B1220"
+        )]
+        : [
+          cardGridSection(page.baseEyebrow, page.baseTitle, page.baseDescription, baseFeatures.map((f) => ({ title: f, description: "" })), 2, "#000000"),
+          cardGridSection(page.addonsEyebrow, page.addonsTitle, page.addonsDescription, addonModules.map((m) => ({
+            title: m.name, subtitle: m.subtitle, description: m.description, badge: "Module",
+          })), 3, "#0B1220"),
+        ]),
+      ctaSection(content, "Find Your Forge", "Not sure which product fits? Tell us about your team and we'll point you to the right starting package.", [
         { label: global.ui?.requestDemoLabel || global.navigation.ctaLabel, href: "/contact", style: "primary", newTab: false },
       ]),
     ],
@@ -462,30 +488,149 @@ function buildBranding(content, program) {
   };
 }
 
+function getProductLinesMap(content) {
+  const raw = content?.productLines;
+  if (!raw || typeof raw !== "object") return {};
+  if (raw.productLines && typeof raw.productLines === "object" && !Array.isArray(raw.productLines)) {
+    return raw.productLines;
+  }
+  // Already a slug→line map
+  return Object.values(raw).some((v) => v && typeof v === "object" && v.slug)
+    ? raw
+    : {};
+}
+
 function buildNavigation(content, program) {
   const global = content.global;
   const main = global.navigation?.main || [];
+  const productLines = Object.values(getProductLinesMap(content));
+
   return {
     id: program.id,
     programId: program.id,
     ...DEFAULT_NAVIGATION,
-    mainMenu: main.map((item) => ({
-      id: createId("nav"),
-      label: item.label,
-      href: item.href,
-      type: "internal",
-      newTab: false,
-      icon: "",
-      children: [],
-    })),
+    mainMenu: main.map((item) => {
+      const isProducts = item.label === "Products" || item.href === "/products";
+      return {
+        id: createId("nav"),
+        label: item.label,
+        href: item.href,
+        type: "internal",
+        newTab: false,
+        icon: "",
+        children: isProducts
+          ? [
+              { id: createId("nav"), label: "All Products", href: "/products", type: "internal", newTab: false, children: [] },
+              ...productLines.map((line) => ({
+                id: createId("nav"),
+                label: line.name,
+                href: `/products/${line.slug}`,
+                type: "internal",
+                newTab: false,
+                children: [],
+              })),
+            ]
+          : [],
+      };
+    }),
     headerButtons: [{
       id: createId("btn"),
       label: global.navigation?.ctaLabel || "Request Demo",
-      href: program.appUrl || "/contact",
+      href: program.type === "marketing" && !program.appUrl ? "/contact" : (program.appUrl || "/contact"),
       style: "primary",
       newTab: Boolean(program.appUrl),
     }],
   };
+}
+
+function buildProductLinePages(content, programId) {
+  const global = content.global;
+  const lines = Object.values(getProductLinesMap(content));
+
+  return lines.map((line) => ({
+    id: createPageId(),
+    programId,
+    ...DEFAULT_PAGE,
+    title: line.name,
+    slug: `products/${line.slug}`,
+    status: "published",
+    seo: {
+      ...DEFAULT_SEO,
+      title: `${line.name} — ${global.site.name}`,
+      description: line.hero?.lead || "",
+    },
+    sections: [
+      {
+        id: createSectionId(),
+        type: "hero",
+        hidden: false,
+        settings: {
+          padding: { top: "0", right: "0", bottom: "0", left: "0" },
+          background: { type: "color", color: "#0B1220" },
+        },
+        blocks: [{
+          id: createBlockId(),
+          type: "hero",
+          hidden: false,
+          settings: {},
+          content: {
+            eyebrow: line.hero?.eyebrow || "",
+            title: line.hero?.title || line.name,
+            lead: line.hero?.lead || "",
+            body: line.hero?.body || "",
+            bullets: [],
+            backgroundImage: "",
+            buttons: [
+              { label: global.navigation?.ctaLabel || "Request Demo", href: "/contact", style: "primary", newTab: false },
+              { label: "All Products", href: "/products", style: "outline", newTab: false },
+            ],
+          },
+        }],
+      },
+      {
+        id: createSectionId(),
+        type: "image",
+        hidden: false,
+        settings: {
+          padding: { top: "40px", right: "0", bottom: "40px", left: "0" },
+          background: { type: "color", color: "#000000" },
+        },
+        blocks: [{
+          id: createBlockId(),
+          type: "image",
+          hidden: false,
+          settings: {},
+          content: {
+            src: line.emblem || "",
+            alt: line.name,
+            caption: line.name,
+            link: "",
+            imageWidth: "",
+            imageHeight: "",
+          },
+        }],
+      },
+      cardGridSection(
+        "Who it's for",
+        line.whoForTitle || "Who it's built for",
+        "",
+        (line.whoFor || []).map((item) => ({ title: item, description: "" })),
+        2,
+        "#000000"
+      ),
+      cardGridSection(
+        line.core?.eyebrow || "Base package",
+        line.core?.title || "Core package",
+        line.core?.description || "",
+        (line.core?.features || []).map((feature) => ({ title: feature, description: "" })),
+        3,
+        "#0B1220"
+      ),
+      ctaSection(content, `Ready for ${line.name}?`, "Tell us about your team and we'll point you to the right starting package.", [
+        { label: global.ui?.requestDemoLabel || global.navigation?.ctaLabel || "Request Demo", href: "/contact", style: "primary", newTab: false },
+      ]),
+    ],
+  }));
 }
 
 function buildFooter(content, program) {
@@ -684,6 +829,7 @@ export function buildMarketingBundleFromContent(program, content) {
   const pages = [
     buildHomePage(content, programId),
     buildProductsPage(content, programId),
+    ...buildProductLinePages(content, programId),
     ...(content.solutions ? [buildSolutionsPage(content, programId)] : []),
     buildCompanyPage(content, programId),
     buildContactPage(content, programId),
@@ -789,6 +935,7 @@ export function normalizeLegacyContentJson(json) {
       home: json.home ? { home: json.home.home || json.home } : undefined,
       productsPage: json["products-page"] || json.productsPage,
       productModules: json["product-modules"] || json.productModules,
+      productLines: json["product-lines"] || json.productLines,
       addonModules: json["addon-modules"] || json.addonModules,
       solutions: json.solutions,
       company: json.company,

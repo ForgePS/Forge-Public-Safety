@@ -82,10 +82,10 @@ function NavItem({ item, preview }) {
         <button type="button" className="text-base font-bold tracking-wide text-[#94A3B8] hover:text-white transition-colors flex items-center gap-1">
           {item.label}
         </button>
-        <div className="absolute top-full left-0 pt-2 hidden group-hover:block min-w-[200px]">
+        <div className="absolute top-full left-0 pt-2 hidden group-hover:block min-w-[220px] z-50">
           <div className="rounded-xl border border-[#1E293B] bg-[#111827] py-2 shadow-xl">
             {item.children.map((child) => (
-              <NavLink key={child.id} item={child} className="block px-4 py-2 text-sm text-[#94A3B8] hover:text-white hover:bg-white/5" preview={preview} />
+              <NavLink key={child.id || `${child.href}-${child.label}`} item={child} className="block px-4 py-2 text-sm text-[#94A3B8] hover:text-white hover:bg-white/5" preview={preview} />
             ))}
           </div>
         </div>

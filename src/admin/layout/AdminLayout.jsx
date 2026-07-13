@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { to: "/admin/programs", label: "Programs", icon: Layers },
   { to: "/admin/pages", label: "Pages", icon: FileText },
   { to: "/admin/branding", label: "Branding", icon: Palette },
-  { to: "/admin/navigation", label: "Navigation", icon: Menu },
+  { to: "/admin/navigation", label: "Header", icon: Menu },
   { to: "/admin/footer", label: "Footer", icon: PanelBottom },
   { to: "/admin/media", label: "Media Library", icon: Image },
   { to: "/admin/forms", label: "Forms", icon: FormInput },

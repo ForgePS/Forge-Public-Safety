@@ -2,6 +2,7 @@ import globalData from "../../../content/global.json";
 import homeData from "../../../content/home.json";
 import productsPageData from "../../../content/products-page.json";
 import productModulesData from "../../../content/product-modules.json";
+import productLinesData from "../../../content/product-lines.json";
 import addonModulesData from "../../../content/addon-modules.json";
 import solutionsData from "../../../content/solutions.json";
 import companyData from "../../../content/company.json";
@@ -46,6 +47,7 @@ const MARKETING_CONTENT = {
   home: homeData,
   productsPage: productsPageData,
   productModules: productModulesData,
+  productLines: productLinesData,
   addonModules: addonModulesData,
   solutions: solutionsData,
   company: companyData,
