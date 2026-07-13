@@ -55,7 +55,7 @@ function mergeProductLinesFromCms(productLines, pages, programId) {
   if (!productLines) return productLines;
   const next = { ...productLines };
   Object.keys(next).forEach((slug) => {
-    const page = findPublishedPage(pages, `products/${slug}`, programId);
+    const page = findPublishedPage(pages, `products-${slug}`, programId);
     if (!page) return;
     const hero = findHeroContent(page);
     const image = findImageContent(page);

@@ -552,7 +552,7 @@ function buildProductLinePages(content, programId) {
     programId,
     ...DEFAULT_PAGE,
     title: line.name,
-    slug: `products/${line.slug}`,
+    slug: `products-${line.slug}`,
     status: "published",
     seo: {
       ...DEFAULT_SEO,
