@@ -67,14 +67,22 @@ Wait for `Deploy complete!` then open:
 
 ---
 
-## After first deploy
+## After deploy (required if you still see the old single-firefighter hero)
 
-1. Log in at `/admin`
-2. If the site is empty: **Settings → Restore default content**
-3. **Pages → Home** → Status: **Published** → **Save**
+Browser localStorage can keep old CMS content after deploy. Force the seeded marketing site:
 
-Homepage hero and logo come from `content/media.json` (synced from **ForgePS-Website**):
-- Hero (3 responders): `/assets/uploads/hero-three-responders.png`
+1. Open https://forge-website-b276c.web.app/admin (local login: any email / password `admin`)
+2. **Settings → Restore default content**
+3. Hard-refresh the public site (Ctrl+Shift+R)
+
+You should then see:
+- **Home:** Firefighter + EMS (red trauma bag) + Public Safety (hi-vis / tablet) hero
+- **Nav:** Solutions · Products · Resources · Company
+- **Products:** Forge RMS → https://rms.forgepublicsafety.com (Open live platform); other products → Request Demo
+- **Footer Products:** deep links like `/products#forge-rms`
+
+Assets (`content/media.json`):
+- Hero: `/assets/uploads/hero-three-responders.png`
 - Logo: `/assets/uploads/forge-logo-hero.png`
 
 ---
