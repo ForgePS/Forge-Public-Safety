@@ -10,11 +10,12 @@ function sanitize(html) {
 
 function ButtonEl({ btn, branding }) {
   const primary = branding?.colors?.primary || "#F97316";
+  const buttonText = branding?.colors?.buttonText || "#fff";
   const styles = {
-    primary: `background-color:${primary};color:${branding?.colors?.buttonText || "#fff"}`,
-    outline: "border:1px solid rgba(255,255,255,0.15);color:#fff;background:transparent",
-    secondary: "background:#1E293B;color:#fff",
-    ghost: "color:#94A3B8;background:transparent",
+    primary: { backgroundColor: primary, color: buttonText },
+    outline: { border: "1px solid rgba(255,255,255,0.15)", color: "#fff", background: "transparent" },
+    secondary: { background: "#1E293B", color: "#fff" },
+    ghost: { color: "#94A3B8", background: "transparent" },
   };
   const cls = `inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-bold transition-colors hover:opacity-90`;
   const isExternal = btn.href?.startsWith("http");
