@@ -62,7 +62,7 @@ function disciplineHeroSection(content, data) {
   };
 }
 
-function heroSection(content, data, bgImage = "/assets/uploads/hero-three-responders.png") {
+function heroSection(content, data, bgImage = "/assets/hero-three-responders.png") {
   const global = content.global;
   return {
     id: createSectionId(),
@@ -172,7 +172,7 @@ function buildHomePage(content, programId) {
         heroLead: home.heroLead,
         heroBody: home.heroBody,
         heroBullets: home.heroBullets,
-      }, content.media?.images?.hero || "/assets/uploads/hero-three-responders.png"),
+      }, content.media?.images?.hero || "/assets/hero-three-responders.png"),
       cardGridSection(
         home.modulesEyebrow,
         home.modulesTitle,

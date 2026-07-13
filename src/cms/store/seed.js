@@ -11,6 +11,7 @@ export function buildSeedData() {
   const merge = (key) => bundles.flatMap((b) => b[key] || []);
 
   return {
+    seedVersion: `seed_${new Date().toISOString()}`,
     programs,
     pages: merge("pages"),
     savedSections: [],
