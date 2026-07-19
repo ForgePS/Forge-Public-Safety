@@ -1,0 +1,30 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "staffConversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "participantUids", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "lastMessageAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "hubIdentities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "femaSidNormalized", "order": "ASCENDING" },
+        { "fieldPath": "femaSidStatus", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "hubIdentities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lastName", "order": "ASCENDING" },
+        { "fieldPath": "firstName", "order": "ASCENDING" },
+        { "fieldPath": "dateOfBirth", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,24 @@
+{
+  "name": "forge-integration-hub",
+  "version": "1.0.0-phase1",
+  "private": true,
+  "type": "module",
+  "description": "Forge Integration Hub — centralized Academy ↔ RMS sync service",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "reconcile": "node src/jobs/reconcile.js"
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "^4.11.0",
+    "@google-cloud/secret-manager": "^5.6.0",
+    "@google-cloud/tasks": "^5.5.0",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.4.0",
+    "uuid": "^11.1.0"
+  }
+}

@@ -1,0 +1,242 @@
+openapi: 3.0.3
+info:
+  title: Forge Integration Hub API
+  version: 1.1.0-identity
+  description: >
+    Centralized Academy ↔ RMS synchronization and Forge Person Identity service.
+    Academy and RMS must call POST /identity/resolve before creating people;
+    personId is a Firestore auto-generated document id and is never client-editable.
+servers:
+  - url: /api/integrations/v1
+security:
+  - BearerAuth: []
+  - IntegrationSecret: []
+paths:
+  /health:
+    get:
+      security: []
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /departments:
+    post:
+      summary: Create or upsert department connection profile
+      responses:
+        "200":
+          description: Department stored
+  /departments/{departmentId}:
+    get:
+      summary: Get department connection
+      parameters:
+        - $ref: "#/components/parameters/departmentId"
+      responses:
+        "200":
+          description: Department
+    patch:
+      summary: Update department connection profile
+      parameters:
+        - $ref: "#/components/parameters/departmentId"
+      responses:
+        "200":
+          description: Updated
+  /departments/{departmentId}/connect:
+    post:
+      summary: Authorize Academy connection
+      parameters:
+        - $ref: "#/components/parameters/departmentId"
+      responses:
+        "200":
+          description: Connected
+  /departments/{departmentId}/disconnect:
+    post:
+      summary: Revoke connection (keeps historical identity map)
+      parameters:
+        - $ref: "#/components/parameters/departmentId"
+      responses:
+        "200":
+          description: Disconnected
+  /departments/{departmentId}/personnel:
+    get:
+      summary: List mapped personnel for a department
+      parameters:
+        - $ref: "#/components/parameters/departmentId"
+      responses:
+        "200":
+          description: Personnel list
+    post:
+      summary: Upsert personnel batch from RMS
+      parameters:
+        - $ref: "#/components/parameters/departmentId"
+      responses:
+        "200":
+          description: Upsert result
+  /identity/resolve:
+    post:
+      summary: Resolve or create permanent personId (canonical Person Identity API)
+      description: >
+        Normalize and search FEMA SID. Return existing personId for a unique verified match;
+        otherwise create a new hubIdentities document with a Firestore auto-id.
+        Ambiguous matches return HTTP 202 with a duplicate review (no new personId).
+      responses:
+        "200":
+          description: Identity resolved or created
+        "202":
+          description: Duplicate review required
+  /identity/duplicates:
+    get:
+      summary: List duplicate identity reviews
+      responses:
+        "200":
+          description: Reviews
+  /identity/duplicates/{reviewId}/resolve:
+    post:
+      summary: Resolve a duplicate review (merge | keep_separate | link_existing)
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Resolved
+  /identity/merge:
+    post:
+      summary: Controlled merge of two identities
+      responses:
+        "200":
+          description: Merged
+  /identity/fema-sid/corrections:
+    get:
+      summary: List FEMA SID correction cases
+      responses:
+        "200":
+          description: Corrections
+  /identity/fema-sid/corrections/{correctionId}/approve:
+    post:
+      summary: Approve a FEMA SID correction
+      parameters:
+        - name: correctionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Approved
+  /identity/fema-sid/corrections/{correctionId}/reject:
+    post:
+      summary: Reject a FEMA SID correction
+      parameters:
+        - name: correctionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Rejected
+  /identity/{personId}:
+    get:
+      summary: Get identity by personId
+      parameters:
+        - $ref: "#/components/parameters/personId"
+        - name: follow
+          in: query
+          schema:
+            type: boolean
+          description: Follow mergedIntoPersonId when identity was merged away
+      responses:
+        "200":
+          description: Identity
+  /identity/{personId}/verify:
+    post:
+      summary: Mark identity (and optionally FEMA SID) verified
+      parameters:
+        - $ref: "#/components/parameters/personId"
+      responses:
+        "200":
+          description: Verified
+  /identity/{personId}/fema-sid/corrections:
+    post:
+      summary: Request controlled FEMA SID correction
+      parameters:
+        - $ref: "#/components/parameters/personId"
+      responses:
+        "201":
+          description: Correction requested
+  /personnel/{personId}:
+    patch:
+      summary: Patch person identity / employment summary (alias; personId immutable)
+      parameters:
+        - $ref: "#/components/parameters/personId"
+      responses:
+        "200":
+          description: Updated
+  /personnel/{personId}/status:
+    post:
+      summary: Change employment / sync eligibility status
+      parameters:
+        - $ref: "#/components/parameters/personId"
+      responses:
+        "200":
+          description: Status updated
+  /events:
+    post:
+      summary: Ingest integration event
+      responses:
+        "202":
+          description: Accepted
+  /events/{eventId}:
+    get:
+      summary: Get event by id
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Event
+  /sync/status:
+    get:
+      summary: Hub sync dashboard summary
+      responses:
+        "200":
+          description: Status
+  /sync/resync:
+    post:
+      summary: Manually retry failed syncs or force entity resync
+      responses:
+        "202":
+          description: Resync queued
+  /reconcile/run:
+    post:
+      summary: Trigger report-only nightly reconcile
+      responses:
+        "200":
+          description: Report
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+    IntegrationSecret:
+      type: apiKey
+      in: header
+      name: X-Integration-Secret
+  parameters:
+    departmentId:
+      name: departmentId
+      in: path
+      required: true
+      schema:
+        type: string
+    personId:
+      name: personId
+      in: path
+      required: true
+      schema:
+        type: string

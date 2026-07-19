@@ -1,113 +1,523 @@
-import { onRequest } from "firebase-functions/v2/https";
-import { defineString, defineSecret } from "firebase-functions/params";
-import { initializeApp, getApps } from "firebase-admin/app";
+import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import crypto from "node:crypto";
+import { onDocumentCreated, onDocumentUpdated } from "firebase-functions/v2/firestore";
+import { onCall, HttpsError, onRequest } from "firebase-functions/v2/https";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onInit, setGlobalOptions } from "firebase-functions/v2";
+import {
+  buildRegistrationApprovedStudentEmail,
+  buildRegistrationSubmittedDepartmentEmail,
+  buildRegistrationSubmittedStudentEmail,
+} from "./lib/templates.js";
+import { sendEmailMessage } from "./lib/sendEmail.js";
+import {
+  createPortalUserAccount,
+  resetPortalUserPasswordAccount,
+  updatePortalUserAccount,
+} from "./lib/portalUsers.js";
+import {
+  createTestAssignment,
+  listActiveTestSessions,
+  proctorTestAction,
+  publishTestVersion,
+  saveTestAnswers,
+  startTestSession,
+  submitTestAttempt,
+} from "./lib/onlineTesting.js";
+import {
+  completeRemediation,
+  getTestingDashboardMetrics,
+  gradeManualQueueItem,
+  overrideTestScore,
+  recordStateCertificationTest,
+  requestRetest,
+  reviewCertificateRelease,
+  reviewChallengeTestRequest,
+  reviewRetestRequest,
+  submitChallengeTestRequest,
+} from "./lib/testGradingActions.js";
+import { runScheduledReportExports } from "./lib/scheduledReports.js";
+import { handleLmsCompletionWebhook, processLmsGradePassback } from "./lib/lmsWebhook.js";
+import {
+  handleRmsPersonnelWebhook,
+  processRmsTrainingSync,
+  pullRosterFromRms,
+  queueRmsTrainingSyncFromCertificate,
+} from "./lib/rmsWebhook.js";
+import { handleHubAcademyCommand } from "./lib/hubAcademyCommand.js";
+import {
+  approveFemaSidCorrectionViaHub,
+  fetchHubSyncStatus,
+  rejectFemaSidCorrectionViaHub,
+  requestFemaSidCorrectionViaHub,
+  requestHubResync,
+  resolveDuplicateReviewViaHub,
+  resolvePersonIdentityViaHub,
+  verifyPersonIdentityViaHub,
+} from "./lib/hubClient.js";
+import {
+  notifyAdminsRegistrationSubmitted,
+  notifyDepartmentRegistrationSubmitted,
+  syncNotificationsForUser,
+} from "./lib/notificationSync.js";
+import { fetchPublishedGoogleSheet } from "./lib/googleSheetsFetch.js";
+import { getDigitalDisplayPayload } from "./lib/digitalDashboardPlayer.js";
+import { syncDigitalDashboardRssFeed } from "./lib/digitalDashboardRss.js";
 
-if (!getApps().length) initializeApp();
-const db = getFirestore();
+// Defer Admin init so CLI function discovery does not hang on credentials/network.
+setGlobalOptions({
+  region: "us-central1",
+  serviceAccount: "firebase-adminsdk-fbsvc@forge-academy-95f84.iam.gserviceaccount.com",
+});
+onInit(() => {
+  initializeApp();
+});
 
-const clientId = defineString("OAUTH_CLIENT_ID");
-const clientSecret = defineSecret("OAUTH_CLIENT_SECRET");
+const APPROVED_STATUSES = new Set(["enrolled", "waitlisted"]);
 
-function requestOrigin(req) {
-  const proto = req.get("x-forwarded-proto") || "https";
-  const host = req.get("x-forwarded-host") || req.get("host");
-  return `${proto}://${host}`;
+async function getDepartment(departmentId) {
+  if (!departmentId) return null;
+  const snap = await getFirestore().doc(`departments/${departmentId}`).get();
+  return snap.exists ? { id: snap.id, ...snap.data() } : null;
 }
 
-function routeName(req) {
-  const path = req.path.replace(/\/$/, "");
-  if (path.endsWith("/auth")) return "auth";
-  if (path.endsWith("/callback")) return "callback";
-  return "";
+async function sendRegistrationCreatedEmails(registration) {
+  const tasks = [];
+
+  if (registration.studentEmail) {
+    const studentEmail = buildRegistrationSubmittedStudentEmail(registration);
+    tasks.push(
+      sendEmailMessage({
+        to: registration.studentEmail,
+        ...studentEmail,
+        template: "registration_submitted_student",
+        registrationId: registration.id,
+      }),
+    );
+  }
+
+  if (registration.departmentId) {
+    const department = await getDepartment(registration.departmentId);
+
+    if (department?.trainingOfficerEmail) {
+      const deptEmail = buildRegistrationSubmittedDepartmentEmail(
+        registration,
+        department.trainingOfficerName || "Training Officer",
+      );
+      tasks.push(
+        sendEmailMessage({
+          to: department.trainingOfficerEmail,
+          ...deptEmail,
+          template: "registration_submitted_training_officer",
+          registrationId: registration.id,
+        }),
+      );
+    }
+
+    if (department?.chiefEmail && department.chiefEmail !== department.trainingOfficerEmail) {
+      const chiefEmail = buildRegistrationSubmittedDepartmentEmail(
+        registration,
+        department.chiefName || "Fire Chief",
+      );
+      tasks.push(
+        sendEmailMessage({
+          to: department.chiefEmail,
+          ...chiefEmail,
+          template: "registration_submitted_chief",
+          registrationId: registration.id,
+        }),
+      );
+    }
+  }
+
+  await Promise.all(tasks);
 }
 
-function authSuccessPage(token) {
-  const payload = JSON.stringify({ token, provider: "github" });
-  return `<!doctype html>
-<html lang="en"><body><p>Login successful.</p>
-<script>window.opener.postMessage("authorization:github:success:" + ${JSON.stringify(payload)}, "*");window.close();</script>
-</body></html>`;
+async function sendRegistrationApprovedEmail(registration) {
+  if (!registration.studentEmail) return;
+
+  const approvedEmail = buildRegistrationApprovedStudentEmail(registration);
+  await sendEmailMessage({
+    to: registration.studentEmail,
+    ...approvedEmail,
+    template: "registration_approved_student",
+    registrationId: registration.id,
+  });
 }
 
-export const cmsOAuth = onRequest({ cors: true, secrets: [clientSecret], invoker: "public" }, async (req, res) => {
-  const origin = requestOrigin(req);
-  const route = routeName(req);
+export const emailOnRegistrationCreated = onDocumentCreated("registrations/{registrationId}", async (event) => {
+  const data = event.data?.data();
+  if (!data) return;
 
-  if (route === "auth") {
-    const scope = typeof req.query.scope === "string" ? req.query.scope : "repo";
-    const state = crypto.randomBytes(16).toString("hex");
-    res.setHeader("Set-Cookie", `oauth_state=${state}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=600`);
-    const authorize = new URL("https://github.com/login/oauth/authorize");
-    authorize.searchParams.set("client_id", clientId.value());
-    authorize.searchParams.set("redirect_uri", `${origin}/callback`);
-    authorize.searchParams.set("scope", scope);
-    authorize.searchParams.set("state", state);
-    res.redirect(authorize.toString());
+  const registration = { id: event.params.registrationId, ...data };
+  await sendRegistrationCreatedEmails(registration);
+  await notifyAdminsRegistrationSubmitted(registration);
+  if (registration.status === "pending_department" && registration.departmentId) {
+    await notifyDepartmentRegistrationSubmitted(registration.departmentId, registration);
+  }
+});
+
+export const emailOnRegistrationUpdated = onDocumentUpdated("registrations/{registrationId}", async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+  if (!before || !after) return;
+
+  if (before.status === after.status) return;
+  if (!APPROVED_STATUSES.has(after.status)) return;
+
+  const registration = { id: event.params.registrationId, ...after };
+  await sendRegistrationApprovedEmail(registration);
+});
+
+export const createPortalUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  try {
+    return await createPortalUserAccount(request.auth.uid, request.data ?? {});
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Unable to create portal user.");
+  }
+});
+
+export const updatePortalUser = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  try {
+    return await updatePortalUserAccount(request.auth.uid, request.data ?? {});
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Unable to update portal user.");
+  }
+});
+
+export const resetPortalUserPassword = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  try {
+    return await resetPortalUserPasswordAccount(request.auth.uid, request.data ?? {});
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Unable to reset password.");
+  }
+});
+
+function wrapCallable(handler) {
+  return onCall(async (request) => {
+    if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+    try {
+      return await handler(request.auth.uid, request.data ?? {});
+    } catch (error) {
+      if (error instanceof HttpsError) throw error;
+      throw new HttpsError("internal", error instanceof Error ? error.message : "Request failed.");
+    }
+  });
+}
+
+export const publishTestVersionCallable = wrapCallable(publishTestVersion);
+export const createTestAssignmentCallable = wrapCallable(createTestAssignment);
+export const startTestSessionCallable = wrapCallable(startTestSession);
+export const saveTestAnswersCallable = wrapCallable(saveTestAnswers);
+export const submitTestAttemptCallable = wrapCallable(submitTestAttempt);
+export const proctorTestActionCallable = wrapCallable(proctorTestAction);
+export const listActiveTestSessionsCallable = wrapCallable(listActiveTestSessions);
+export const gradeManualQueueItemCallable = wrapCallable(gradeManualQueueItem);
+export const overrideTestScoreCallable = wrapCallable(overrideTestScore);
+export const completeRemediationCallable = wrapCallable(completeRemediation);
+export const requestRetestCallable = wrapCallable(requestRetest);
+export const reviewRetestRequestCallable = wrapCallable(reviewRetestRequest);
+export const reviewCertificateReleaseCallable = wrapCallable(reviewCertificateRelease);
+export const recordStateCertificationTestCallable = wrapCallable(recordStateCertificationTest);
+export const submitChallengeTestRequestCallable = wrapCallable(submitChallengeTestRequest);
+export const reviewChallengeTestRequestCallable = wrapCallable(reviewChallengeTestRequest);
+export const getTestingDashboardMetricsCallable = wrapCallable(getTestingDashboardMetrics);
+
+export const scheduledReportExportsJob = onSchedule(
+  {
+    schedule: "0 6 * * *",
+    timeZone: "America/Chicago",
+  },
+  async () => {
+    await runScheduledReportExports();
+  },
+);
+
+export const lmsCompletionWebhook = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed." });
     return;
   }
 
-  if (route === "callback") {
-    const code = typeof req.query.code === "string" ? req.query.code : "";
-    const state = typeof req.query.state === "string" ? req.query.state : "";
-    const cookies = req.get("cookie") || "";
-    const match = cookies.match(/oauth_state=([^;]+)/);
-    if (!code || !state || !match || match[1] !== state) {
-      res.status(400).send("OAuth state mismatch.");
-      return;
-    }
-    const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
-      method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: clientId.value(), client_secret: clientSecret.value(), code, redirect_uri: `${origin}/callback` }),
+  try {
+    const result = await handleLmsCompletionWebhook(req.body ?? {}, req.get("x-lms-secret"));
+    res.status(result.status).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Webhook processing failed.",
     });
-    const tokenData = await tokenResponse.json();
-    if (!tokenData.access_token) { res.status(400).send("Token error"); return; }
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.send(authSuccessPage(tokenData.access_token));
+  }
+});
+
+export const rmsPersonnelWebhook = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed." });
     return;
   }
 
-  res.status(404).send("OAuth endpoint");
-});
-
-export const submitForm = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
-  if (req.method !== "POST") { res.status(405).send("Method not allowed"); return; }
   try {
-    const { formId, data } = req.body;
-    if (!formId || !data) { res.status(400).json({ error: "Missing formId or data" }); return; }
-    const submission = {
-      formId,
-      data,
-      status: "new",
-      createdAt: new Date().toISOString(),
-      ip: req.ip,
-    };
-    const ref = await db.collection("cms_form_submissions").add(submission);
-    res.json({ success: true, id: ref.id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const result = await handleRmsPersonnelWebhook(req.body ?? {}, req.get("x-integration-secret"));
+    res.status(result.status).json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "RMS webhook processing failed.",
+    });
   }
 });
 
-export const cmsApi = onRequest({ cors: true, invoker: "public" }, async (req, res) => {
-  const path = req.path.replace(/^\/cmsApi\/?/, "");
-  try {
-    if (path === "pages" && req.method === "GET") {
-      const snap = await db.collection("cms_pages").where("status", "==", "published").get();
-      res.json(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      return;
-    }
-    if (path.startsWith("pages/") && req.method === "GET") {
-      const slug = path.replace("pages/", "");
-      const snap = await db.collection("cms_pages").where("slug", "==", slug).limit(1).get();
-      if (snap.empty) { res.status(404).json({ error: "Not found" }); return; }
-      res.json({ id: snap.docs[0].id, ...snap.docs[0].data() });
-      return;
-    }
-    res.status(404).json({ error: "Unknown endpoint" });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+/** Integration Hub → Academy normalized commands (upsert_student, …). */
+export const hubAcademyCommand = onRequest(async (req, res) => {
+  if (req.method !== "POST") {
+    res.status(405).json({ error: "Method not allowed." });
+    return;
   }
+
+  try {
+    const result = await handleHubAcademyCommand(
+      req.body ?? {},
+      req.get("x-integration-secret"),
+      req.get("authorization"),
+    );
+    res.status(result.status).json(result);
+  } catch (error) {
+    res.status(500).json({
+      ok: false,
+      error: error instanceof Error ? error.message : "Hub command failed.",
+    });
+  }
+});
+
+export const pullRosterFromRmsCallable = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+
+  const userSnap = await getFirestore().doc(`users/${request.auth.uid}`).get();
+  const role = userSnap.data()?.role;
+  if (!["academy_admin", "super_admin", "creator"].includes(role)) {
+    throw new HttpsError("permission-denied", "Admin access required.");
+  }
+
+  try {
+    return await pullRosterFromRms();
+  } catch (error) {
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Roster pull failed.");
+  }
+});
+
+export const getHubSyncStatusCallable = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  const userSnap = await getFirestore().doc(`users/${request.auth.uid}`).get();
+  const role = userSnap.data()?.role;
+  if (!["academy_admin", "super_admin", "creator"].includes(role)) {
+    throw new HttpsError("permission-denied", "Admin access required.");
+  }
+  try {
+    return await fetchHubSyncStatus();
+  } catch (error) {
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Hub status failed.");
+  }
+});
+
+export const requestHubResyncCallable = onCall(async (request) => {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  const userSnap = await getFirestore().doc(`users/${request.auth.uid}`).get();
+  const role = userSnap.data()?.role;
+  if (!["academy_admin", "super_admin", "creator"].includes(role)) {
+    throw new HttpsError("permission-denied", "Admin access required.");
+  }
+  try {
+    return await requestHubResync(request.data ?? {});
+  } catch (error) {
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Hub resync failed.");
+  }
+});
+
+async function requireStaffOrAdmin(request) {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  const userSnap = await getFirestore().doc(`users/${request.auth.uid}`).get();
+  const role = userSnap.data()?.role;
+  if (
+    !["academy_admin", "super_admin", "creator", "department_training_officer", "instructor"].includes(
+      role,
+    )
+  ) {
+    throw new HttpsError("permission-denied", "Staff access required.");
+  }
+  return { uid: request.auth.uid, role, email: userSnap.data()?.email || request.auth.token?.email };
+}
+
+async function requireAdmin(request) {
+  if (!request.auth) {
+    throw new HttpsError("unauthenticated", "Sign in required.");
+  }
+  const userSnap = await getFirestore().doc(`users/${request.auth.uid}`).get();
+  const role = userSnap.data()?.role;
+  if (!["academy_admin", "super_admin", "creator"].includes(role)) {
+    throw new HttpsError("permission-denied", "Admin access required.");
+  }
+  return { uid: request.auth.uid, role };
+}
+
+/** Resolve or create forgePersonId via Integration Hub Person Identity service. */
+export const resolveForgePersonIdentityCallable = onCall(async (request) => {
+  const actor = await requireStaffOrAdmin(request);
+  try {
+    const result = await resolvePersonIdentityViaHub({
+      ...(request.data ?? {}),
+      sourceSystem: "academy",
+      actor: actor.uid,
+    });
+    return result;
+  } catch (error) {
+    throw new HttpsError(
+      "internal",
+      error instanceof Error ? error.message : "Identity resolve failed.",
+    );
+  }
+});
+
+export const verifyHubPersonIdentityCallable = onCall(async (request) => {
+  await requireAdmin(request);
+  const personId = String(request.data?.personId || request.data?.forgePersonId || "").trim();
+  if (!personId) throw new HttpsError("invalid-argument", "personId is required.");
+  try {
+    return await verifyPersonIdentityViaHub(personId, request.data ?? {});
+  } catch (error) {
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Verify failed.");
+  }
+});
+
+export const resolveHubDuplicateReviewCallable = onCall(async (request) => {
+  await requireAdmin(request);
+  const reviewId = String(request.data?.reviewId || "").trim();
+  if (!reviewId) throw new HttpsError("invalid-argument", "reviewId is required.");
+  try {
+    return await resolveDuplicateReviewViaHub(reviewId, request.data ?? {});
+  } catch (error) {
+    throw new HttpsError(
+      "internal",
+      error instanceof Error ? error.message : "Duplicate resolve failed.",
+    );
+  }
+});
+
+export const requestHubFemaSidCorrectionCallable = onCall(async (request) => {
+  await requireAdmin(request);
+  const personId = String(request.data?.personId || request.data?.forgePersonId || "").trim();
+  if (!personId) throw new HttpsError("invalid-argument", "personId is required.");
+  try {
+    return await requestFemaSidCorrectionViaHub(personId, request.data ?? {});
+  } catch (error) {
+    throw new HttpsError(
+      "internal",
+      error instanceof Error ? error.message : "FEMA SID correction request failed.",
+    );
+  }
+});
+
+export const approveHubFemaSidCorrectionCallable = onCall(async (request) => {
+  await requireAdmin(request);
+  const correctionId = String(request.data?.correctionId || "").trim();
+  if (!correctionId) throw new HttpsError("invalid-argument", "correctionId is required.");
+  try {
+    return await approveFemaSidCorrectionViaHub(correctionId, request.data ?? {});
+  } catch (error) {
+    throw new HttpsError(
+      "internal",
+      error instanceof Error ? error.message : "FEMA SID correction approve failed.",
+    );
+  }
+});
+
+export const rejectHubFemaSidCorrectionCallable = onCall(async (request) => {
+  await requireAdmin(request);
+  const correctionId = String(request.data?.correctionId || "").trim();
+  if (!correctionId) throw new HttpsError("invalid-argument", "correctionId is required.");
+  try {
+    return await rejectFemaSidCorrectionViaHub(correctionId, request.data ?? {});
+  } catch (error) {
+    throw new HttpsError(
+      "internal",
+      error instanceof Error ? error.message : "FEMA SID correction reject failed.",
+    );
+  }
+});
+
+export const onRmsTrainingSyncQueued = onDocumentCreated("rmsTrainingSyncLog/{logId}", async (event) => {
+  await processRmsTrainingSync(event.params.logId);
+});
+
+export const onLmsGradePassbackQueued = onDocumentCreated("lmsGradePassbackLog/{logId}", async (event) => {
+  await processLmsGradePassback(event.params.logId);
+});
+
+export const syncMyNotificationsCallable = wrapCallable(async (uid) => syncNotificationsForUser(uid));
+
+export const syncDigitalDashboardRssFeedCallable = wrapCallable(async (_uid, data) => {
+  const feedId = String(data?.feedId ?? "").trim();
+  if (!feedId) {
+    throw new HttpsError("invalid-argument", "feedId is required.");
+  }
+  return await syncDigitalDashboardRssFeed(feedId);
+});
+
+export const getDigitalDisplayPayloadCallable = onCall(async (request) => {
+  const displayId = String(request.data?.displayId ?? "").trim();
+  const publicKey = String(request.data?.publicKey ?? "").trim();
+  const virtualSession = Boolean(request.data?.virtualSession);
+  if (!displayId || !publicKey) {
+    throw new HttpsError("invalid-argument", "displayId and publicKey are required.");
+  }
+
+  try {
+    return await getDigitalDisplayPayload(displayId, publicKey, { virtualSession });
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Request failed.");
+  }
+});
+
+export const fetchPublishedGoogleSheetCallable = onCall(async (request) => {
+  const url = String(request.data?.url ?? "").trim();
+  if (!url) {
+    throw new HttpsError("invalid-argument", "url is required.");
+  }
+
+  try {
+    return await fetchPublishedGoogleSheet(url);
+  } catch (error) {
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error instanceof Error ? error.message : "Request failed.");
+  }
+});
+
+export const sendInvoiceEmailCallable = wrapCallable(async (uid, data) => {
+  const { sendInvoiceEmailForUser } = await import("./lib/invoiceEmail.js");
+  return sendInvoiceEmailForUser(uid, data);
+});
+
+export const emailOnInvoiceCreated = onDocumentCreated("invoices/{invoiceId}", async (event) => {
+  const data = event.data?.data();
+  if (!data) return;
+  const { emailInvoiceOnCreate } = await import("./lib/invoiceEmail.js");
+  await emailInvoiceOnCreate(event.params.invoiceId, data);
 });

@@ -1,0 +1,21 @@
+# Cloud Scheduler job for Phase 1 report-only nightly reconcile.
+# Apply after Hub is deployed:
+#   gcloud scheduler jobs create http forge-hub-nightly-reconcile \
+#     --location=us-central1 \
+#     --schedule="0 3 * * *" \
+#     --uri="https://YOUR_HUB_HOST/api/integrations/v1/reconcile/run" \
+#     --http-method=POST \
+#     --headers="Authorization=Bearer YOUR_HUB_TOKEN,Content-Type=application/json" \
+#     --message-body="{}" \
+#     --time-zone="America/Chicago"
+
+name: forge-hub-nightly-reconcile
+description: Report-only Hub reconcile — personnel map gaps and open sync failures
+schedule: "0 3 * * *"
+timeZone: America/Chicago
+httpTarget:
+  uri: https://YOUR_HUB_HOST/api/integrations/v1/reconcile/run
+  httpMethod: POST
+  headers:
+    Content-Type: application/json
+  body: e30=
