@@ -1,0 +1,37 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "apparatus",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stationId", "order": "ASCENDING" },
+        { "fieldPath": "unitNumber", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "maintenanceSchedules",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "apparatusId", "order": "ASCENDING" },
+        { "fieldPath": "nextDueDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "workOrders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "openedDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "maintenanceRecords",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "apparatusId", "order": "ASCENDING" },
+        { "fieldPath": "performedDate", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
