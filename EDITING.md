@@ -1,15 +1,13 @@
 # Edit your website (no AI required)
 
-## Option A — Browser editor (recommended)
+## Option A — Browser editor (local /admin)
 
-Use **Decap CMS** at **`/admin`** on your live site.
+Use **Forge CMS** at **`/admin`**.
 
-1. Open **https://forge-website-b276c.web.app/admin** (or `/admin` on your domain after DNS cutover)
-2. Log in with GitHub
-3. Pick a page from the sidebar, edit, click **Publish**
-4. The site redeploys automatically (via GitHub Actions)
-
-**First-time setup:** see **`DECAP-CMS-SETUP.md`**
+1. Open **`/admin`** on your CloudFront domain (or http://localhost:5173/admin locally)
+2. Local login: any email with password `admin`
+3. Pick a page from the sidebar, edit, and save
+4. For production, keep canonical copy in **`content/*.json`**, commit, and push — GitHub Actions deploys to **S3 + CloudFront**
 
 ---
 
@@ -36,7 +34,7 @@ Double-click **`preview.bat`** or run `npm run dev` → http://localhost:5173
 
 ### Publish manually
 
-Double-click **`publish.bat`** or run `npm run build` then `firebase deploy --only hosting`
+Double-click **`publish.bat`** (requires AWS CLI + `AWS_S3_BUCKET` / `AWS_CLOUDFRONT_DISTRIBUTION_ID`) or push to `main`
 
 ---
 

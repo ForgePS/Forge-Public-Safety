@@ -3,6 +3,15 @@ name: Deploy website
 on:
   push:
     branches: [main]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "content/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.js"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
 jobs:
@@ -16,41 +25,61 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Verify Firebase deploy credentials
+      - name: Verify AWS deploy credentials
         env:
-          HAS_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
-          HAS_TOKEN: ${{ secrets.FIREBASE_TOKEN != '' }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}
         run: |
-          if [ "$HAS_SERVICE_ACCOUNT" != "true" ] && [ "$HAS_TOKEN" != "true" ]; then
-            echo "::error::No Firebase deploy credentials configured."
+          missing=0
+          for name in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_S3_BUCKET AWS_CLOUDFRONT_DISTRIBUTION_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing repository secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
             echo ""
-            echo "Add one of these repository secrets (Settings → Secrets and variables → Actions):"
-            echo "  • FIREBASE_SERVICE_ACCOUNT — recommended; paste full service account JSON from Firebase Console"
-            echo "  • FIREBASE_TOKEN — fallback; run 'npx firebase-tools login:ci' locally and paste the token"
+            echo "Add these repository secrets (Settings → Secrets and variables → Actions):"
+            echo "  • AWS_ACCESS_KEY_ID"
+            echo "  • AWS_SECRET_ACCESS_KEY"
+            echo "  • AWS_S3_BUCKET — private S3 bucket for the static site"
+            echo "  • AWS_CLOUDFRONT_DISTRIBUTION_ID — CloudFront distribution in front of the bucket"
             echo ""
-            echo "See DECAP-CMS-SETUP.md section 5 for service account setup."
+            echo "Optional repository variable:"
+            echo "  • AWS_REGION — defaults to us-east-1"
             exit 1
           fi
-          echo "HAS_SERVICE_ACCOUNT=$HAS_SERVICE_ACCOUNT" >> "$GITHUB_ENV"
-          echo "HAS_TOKEN=$HAS_TOKEN" >> "$GITHUB_ENV"
 
       - run: npm ci
       - run: npm run build
 
-      - name: Deploy to Firebase Hosting (service account)
-        if: env.HAS_SERVICE_ACCOUNT == 'true'
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: forge-website-b276c
-          channelId: live
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
-      - name: Deploy to Firebase Hosting (token)
-        if: env.HAS_SERVICE_ACCOUNT != 'true' && env.HAS_TOKEN == 'true'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseToken: ${{ secrets.FIREBASE_TOKEN }}
-          projectId: forge-website-b276c
-          channelId: live
+      - name: Sync build to S3
+        env:
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        run: |
+          aws s3 sync dist/ "s3://${AWS_S3_BUCKET}/" --delete
+          # Short cache for the SPA shell; long cache for hashed Vite assets
+          aws s3 cp dist/index.html "s3://${AWS_S3_BUCKET}/index.html" \
+            --cache-control "public,max-age=0,must-revalidate" \
+            --content-type "text/html; charset=utf-8"
+          if [ -d dist/assets ]; then
+            aws s3 sync dist/assets/ "s3://${AWS_S3_BUCKET}/assets/" \
+              --cache-control "public,max-age=31536000,immutable"
+          fi
+
+      - name: Invalidate CloudFront
+        env:
+          AWS_CLOUDFRONT_DISTRIBUTION_ID: ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "$AWS_CLOUDFRONT_DISTRIBUTION_ID" \
+            --paths "/*"

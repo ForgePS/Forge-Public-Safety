@@ -36,32 +36,49 @@ npm run dev
 npm run build
 ```
 
-## Deploy to Firebase Hosting
+## Deploy to AWS (S3 + CloudFront)
 
-This project is configured for Firebase project **`forge-website-b276c`**.
+The marketing site is a static Vite build served from **S3** behind **CloudFront**. Nothing for this site deploys to Firebase.
 
 ```powershell
 npm run build
-firebase deploy --only hosting
+# or double-click publish.bat after setting AWS env vars
 ```
 
-Live preview: **https://forge-website-b276c.web.app**  
-CMS admin: **https://forge-website-b276c.web.app/admin**
+### GitHub Actions secrets
 
-### Point forgepublicsafety.com to Firebase
+Repo → **Settings** → **Secrets and variables** → **Actions**:
 
-1. Firebase Console → **Hosting** → **Add custom domain** → `forgepublicsafety.com`
-2. In GoDaddy: disconnect the domain from **Airo Builder** first
-3. Add the DNS records Firebase shows (usually A records + TXT for verification)
-4. Wait for SSL (can take up to 24 hours)
+| Secret | Purpose |
+|--------|---------|
+| `AWS_ACCESS_KEY_ID` | IAM user/key allowed to write the bucket + invalidate CloudFront |
+| `AWS_SECRET_ACCESS_KEY` | Matching secret |
+| `AWS_S3_BUCKET` | Bucket name for the built `dist/` site |
+| `AWS_CLOUDFRONT_DISTRIBUTION_ID` | Distribution ID in front of that bucket |
+
+Optional variable: `AWS_REGION` (defaults to `us-east-1`).
+
+Push to `main` (or run **Deploy website**) syncs `dist/` to S3 and invalidates CloudFront.
+
+### CloudFront SPA routing
+
+Point the distribution origin at the S3 bucket (Origin Access Control). Add custom error responses so deep links work:
+
+- **403** and **404** → response path `/index.html`, response code **200**
+
+### Custom domain
+
+1. Request/attach an ACM certificate in **us-east-1** for `forgepublicsafety.com`
+2. Add the domain as a CloudFront alternate domain name
+3. In DNS, point the domain to the CloudFront distribution (ALIAS/CNAME)
 
 ## Demo form
 
-The contact form opens a `mailto:demo@forgepublicsafety.com` message. Replace with Formspree, Firebase Functions, or another form backend when ready.
+The contact form opens a `mailto:demo@forgepublicsafety.com` message. Replace with Formspree, API Gateway, or another form backend when ready.
 
 ## Content Management (Forge CMS)
 
-The marketing site is powered by **Forge CMS** — a full visual website management platform.
+The marketing site is powered by **Forge CMS** — a visual website management platform. Public pages seed from `content/*.json` (no Firebase).
 
 ### Admin Panel
 
@@ -84,17 +101,15 @@ The admin panel provides complete control over:
 
 See **`CMS-AUDIT-REPORT.md`** for the full customization audit.
 
-### Production Setup
+### Production publish path
 
-1. Create a Firebase project and enable Firestore, Auth, and Storage
-2. Copy `.env.example` to `.env.local` and fill in Firebase config
-3. Add GitHub Actions secret **`FIREBASE_SERVICE_ACCOUNT`** (full service account JSON from Firebase Console → Project settings → Service accounts → Generate new private key). See `DECAP-CMS-SETUP.md` section 5.
-4. Alternatively, add **`FIREBASE_TOKEN`** from `npx firebase-tools login:ci` as a fallback
-5. Deploy: `firebase deploy --only hosting,firestore:rules,functions`
+1. Edit `content/*.json` (or use local `/admin` then export/sync into `content/`)
+2. Commit and push to `main` — GitHub Actions deploys to S3/CloudFront
+3. Or run `publish.bat` / AWS CLI sync locally with the env vars above
 
 ### Legacy Decap CMS
 
-The previous Decap CMS at `/admin` has been replaced by Forge CMS. Decap files remain in `public/admin/` for reference but are no longer used.
+Decap CMS files may remain under `public/admin/` for reference but are not the production editor.
 
 ## Assets
 

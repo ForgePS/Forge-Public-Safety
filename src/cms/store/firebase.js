@@ -24,8 +24,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+/** Marketing site hosts on AWS CloudFront — Firebase backend is disabled. */
 export function isFirebaseConfigured() {
-  return Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+  return false;
 }
 
 let app = null;
