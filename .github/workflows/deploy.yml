@@ -37,6 +37,7 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # Prefer service account — FirebaseExtended/action-hosting-deploy requires firebaseServiceAccount
       - name: Deploy to Firebase Hosting (service account)
         if: env.HAS_SERVICE_ACCOUNT == 'true'
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -46,11 +47,15 @@ jobs:
           projectId: forge-website-b276c
           channelId: live
 
+      # FIREBASE_TOKEN fallback — action-hosting-deploy no longer accepts firebaseToken;
+      # deploy with firebase-tools CLI the same way Forge Academy hosting does.
       - name: Deploy to Firebase Hosting (token)
         if: env.HAS_SERVICE_ACCOUNT != 'true' && env.HAS_TOKEN == 'true'
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseToken: ${{ secrets.FIREBASE_TOKEN }}
-          projectId: forge-website-b276c
-          channelId: live
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: |
+          npx firebase-tools@13 deploy \
+            --only hosting \
+            --project forge-website-b276c \
+            --non-interactive \
+            --token "$FIREBASE_TOKEN"
