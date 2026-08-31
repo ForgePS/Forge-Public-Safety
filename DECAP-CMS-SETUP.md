@@ -1,10 +1,13 @@
-# Decap CMS setup (browser editor)
+# Decap CMS setup (legacy — do not use for new deploys)
 
-Decap CMS gives you a visual editor at **`/admin`** on your live site — no AI, no JSON editing required.
+> **Hosting moved to AWS S3 + CloudFront.** Do not deploy this marketing site with Firebase.
+> Use **`README.md`** (Deploy to AWS) and **`EDITING.md`** instead. This file is kept only as historical Decap OAuth notes.
 
-After setup, your workflow is:
+Decap CMS previously gave a visual editor at **`/admin`** on Firebase Hosting.
 
-1. Open **https://forge-website-b276c.web.app/admin** (or **https://forgepublicsafety.com/admin** after DNS cutover)
+After setup, your workflow was:
+
+1. Open **`/admin`** on the live domain
 2. Log in with GitHub
 3. Edit pages in the sidebar → **Publish** (saves to GitHub)
 4. GitHub Actions automatically rebuilds and deploys the site (about 2 minutes)
